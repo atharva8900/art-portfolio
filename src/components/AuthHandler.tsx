@@ -16,43 +16,42 @@ function AuthHandlerContent() {
 
         if (code) {
             const handleAuthCode = async () => {
-                setStatus('Processing login...');
+                setStatus('Initializing...');
+
+                // wait 1.5 seconds to let server-side callback finish
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
                 try {
-                    console.log('AuthHandler: Found code, exchanging for session...');
+                    console.log('AuthHandler: Checking for existing session...');
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    if (user) {
+                        console.log('AuthHandler: Session found, login successful (handled by server)');
+                        setStatus('Success! Redirecting...');
+                        window.location.href = '/';
+                        return;
+                    }
+
+                    setStatus('Finalizing login...');
+                    console.log('AuthHandler: No session found, exchanging code...');
                     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
                     if (error) {
-                        console.warn('AuthHandler: Initial exchange failed, checking for existing session...', error.message);
+                        console.warn('AuthHandler: Exchange failed, last check...', error.message);
 
-                        // Check if session was already established by server-side callback
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (user) {
-                            console.log('AuthHandler: Session found, login successful (likely handled by server)');
-                            setStatus('Success! Redirecting...');
+                        // Final check for session (maybe error was just a race condition)
+                        const { data: { user: lastUser } } = await supabase.auth.getUser();
+                        if (lastUser) {
                             window.location.href = '/';
                             return;
                         }
 
-                        // Specific handling for PKCE errors
-                        if (error.message.includes('PKCE') || error.message.includes('verifier')) {
-                            setStatus('Login in progress... refreshing session');
-                            // Wait a moment and try one last time to get session
-                            await new Promise(resolve => setTimeout(resolve, 1500));
-                            const { data: { user: retryUser } } = await supabase.auth.getUser();
-                            if (retryUser) {
-                                window.location.href = '/';
-                                return;
-                            }
-                        }
-
                         console.error('Auth code exchange failed:', error.message);
                         setStatus(`Error: ${error.message}`);
-                        // Wait a bit so the user can see the error
                         await new Promise(resolve => setTimeout(resolve, 3000));
                     } else {
                         console.log('Successfully exchanged code for session');
                         setStatus('Success! Redirecting...');
-                        // Use window.location as a last resort to ensure the session is picked up
                         window.location.href = '/';
                         return;
                     }
@@ -61,7 +60,6 @@ function AuthHandlerContent() {
                     setStatus(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
                     await new Promise(resolve => setTimeout(resolve, 3000));
                 } finally {
-                    // Clean up the URL by removing the code parameter
                     const params = new URLSearchParams(searchParams.toString());
                     params.delete('code');
                     const newPath = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
