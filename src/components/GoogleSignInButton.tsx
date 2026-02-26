@@ -16,11 +16,14 @@ export default function GoogleSignInButton({ onSuccess }: GoogleSignInButtonProp
             setLoading(true);
             setError('');
 
+            console.log('Initiating Google sign-in...');
             // next-auth: redirect is handled automatically
             const result = await signIn('google', {
                 callbackUrl: '/admin', // Redirect to admin after login
                 redirect: true
             });
+
+            console.log('SignIn result:', result);
 
             if (result?.error) {
                 throw new Error(result.error);
