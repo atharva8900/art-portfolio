@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     description: "Turn your photos into hyper-realistic hand-drawn graphite portraits.",
     images: [
       {
-        url: "https://github.com/atharva8900/art-portfolio/blob/main/WhatsApp%20Image%202026-02-11%20at%203.41.04%20PM%20(1).jpeg?raw=true",
+        url: "/images/spiderman_andrew_final.jpg",
         width: 1200,
         height: 630,
         alt: "Tobey Maguire Portrait by Atharva Sherlekar",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Atharva Sherlekar Art - Realistic Graphite Portrait Artist",
     description: "Turn your photos into hyper-realistic hand-drawn graphite portraits.",
-    images: ["https://github.com/atharva8900/art-portfolio/blob/main/WhatsApp%20Image%202026-02-11%20at%3.41.04%20PM%20(1).jpeg?raw=true"],
+    images: ["/images/spiderman_andrew_final.jpg"],
   },
 };
 

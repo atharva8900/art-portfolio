@@ -28,7 +28,7 @@ const Testimonials = () => {
                         <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl border border-foreground/5 bg-surface max-w-sm">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                                src="https://github.com/atharva8900/art-portfolio/blob/main/testimonial1.jpeg?raw=true"
+                                src="/images/testimonial_1.jpg"
                                 alt="Happy client holding their custom graphite sketch"
                                 className="w-full h-auto object-cover scale-105 hover:scale-100 transition-transform duration-700"
                             />
