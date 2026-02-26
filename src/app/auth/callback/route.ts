@@ -31,9 +31,6 @@ export async function GET(request: Request) {
     }
 
     // Redirect to home page
-    const origin = requestUrl.origin.includes('localhost')
-        ? requestUrl.origin
-        : 'https://art-website.vercel.app';
-
-    return NextResponse.redirect(new URL('/', origin));
+    // Using current request origin ensures the user stays on their own site
+    return NextResponse.redirect(new URL('/', requestUrl.origin));
 }
