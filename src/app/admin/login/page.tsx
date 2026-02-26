@@ -7,7 +7,7 @@ import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { motion } from 'framer-motion';
 
 export default function AdminLoginPage() {
-    const { data: session, status } = useSession();
+    const { status } = useSession();
     const router = useRouter();
 
     useEffect(() => {
