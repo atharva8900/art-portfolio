@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2, Lock, RefreshCcw, Check, X, DollarSign, ExternalLink } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSession, signOut } from 'next-auth/react';
 import StatusDropdown from '@/components/admin/StatusDropdown';
 import AdminNav from '@/components/admin/AdminNav';
 
@@ -38,7 +38,7 @@ interface GroupedReferrals {
     };
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com', 'atharvasherlekar@gmail.com'];
 
 const PAYOUT_OPTIONS = [
     { value: 'unpaid', label: 'Unpaid', colorClass: 'bg-neutral-700/60 text-neutral-300 border-neutral-600' },
@@ -47,32 +47,27 @@ const PAYOUT_OPTIONS = [
 ];
 
 export default function AdminPayoutsPage() {
+    const router = useRouter();
+    const { data: session, status } = useSession();
+
     const [groupedData, setGroupedData] = useState<GroupedReferrals>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-
-    const router = useRouter();
-    const supabase = createClient();
+    // Auth Logic
+    const userEmail = session?.user?.email;
+    const isAuthorized = !!session && !!userEmail && ALLOWED_EMAILS.includes(userEmail.toLowerCase());
 
     const [confirmingAction, setConfirmingAction] = useState<{ id: string, value: string } | null>(null);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user && user.email && ALLOWED_EMAILS.includes(user.email)) {
-                setIsAuthorized(true);
-                fetchCommissions();
-            } else {
-                setIsAuthorized(false);
-                setLoading(false);
-            }
-        };
-        checkAuth();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        if (isAuthorized) {
+            fetchCommissions();
+        } else if (status === 'unauthenticated') {
+            setLoading(false);
+        }
+    }, [isAuthorized, status]);
 
     const fetchCommissions = async () => {
         setLoading(true);
@@ -80,7 +75,7 @@ export default function AdminPayoutsPage() {
         try {
             const res = await fetch('/api/admin/commissions');
             if (!res.ok) {
-                if (res.status === 401) { setIsAuthorized(false); return; }
+                if (res.status === 401) { return; }
                 throw new Error('Failed to fetch commissions');
             }
             const data = await res.json();
@@ -117,7 +112,7 @@ export default function AdminPayoutsPage() {
             });
             if (!res.ok) {
                 const errData = await res.json();
-                if (res.status === 401) { setIsAuthorized(false); }
+                if (res.status === 401) { /* handled */ }
                 else { throw new Error(errData.error || 'Failed to update payout'); }
             } else {
                 await fetchCommissions();
@@ -132,11 +127,15 @@ export default function AdminPayoutsPage() {
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await signOut({ redirect: false });
         router.push('/');
     };
 
-    if (isAuthorized === false) {
+    if (status === 'loading') {
+        return <div className="min-h-screen bg-surface flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={48} /></div>;
+    }
+
+    if (!isAuthorized) {
         return (
             <div className="min-h-screen bg-surface flex items-center justify-center p-4">
                 <div className="bg-surface border border-foreground/10 p-8 rounded-xl max-w-md w-full text-center space-y-6">
@@ -150,10 +149,6 @@ export default function AdminPayoutsPage() {
                 </div>
             </div>
         );
-    }
-
-    if (loading && isAuthorized === null) {
-        return <div className="min-h-screen bg-surface flex items-center justify-center"><Loader2 className="animate-spin text-accent" size={48} /></div>;
     }
 
     return (

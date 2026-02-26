@@ -1,39 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount } from '@/lib/commissions';
 import { setAvailability } from '@/lib/availability';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { Resend } from 'resend';
 
 const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
 async function checkAdminAuth() {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value;
-                },
-                set(name: string, value: string, options: Record<string, unknown>) {
-                    cookieStore.set({ name, value, ...options });
-                },
-                remove(name: string, options: Record<string, unknown>) {
-                    cookieStore.set({ name, value: '', ...options });
-                },
-            },
-        }
-    );
+    const session = await getServerSession(authOptions);
 
-    const { data: { user }, error } = await supabase.auth.getUser();
-
-    if (error || !user || !user.email) {
+    if (!session || !session.user || !session.user.email) {
         return false;
     }
 
-    return ALLOWED_EMAILS.includes(user.email);
+    return ALLOWED_EMAILS.includes(session.user.email.toLowerCase());
 }
 
 // GET: Return all commissions (Requires Admin Auth)

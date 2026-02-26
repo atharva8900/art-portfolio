@@ -5,9 +5,9 @@ import {
     Loader2, Trash2, Lock, RefreshCcw, Check, X, AlertTriangle, ChevronDown,
     Phone, Instagram, MapPin, User, Package, Calendar
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSession, signOut } from 'next-auth/react';
 import StatusDropdown from '@/components/admin/StatusDropdown';
 import AdminNav from '@/components/admin/AdminNav';
 
@@ -40,7 +40,7 @@ interface CommissionData {
     timelapse_recording?: boolean;
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com', 'atharvasherlekar@gmail.com'];
 
 const STATUS_OPTIONS = [
     { value: 'pending', label: 'Waiting', colorClass: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
@@ -54,6 +54,9 @@ const STATUS_OPTIONS = [
 
 
 export default function AdminCommissionsPage() {
+    const router = useRouter();
+    const { data: session, status } = useSession();
+
     const [commissions, setCommissions] = useState<CommissionData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -61,12 +64,9 @@ export default function AdminCommissionsPage() {
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [commissionToDelete, setCommissionToDelete] = useState<string | null>(null);
 
-    // Auth State
-    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null); // null = checking
-
-
-    const router = useRouter();
-    const supabase = createClient();
+    // Auth Logic
+    const userEmail = session?.user?.email;
+    const isAuthorized = !!session && !!userEmail && ALLOWED_EMAILS.includes(userEmail.toLowerCase());
 
     const [confirmingAction, setConfirmingAction] = useState<{ id: string, field: 'status', value: string } | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -74,21 +74,12 @@ export default function AdminCommissionsPage() {
     const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (user && user.email && ALLOWED_EMAILS.includes(user.email)) {
-                setIsAuthorized(true);
-                fetchCommissions();
-            } else {
-                setIsAuthorized(false);
-                setLoading(false);
-            }
-        };
-
-        checkAuth();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        if (isAuthorized) {
+            fetchCommissions();
+        } else if (status === 'unauthenticated') {
+            setLoading(false);
+        }
+    }, [isAuthorized, status]);
 
     const fetchCommissions = async () => {
         setLoading(true);
@@ -99,7 +90,6 @@ export default function AdminCommissionsPage() {
 
             if (!res.ok) {
                 if (res.status === 401) {
-                    setIsAuthorized(false);
                     return;
                 }
                 throw new Error('Failed to fetch commissions');
@@ -135,7 +125,7 @@ export default function AdminCommissionsPage() {
             if (!res.ok) {
                 const errData = await res.json();
                 if (res.status === 401) {
-                    setIsAuthorized(false);
+                    // Handled by NextAuth protection
                 } else {
                     throw new Error(errData.error || 'Failed to update');
                 }
@@ -175,7 +165,7 @@ export default function AdminCommissionsPage() {
             if (!res.ok) {
                 const errData = await res.json();
                 if (res.status === 401) {
-                    setIsAuthorized(false);
+                    // Handled by NextAuth protection
                 } else {
                     throw new Error(errData.error || 'Failed to delete commission');
                 }
@@ -192,13 +182,21 @@ export default function AdminCommissionsPage() {
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await signOut({ redirect: false });
         router.push('/');
     };
 
 
 
-    if (isAuthorized === false) {
+    if (status === 'loading') {
+        return (
+            <div className="min-h-screen bg-surface flex items-center justify-center">
+                <Loader2 className="animate-spin text-accent" size={48} />
+            </div>
+        );
+    }
+
+    if (!isAuthorized) {
         return (
             <div className="min-h-screen bg-surface flex items-center justify-center p-4">
                 <div className="bg-surface hover:bg-surface\/80 border border-foreground/10 p-8 rounded-xl max-w-md w-full text-center space-y-6">
@@ -221,14 +219,6 @@ export default function AdminCommissionsPage() {
                         Go to Home / Login
                     </button>
                 </div>
-            </div>
-        );
-    }
-
-    if (loading && isAuthorized === null) {
-        return (
-            <div className="min-h-screen bg-surface flex items-center justify-center">
-                <Loader2 className="animate-spin text-accent" size={48} />
             </div>
         );
     }

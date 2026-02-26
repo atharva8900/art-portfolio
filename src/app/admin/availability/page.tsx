@@ -1,24 +1,20 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Lock, Unlock, Power, AlertCircle } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AdminNav from '@/components/admin/AdminNav';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com', 'atharvasherlekar@gmail.com'];
 
 export default function AdminAvailability() {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-    const [userEmail, setUserEmail] = useState<string | null>(null);
+    const { data: session, status } = useSession();
     const [statusLoading, setStatusLoading] = useState(false);
     const [error, setError] = useState('');
     const [isOpen, setIsOpen] = useState<boolean | null>(null);
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const router = useRouter();
-    const supabase = createClient();
 
     // Check status on load (if authenticated)
     const fetchStatus = async () => {
@@ -32,22 +28,8 @@ export default function AdminAvailability() {
         }
     };
 
-    // Check Supabase session on mount
-    useEffect(() => {
-        const checkAuth = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (user && user.email && ALLOWED_EMAILS.includes(user.email)) {
-                setIsAuthenticated(true);
-                setUserEmail(user.email);
-            } else {
-                setIsAuthenticated(false);
-            }
-        };
-
-        checkAuth();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    const userEmail = session?.user?.email;
+    const isAuthenticated = !!session && !!userEmail && ALLOWED_EMAILS.includes(userEmail.toLowerCase());
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -69,9 +51,7 @@ export default function AdminAvailability() {
             const data = await res.json();
 
             if (!res.ok) {
-                if (res.status === 401) {
-                    setIsAuthenticated(false);
-                }
+                // Redirect handled via session change
                 throw new Error(data.error || 'Failed to update status');
             }
 
@@ -86,11 +66,19 @@ export default function AdminAvailability() {
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await signOut({ redirect: false });
         router.push('/');
     };
 
-    if (isAuthenticated === false) {
+    if (status === 'loading') {
+        return (
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+                <Loader2 className="animate-spin text-accent" size={32} />
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
                 <motion.div
@@ -112,14 +100,6 @@ export default function AdminAvailability() {
                         Go to Home / Login
                     </button>
                 </motion.div>
-            </div>
-        );
-    }
-
-    if (isAuthenticated === null) {
-        return (
-            <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-                <Loader2 className="animate-spin text-accent" size={32} />
             </div>
         );
     }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../auth/[...nextauth]/route';
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 // Normalize emails to lowercase for comparison
@@ -18,14 +19,13 @@ export async function POST() {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        const supabase = createClient();
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const session = await getServerSession(authOptions);
 
-        if (error || !user || !user.email) {
+        if (!session || !session.user || !session.user.email) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
+        if (ALLOWED_EMAILS.includes(session.user.email.toLowerCase())) {
             return NextResponse.json({ success: true, secret: ADMIN_SECRET });
         } else {
             return NextResponse.json({ error: 'Unauthorized email' }, { status: 403 });

@@ -4,6 +4,7 @@ import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import CustomCursor from "@/components/CustomCursor";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import AuthProvider from "@/components/AuthProvider";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel" });
 
@@ -50,10 +51,12 @@ export default function RootLayout({
       <body className={`${inter.variable} ${cinzel.variable} font-sans bg-background text-foreground antialiased selection:bg-accent selection:text-background`}>
 
         <ThemeProvider attribute="class" defaultTheme="dark">
-          <CustomCursor />
-          <SmoothScroll>
-            {children}
-          </SmoothScroll>
+          <AuthProvider>
+            <CustomCursor />
+            <SmoothScroll>
+              {children}
+            </SmoothScroll>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
