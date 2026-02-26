@@ -1,9 +1,28 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { motion } from 'framer-motion';
 
 export default function AdminLoginPage() {
+    const { data: session, status } = useSession();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (status === 'authenticated') {
+            router.push('/admin');
+        }
+    }, [status, router]);
+
+    if (status === 'loading') {
+        return (
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
     return (
         <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
             <div className="max-w-md w-full space-y-8">
