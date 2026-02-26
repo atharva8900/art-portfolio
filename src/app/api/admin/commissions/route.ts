@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount } from '@/lib/commissions';
 import { setAvailability } from '@/lib/availability';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { Resend } from 'resend';
 
 const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];

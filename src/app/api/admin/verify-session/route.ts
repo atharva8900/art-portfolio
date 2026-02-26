@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 // Normalize emails to lowercase for comparison

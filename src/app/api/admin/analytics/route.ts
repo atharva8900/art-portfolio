@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAllCommissions, CommissionData } from '@/lib/commissions';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
