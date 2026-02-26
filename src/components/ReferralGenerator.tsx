@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { createClient } from '@/lib/supabase/client';
 import GoogleSignInButton from './GoogleSignInButton';
 
 export default function ReferralGenerator() {
@@ -16,7 +15,6 @@ export default function ReferralGenerator() {
     const [copied, setCopied] = useState(false);
     const [infoMessage, setInfoMessage] = useState('');
     const [isRulesOpen, setIsRulesOpen] = useState(false);
-    const supabase = createClient();
 
     const user = session?.user;
     const authLoading = authStatus === 'loading';

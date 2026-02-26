@@ -11,8 +11,6 @@ import {
 } from '@/lib/referrals';
 import { saveCommission, generateCommissionId, getActiveWorkloadCount, hasActiveCommission } from '@/lib/commissions';
 import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing'; // Import price helper
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
