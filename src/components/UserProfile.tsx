@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Image from 'next/image';
