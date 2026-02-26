@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { saveReferral, hashIP, getActiveReferralForUser } from '@/lib/referrals';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -29,29 +29,11 @@ function getClientIP(request: NextRequest): string {
 
 export async function POST(request: NextRequest) {
     try {
-        // Verify user is authenticated
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    get(name: string) {
-                        return cookieStore.get(name)?.value;
-                    },
-                    set(name: string, value: string, options: Record<string, unknown>) {
-                        cookieStore.set({ name, value, ...options });
-                    },
-                    remove(name: string, options: Record<string, unknown>) {
-                        cookieStore.set({ name, value: '', ...options });
-                    },
-                },
-            }
-        );
+        // Verify user is authenticated via NextAuth
+        const session = await getServerSession(authOptions);
+        const user = session?.user;
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
+        if (!user) {
             return NextResponse.json({ error: 'Authentication required. Please sign in to create a referral link.' }, { status: 401 });
         }
 
@@ -94,7 +76,7 @@ export async function POST(request: NextRequest) {
                 referrer_name: name,
                 referrer_phone: phone,
                 referrer_instagram: instagram,
-                referrer_user_id: user.id, // Store Supabase user ID for self-referral prevention
+                referrer_user_id: user.email || undefined, // Use email as identifier for NextAuth
                 created_at: new Date().toISOString(),
                 ip_hash: ipHash,
                 successful_referrals_count: 0,

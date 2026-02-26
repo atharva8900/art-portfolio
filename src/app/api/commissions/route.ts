@@ -13,6 +13,8 @@ import { saveCommission, generateCommissionId, getActiveWorkloadCount, hasActive
 import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing'; // Import price helper
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -122,31 +124,14 @@ export async function POST(request: NextRequest) {
                     }, { status: 400 });
                 }
 
-                // LAYER 3: Self-Referral Prevention (email, phone, Instagram, user ID)
-                // Get current user ID if authenticated
+                // Get current user ID if authenticated via NextAuth
                 let currentUserId: string | undefined;
                 try {
-                    const cookieStore = cookies();
-                    const supabase = createServerClient(
-                        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-                        {
-                            cookies: {
-                                get(name: string) {
-                                    return cookieStore.get(name)?.value;
-                                },
-                                set(name: string, value: string, options: Record<string, unknown>) {
-                                    cookieStore.set({ name, value, ...options });
-                                },
-                                remove(name: string, options: Record<string, unknown>) {
-                                    cookieStore.set({ name, value: '', ...options });
-                                },
-                            },
-                        }
-                    );
-
-                    const { data: { user } } = await supabase.auth.getUser();
-                    currentUserId = user?.id;
+                    const session = await getServerSession(authOptions);
+                    // For NextAuth, we might use email as an identifier if id is not directly available 
+                    // or if the implementation plan specifically mentions ID.
+                    // The schema expects a string for currentUserId in validateNotSelfReferral.
+                    currentUserId = session?.user?.email || undefined;
                 } catch {
                     // Not authenticated or error - that's okay, commissions don't require auth
                     currentUserId = undefined;

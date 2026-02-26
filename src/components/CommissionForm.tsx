@@ -4,8 +4,8 @@ import { useState, useEffect, FormEvent, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X } from 'lucide-react';
 import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing-shared';
+import { useSession } from 'next-auth/react';
 import { createClient } from '@/lib/supabase/client';
-import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import GoogleSignInButton from './GoogleSignInButton';
 import { createPortal } from 'react-dom';
 import ArtVisualizer, { FrameConfig } from './ArtVisualizer';
@@ -115,8 +115,7 @@ export default function CommissionForm() {
     const [availability, setAvailability] = useState(true);
     const [status, setStatus] = useState<'open' | 'waitlist' | 'closed'>('open');
     const [slotsRemaining, setSlotsRemaining] = useState<number | null>(null);
-    const [user, setUser] = useState<User | null>(null);
-    const [authLoading, setAuthLoading] = useState(true);
+    const { data: session, status: authStatus } = useSession();
     const [hasActive, setHasActive] = useState(false);
     const [activeStatus, setActiveStatus] = useState<string | null>(null);
     const [attachments, setAttachments] = useState<{ name: string; content: string }[]>([]);
@@ -142,47 +141,21 @@ export default function CommissionForm() {
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
     const supabase = createClient();
 
-    // Check Auth and Active Commission Status
+    const user = session?.user;
+    const authLoading = authStatus === 'loading';
+
+    // Check Active Commission Status when authenticated
     useEffect(() => {
-        // Initial session fetch with timeout fallback
-        const authTimeout = setTimeout(() => {
-            setAuthLoading(false); // Fail-safe: stop indefinite loading after 5s
-        }, 5000);
-
-        supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: Session | null } }) => {
-            clearTimeout(authTimeout);
-            const currentUser = session?.user ?? null;
-            setUser(currentUser);
-            if (currentUser) {
-                setUserName(currentUser.user_metadata?.full_name || '');
-                setUserEmail(currentUser.email || '');
-                await checkActiveCommission();
-            }
-            setAuthLoading(false);
-        }).catch(() => {
-            clearTimeout(authTimeout);
-            setAuthLoading(false);
-        });
-
-        // Listen for auth changes
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-            const newUser = session?.user ?? null;
-            setUser(newUser);
-            if (newUser) {
-                setUserName(newUser.user_metadata?.full_name || '');
-                setUserEmail(newUser.email || '');
-                checkActiveCommission();
-            } else {
-                setHasActive(false);
-                setUserName('');
-                setUserEmail('');
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    }, [supabase.auth]);
+        if (session?.user) {
+            setUserName(session.user.name || '');
+            setUserEmail(session.user.email || '');
+            checkActiveCommission();
+        } else {
+            setHasActive(false);
+            setUserName('');
+            setUserEmail('');
+        }
+    }, [session]);
 
     const checkActiveCommission = async () => {
         try {

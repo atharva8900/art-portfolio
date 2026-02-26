@@ -4,13 +4,12 @@ import { useState, FormEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { createClient } from '@/lib/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
 import GoogleSignInButton from './GoogleSignInButton';
 
 export default function ReferralGenerator() {
-    const [user, setUser] = useState<User | null>(null);
-    const [authLoading, setAuthLoading] = useState(true);
+    const { data: session, status: authStatus } = useSession();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [referralLink, setReferralLink] = useState('');
@@ -19,41 +18,8 @@ export default function ReferralGenerator() {
     const [isRulesOpen, setIsRulesOpen] = useState(false);
     const supabase = createClient();
 
-    useEffect(() => {
-        let subscription: { unsubscribe: () => void } | null = null;
-
-        const init = async () => {
-            const authTimeout = setTimeout(() => {
-                setAuthLoading(false); // Fail-safe: stop indefinite loading after 5s
-            }, 5000);
-
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                setUser(session?.user ?? null);
-            } catch (err) {
-                if ((err as Error)?.name !== 'AbortError') {
-                    console.error('ReferralGenerator: session error', err);
-                }
-            } finally {
-                clearTimeout(authTimeout);
-                setAuthLoading(false);
-            }
-
-            try {
-                const { data } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
-                    setUser(session?.user ?? null);
-                });
-                subscription = data.subscription;
-            } catch (err) {
-                if ((err as Error)?.name !== 'AbortError') {
-                    console.error('ReferralGenerator: auth listener error', err);
-                }
-            }
-        };
-
-        init();
-        return () => subscription?.unsubscribe();
-    }, [supabase.auth]);
+    const user = session?.user;
+    const authLoading = authStatus === 'loading';
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -156,7 +122,7 @@ export default function ReferralGenerator() {
                                         required
                                         name="name"
                                         type="text"
-                                        defaultValue={user.user_metadata.full_name || ''}
+                                        defaultValue={user.name || ''}
                                         placeholder="Your Name"
                                         className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
                                     />
