@@ -6,9 +6,9 @@ let client: ReturnType<typeof createBrowserClient> | null = null;
 
 export function createClient() {
     if (!client) {
-        // Use the internal rewrite path to bypass Jio DNS blocks
-        // During build/SSR, window is undefined, so we fall back to the direct URL
-        const supabaseUrl = typeof window !== 'undefined'
+        // Force the use of the proxy bridge for all browser-side requests
+        const isBrowser = typeof window !== 'undefined';
+        const supabaseUrl = isBrowser
             ? window.location.origin + '/_supabase'
             : process.env.NEXT_PUBLIC_SUPABASE_URL!;
 

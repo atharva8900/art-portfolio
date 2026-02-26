@@ -17,7 +17,7 @@ const nextConfig = {
         return [
             {
                 source: '/_supabase/:path*',
-                destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/:path*`,
+                destination: 'https://appfiheckvfptasvkily.supabase.co/:path*',
             },
         ];
     },
