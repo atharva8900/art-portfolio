@@ -22,6 +22,9 @@ function AuthHandlerContent() {
                         console.error('Auth code exchange failed:', error.message);
                     } else {
                         console.log('Successfully exchanged code for session');
+                        // Use window.location as a last resort to ensure the session is picked up
+                        window.location.href = '/';
+                        return;
                     }
                 } catch (err) {
                     console.error('Auth error:', err);
