@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
         error: '/admin/login',
     },
     callbacks: {
-        async session({ session, token }) {
+        async session({ session }) {
             return session
         },
     },
