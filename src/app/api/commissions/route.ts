@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
         try {
             const { error: resendError } = await resend.emails.send({
                 from: 'Atharva Sherlekar Art <onboarding@resend.dev>', // User will need to verify domain
-                to: 'atharvasherlekarart@gmail.com',
+                to: process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com',
                 subject: isWaitlist ? 'New Waitlist Joiner – Atharva Sherlekar Art' : 'New Commission Request – Atharva Sherlekar Art',
                 attachments: emailAttachments,
                 html: `
