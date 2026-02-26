@@ -27,7 +27,17 @@ export async function GET(request: Request) {
             }
         );
 
-        await supabase.auth.exchangeCodeForSession(code);
+        try {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+                console.error('Code exchange error:', error);
+                // Redirect to an error page or back home with error
+                return NextResponse.redirect(new URL(`/?error=${encodeURIComponent(error.message)}`, requestUrl.origin));
+            }
+        } catch (err) {
+            console.error('Unexpected callback error:', err);
+            return NextResponse.redirect(new URL('/?error=unexpected_error', requestUrl.origin));
+        }
     }
 
     // Redirect to home page
