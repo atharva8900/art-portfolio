@@ -196,8 +196,8 @@ export async function validateNotSelfReferral(
         }
     }
 
-    if (clientUserId && (referral as any).referrer_user_id) {
-        if (clientUserId === (referral as any).referrer_user_id) {
+    if (clientUserId && referral.referrer_user_id) {
+        if (clientUserId === referral.referrer_user_id) {
             return false;
         }
     }

@@ -21,7 +21,7 @@ const defaultData: AvailabilityData = {
  * Combines admin toggle with dynamic workload calculation.
  */
 export async function getAvailability(): Promise<AvailabilityData> {
-    let baseData = { ...defaultData };
+    const baseData = { ...defaultData };
 
     try {
         const { data, error } = await supabaseAdmin

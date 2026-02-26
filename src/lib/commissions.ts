@@ -82,7 +82,7 @@ export async function updateCommissionStatus(
     status: 'pending' | 'accepted' | 'in_progress' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist',
     adminNote?: string
 ): Promise<CommissionData | null> {
-    const updateData: any = {
+    const updateData: Record<string, any> = {
         status,
         updated_at: new Date().toISOString()
     };
