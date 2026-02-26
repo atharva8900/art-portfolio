@@ -6,8 +6,9 @@ let client: ReturnType<typeof createBrowserClient> | null = null;
 
 export function createClient() {
     if (!client) {
+        // Use the internal rewrite path to bypass Jio DNS blocks
         client = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            window.location.origin + '/_supabase',
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
     }
