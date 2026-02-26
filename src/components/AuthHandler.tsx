@@ -22,6 +22,29 @@ function AuthHandlerContent() {
                     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
                     if (error) {
+                        console.warn('AuthHandler: Initial exchange failed, checking for existing session...', error.message);
+
+                        // Check if session was already established by server-side callback
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (user) {
+                            console.log('AuthHandler: Session found, login successful (likely handled by server)');
+                            setStatus('Success! Redirecting...');
+                            window.location.href = '/';
+                            return;
+                        }
+
+                        // Specific handling for PKCE errors
+                        if (error.message.includes('PKCE') || error.message.includes('verifier')) {
+                            setStatus('Login in progress... refreshing session');
+                            // Wait a moment and try one last time to get session
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                            const { data: { user: retryUser } } = await supabase.auth.getUser();
+                            if (retryUser) {
+                                window.location.href = '/';
+                                return;
+                            }
+                        }
+
                         console.error('Auth code exchange failed:', error.message);
                         setStatus(`Error: ${error.message}`);
                         // Wait a bit so the user can see the error
