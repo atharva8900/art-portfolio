@@ -13,6 +13,7 @@ import CommissionForm from '@/components/CommissionForm';
 import Footer from '@/components/Footer';
 import ReferralTracker from '@/components/ReferralTracker';
 import ReferralGenerator from '@/components/ReferralGenerator';
+import AuthHandler from '@/components/AuthHandler';
 
 import { Metadata } from 'next';
 
@@ -23,6 +24,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
+      <AuthHandler />
       <ReferralTracker />
       <Navbar />
       <Hero />

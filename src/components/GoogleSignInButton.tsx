@@ -17,11 +17,6 @@ export default function GoogleSignInButton({ onSuccess }: GoogleSignInButtonProp
             setLoading(true);
             setError('');
 
-            console.log('SignIn attempt:', {
-                origin: window.location.origin,
-                redirectTo: `${window.location.origin}/auth/callback`
-            });
-
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
