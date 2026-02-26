@@ -5,6 +5,9 @@ export interface Artwork {
     title: string;
     category: ArtworkCategory;
     image_url: string;
+    reference_image_url?: string;
+    time_invested?: string;
+    size?: string;
     created_at: string;
 }
 
@@ -21,12 +24,17 @@ export interface Commission {
     instagram_id?: string;
     size: string;
     number_of_people: number;
-    background_detail?: string;
+    detailed_background?: boolean;
+    timelapse_recording?: boolean;
     address: string;
     notes?: string;
     status: 'pending' | 'accepted' | 'completed';
     referral_code?: string;
     created_at: string;
+    // Commission Calculation Fields
+    base_price?: number;        // Price derived from size * people
+    extras_total?: number;      // Framing + Delivery + Add-ons (Excluded from commission)
+    commission_amount?: number; // 20% of base_price (For Referrer)
 }
 
 export interface Referral {

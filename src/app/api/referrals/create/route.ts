@@ -1,0 +1,139 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
+import { saveReferral, hashIP, getActiveReferralForUser } from '@/lib/referrals';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export const dynamic = 'force-dynamic';
+
+// Helper to extract IP from request
+function getClientIP(request: NextRequest): string {
+    // Check various headers for IP (in order of priority)
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIP = request.headers.get('x-real-ip');
+    const cfConnectingIP = request.headers.get('cf-connecting-ip');
+
+    if (forwarded) {
+        // x-forwarded-for can contain multiple IPs, take the first one
+        return forwarded.split(',')[0].trim();
+    }
+
+    if (cfConnectingIP) return cfConnectingIP;
+    if (realIP) return realIP;
+
+    // Fallback (should not happen in production)
+    return 'unknown';
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        // Verify user is authenticated
+        const cookieStore = await cookies();
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    get(name: string) {
+                        return cookieStore.get(name)?.value;
+                    },
+                    set(name: string, value: string, options: Record<string, unknown>) {
+                        cookieStore.set({ name, value, ...options });
+                    },
+                    remove(name: string, options: Record<string, unknown>) {
+                        cookieStore.set({ name, value: '', ...options });
+                    },
+                },
+            }
+        );
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Authentication required. Please sign in to create a referral link.' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const { name, email, phone, instagram } = body;
+
+        if (!name || !email) {
+            return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
+        }
+
+        if (email !== user.email) {
+            return NextResponse.json({ error: 'Email must match your logged-in account' }, { status: 403 });
+        }
+
+        // Check for existing active referral link
+        const activeReferral = await getActiveReferralForUser(email);
+        if (activeReferral) {
+            return NextResponse.json({
+                success: true,
+                referral_code: activeReferral.code,
+                message: 'You already have an active referral link.'
+            });
+        }
+
+        // Generate Referral Code
+        // Format: First 3 letters of name (uppercase) + 5 random chars
+        const prefix = name.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+        const randomString = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const referralCode = `${prefix}-${randomString}`;
+
+        // Extract and hash IP address
+        const clientIP = getClientIP(request);
+        const ipHash = hashIP(clientIP);
+
+        // Store referral in JSON file
+        try {
+            await saveReferral({
+                code: referralCode,
+                referrer_email: email,
+                referrer_name: name,
+                referrer_phone: phone,
+                referrer_instagram: instagram,
+                referrer_user_id: user.id, // Store Supabase user ID for self-referral prevention
+                created_at: new Date().toISOString(),
+                ip_hash: ipHash,
+                successful_referrals_count: 0,
+                used_by_emails: [],
+                ip_submissions: [], // Initialize empty IP tracking array
+            });
+        } catch (storageError) {
+            console.error('Failed to store referral:', storageError);
+            return NextResponse.json({ error: 'Failed to save referral' }, { status: 500 });
+        }
+
+        // Send Email to Artist
+        const { error: emailError } = await resend.emails.send({
+            from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+            to: 'atharvasherlekarart@gmail.com',
+            subject: 'New Referral Link Generated',
+            html: `
+                <h1>New Referral Registrant</h1>
+                <p><strong>Name:</strong> ${name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+                <p><strong>Generated Code:</strong> ${referralCode}</p>
+                <hr />
+                <p>Save this code. If a commission comes in with this code, you owe this person 20%.</p>
+            `,
+        });
+
+        if (emailError) {
+            console.error('Referral Email Error:', emailError);
+        }
+
+        return NextResponse.json({
+            success: true,
+            referral_code: referralCode
+        });
+
+    } catch (error: unknown) {
+        const err = error as { message?: string };
+        console.error('Handler Error:', err);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}

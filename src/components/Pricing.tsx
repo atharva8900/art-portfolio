@@ -1,61 +1,223 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Users, CreditCard, Image as ImageIcon, Package, Globe, ShieldCheck } from 'lucide-react';
+
+interface PricingTierData {
+    isEarlyAccess: boolean;
+    commissionCount: number;
+    prices: {
+        A5: string;
+        A4: string;
+        A3: string;
+    };
+    progress: {
+        current: number;
+        total: number;
+        remaining: number;
+    };
+}
 
 export default function Pricing() {
-    const sizes = [
-        { name: 'A5', price: '₹500', dim: '14.8 x 21 cm' },
-        { name: 'A4', price: '₹1000', dim: '21 x 29.7 cm' },
-        { name: 'A3', price: '₹2000', dim: '29.7 x 42 cm' },
-    ];
+    const [pricingData, setPricingData] = useState<PricingTierData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        fetch('/api/pricing-tier', { signal: controller.signal })
+            .then(res => res.json())
+            .then(data => {
+                clearTimeout(timeoutId);
+                setPricingData(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                clearTimeout(timeoutId);
+                if (err.name !== 'AbortError') {
+                    console.error('Failed to fetch pricing tier:', err);
+                }
+                // Fail safe: use Early Access prices
+                setPricingData({
+                    isEarlyAccess: true,
+                    commissionCount: 0,
+                    prices: { A5: '₹500', A4: '₹1000', A3: '₹2000' },
+                    progress: { current: 0, total: 10, remaining: 10 },
+                });
+                setLoading(false);
+            });
+
+        return () => {
+            clearTimeout(timeoutId);
+            controller.abort();
+        };
+    }, []);
+
+    if (loading || !pricingData) {
+        return (
+            <section id="pricing" className="py-24 px-6 md:px-12 bg-surface text-foreground">
+                <div className="max-w-6xl mx-auto flex items-center justify-center">
+                    <div className="text-neutral-500">Loading pricing...</div>
+                </div>
+            </section>
+        );
+    }
+
+    // Future prices (for strikethrough during Early Access)
+    const futurePrices = {
+        A5: '₹750',
+        A4: '₹1500',
+        A3: '₹3000',
+    };
+
+    const containerVariants = {
+        hidden: { opacity: 0, x: -20 },
+        visible: {
+            opacity: 1,
+            x: 0,
+            transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.2
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 10 },
+        visible: { opacity: 1, y: 0 }
+    };
 
     return (
         <section id="pricing" className="py-24 px-6 md:px-12 bg-surface text-foreground">
-            <div className="max-w-4xl mx-auto space-y-16">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="text-center space-y-4"
-                >
-                    <h2 className="font-serif text-3xl md:text-5xl tracking-widest uppercase">Commission Rates</h2>
-                    <div className="h-[1px] w-24 bg-white/20 mx-auto" />
-                    <p className="text-neutral-400">Invest in a timeless memory. Prices are per person.</p>
-                </motion.div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {sizes.map((size, idx) => (
-                        <motion.div
-                            key={size.name}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: idx * 0.1 }}
-                            className="border border-white/5 p-8 flex flex-col items-center text-center hover:bg-white/5 transition-colors duration-300"
-                        >
-                            <h3 className="text-5xl font-serif mb-2">{size.name}</h3>
-                            <p className="text-neutral-500 text-sm mb-6 uppercase tracking-widest">{size.dim}</p>
-                            <div className="text-4xl font-light text-accent mb-2">{size.price}</div>
-                            <p className="text-neutral-600 text-xs">Base Price / Person</p>
-                        </motion.div>
-                    ))}
+            <div className="max-w-6xl mx-auto">
+                {/* Section Header */}
+                <div className="text-center mb-16">
+                    <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-4">Commission Details</h2>
+                    <p className="text-neutral-400 text-lg">Transparent pricing and clear policies for your custom portrait.</p>
                 </div>
 
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    className="bg-neutral-900/50 p-8 border-l-2 border-accent space-y-4 text-neutral-400 text-sm md:text-base"
-                >
-                    <h4 className="text-white font-medium uppercase tracking-widest mb-4">Important Details</h4>
-                    <ul className="space-y-2 list-disc list-inside marker:text-accent">
-                        <li><strong>Additional Persons:</strong> Charged at the same base price per person.</li>
-                        <li><strong>Detailed Background:</strong> +₹500 flat fee.</li>
-                        <li><strong>Payment:</strong> 50% advance required to confirm booking.</li>
-                        <li><strong>Timeline:</strong> 15–30 days depending on complexity.</li>
-                        <li><strong>Shipping:</strong> Framing & delivery charges apply additionally.</li>
-                    </ul>
-                </motion.div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                    {/* Left Column: Pricing */}
+                    <div className="p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
+                        <motion.div
+                            variants={containerVariants}
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true }}
+                        >
+                            <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-8">Portrait Pricing</h2>
+
+                            {/* Compact Early Access Badge */}
+                            {pricingData.isEarlyAccess && (
+                                <motion.div
+                                    variants={itemVariants}
+                                    className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground/5 dark:bg-accent/10 border border-border/50 dark:border-accent/30"
+                                >
+                                    <span className="w-2 h-2 rounded-full bg-foreground/70 dark:bg-accent animate-pulse" />
+                                    <span className="text-xs font-bold text-foreground/70 dark:text-accent uppercase tracking-wider">
+                                        Early Access • {pricingData.progress.current}/{pricingData.progress.total}
+                                    </span>
+                                </motion.div>
+                            )}
+
+                            {/* Pricing Cards */}
+                            <div className="space-y-5">
+                                {[
+                                    { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
+                                    { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: '🌟 Most Popular' },
+                                    { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: futurePrices.A3, subtitle: 'Maximum detail & group portraits', badge: '💎 Grand Portrait' }
+                                ].map((item) => (
+                                    <motion.div
+                                        key={item.size}
+                                        variants={itemVariants}
+                                        whileHover={{ scale: 1.02 }}
+                                        className={`relative flex flex-col px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-all duration-300 shadow-sm dark:shadow-none ${item.badge
+                                            ? 'border-accent/40 dark:border-accent/30 hover:border-accent/60'
+                                            : 'border-border/80 dark:border-foreground/10 hover:border-foreground/30 dark:hover:border-accent/40'
+                                            }`}
+                                    >
+                                        {item.badge && (
+                                            <span className="absolute -top-3 left-6 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-accent text-background rounded-full">
+                                                {item.badge}
+                                            </span>
+                                        )}
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xl font-bold text-foreground">{item.size}</span>
+                                            <div className="flex items-center gap-3">
+                                                {pricingData.isEarlyAccess && (
+                                                    <span className="text-lg text-neutral-600 dark:text-neutral-500 line-through">
+                                                        {item.futurePrice}
+                                                    </span>
+                                                )}
+                                                <span className="text-2xl font-black text-foreground/80 dark:text-accent tracking-tight">{item.price}</span>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{item.subtitle}</p>
+                                    </motion.div>
+                                ))}
+                            </div>
+
+                            {/* Bottom Explanation Text */}
+                            {pricingData.isEarlyAccess && (
+                                <motion.p
+                                    variants={itemVariants}
+                                    className="mt-6 text-sm text-neutral-600 dark:text-neutral-400 text-center leading-relaxed"
+                                >
+                                    Early Access pricing applies until 10 commissions are successfully completed.
+                                    <br />
+                                    Prices increase as demand and availability grow.
+                                </motion.p>
+                            )}
+
+                            {/* Post-Early Access Notice */}
+                            {!pricingData.isEarlyAccess && (
+                                <motion.p
+                                    variants={itemVariants}
+                                    className="mt-6 text-sm text-neutral-600 dark:text-neutral-400 text-center leading-relaxed"
+                                >
+                                    Early Access has concluded. Current pricing shown above.
+                                </motion.p>
+                            )}
+                        </motion.div>
+                    </div>
+
+                    {/* Right Column: Policies */}
+                    <div className="p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
+                        <motion.div
+                            variants={containerVariants}
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true }}
+                            className="h-full flex flex-col"
+                        >
+                            <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-8">Policies</h2>
+
+                            <ul className="flex-1 flex flex-col gap-5 md:gap-0 md:justify-between">
+                                {[
+                                    { icon: Users, text: "Group Portraits: A4 & A3 get 50% off for every additional face. A5 charged at base price per person." },
+                                    { icon: CreditCard, text: "50% advance to confirm. Waitlist reservations: 25% to hold your spot" },
+                                    { icon: ImageIcon, text: "Detailed background: +₹500" },
+                                    { icon: Package, text: "Framing & delivery charges apply" },
+                                    { icon: ShieldCheck, text: "All artworks are packed & shipped with care" },
+                                    { icon: Globe, text: "Available all over India & worldwide" }
+                                ].map((policy, idx) => (
+                                    <motion.li
+                                        key={idx}
+                                        variants={itemVariants}
+                                        className="flex items-start gap-4 text-foreground/80 dark:text-neutral-300 font-medium dark:font-normal"
+                                    >
+                                        <div className="p-2 rounded-full bg-foreground/5 dark:bg-accent/10 mt-[-2px] border border-border/50 dark:border-transparent">
+                                            <policy.icon size={18} className="text-foreground/70 dark:text-accent" />
+                                        </div>
+                                        <span className="text-sm md:text-base leading-relaxed">{policy.text}</span>
+                                    </motion.li>
+                                ))}
+                            </ul>
+                        </motion.div>
+                    </div>
+                </div>
             </div>
         </section>
     );

@@ -18,10 +18,10 @@ insert into public.availability (id, is_accepting_commissions) values (1, true);
 
 -- Create Referrals Table
 create table public.referrals (
-  code text primary key,
-  referrer_name text not null,
-  referrer_email text not null,
-  referrer_contact text not null,
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  email text not null,
+  referral_code text unique not null,
   is_used boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

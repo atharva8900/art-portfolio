@@ -1,29 +1,40 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-    // Check if we are using placeholder env vars
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
-        const mockArtworks = [
-            { id: '1', title: 'Hyper-realistic Eye', category: 'personal', image_url: 'https://images.unsplash.com/photo-1594132847051-7f093159dc70?q=80&w=600&auto=format&fit=crop', created_at: new Date().toISOString() },
-            { id: '2', title: 'Graphite Portrait', category: 'personal', image_url: 'https://images.unsplash.com/photo-1594132846990-25e62f520780?q=80&w=600&auto=format&fit=crop', created_at: new Date().toISOString() },
-            { id: '3', title: 'Detailed Texture', category: 'fan_art', image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop', created_at: new Date().toISOString() },
-        ];
-        return NextResponse.json(mockArtworks);
-    }
+    const mockArtworks = [
+        {
+            id: '1',
+            title: 'Andrew Spider-Man',
+            category: 'fan_art',
+            image_url: 'https://github.com/atharva8900/art-portfolio/blob/main/WhatsApp%20Image%202026-02-11%20at%203.41.04%20PM%20(1).jpeg?raw=true',
+            reference_image_url: 'https://github.com/atharva8900/art-portfolio/blob/main/WhatsApp%20Image%202026-02-17%20at%203.22.39%20PM.jpeg?raw=true',
+            time_invested: '80+ hours',
+            size: 'A3 (38 × 28 cm)',
+            created_at: new Date().toISOString()
+        },
+        {
+            id: '2',
+            title: 'Mr Bean Portrait',
+            category: 'fan_art',
+            image_url: 'https://github.com/atharva8900/art-portfolio/blob/main/WhatsApp%20Image%202026-02-11%20at%203.41.04%20PM.jpeg?raw=true',
+            reference_image_url: 'https://github.com/atharva8900/art-portfolio/blob/main/mr%20bean.jpeg?raw=true',
+            time_invested: '45+ hours',
+            size: 'A3 (40 × 28 cm)',
+            created_at: new Date().toISOString()
+        },
+        {
+            id: '3',
+            title: 'Tobey Portrait',
+            category: 'fan_art',
+            image_url: 'https://github.com/atharva8900/art-portfolio/blob/main/WhatsApp%20Image%202026-02-11%20at%203.41.02%20PM%20(1).jpeg?raw=true',
+            reference_image_url: 'https://github.com/atharva8900/art-portfolio/blob/main/tobey.jpeg?raw=true',
+            time_invested: '18+ hours',
+            size: 'A4 (30 × 18 cm)',
+            created_at: new Date().toISOString()
+        }
+    ];
 
-    const { data, error } = await supabase
-        .from('artworks')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Supabase Error:', error);
-        // Return empty array instead of error to avoid breaking UI completely
-        return NextResponse.json([]);
-    }
-
-    return NextResponse.json(data);
+    return NextResponse.json(mockArtworks);
 }

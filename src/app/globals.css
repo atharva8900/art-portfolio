@@ -3,11 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #d4d4d4;
-  --surface: #1a1a1a;
-  --accent: #e5e5e5;
-  --border: #333333;
+  --background: 10 10 10;
+  --foreground: 212 212 212;
+  --surface: 26 26 26;
+  --accent: 229 229 229;
+  --border: 51 51 51;
+}
+
+.light {
+  --background: 242 242 242;
+  /* sleek light grey background */
+  --foreground: 30 30 30;
+  /* dark grey text */
+  --surface: 255 255 255;
+  /* pure white surface / cards */
+  --accent: 120 120 120;
+  /* mid-grey accent */
+  --border: 215 215 215;
+  /* softer grey border */
 }
 
 @layer base {
@@ -18,4 +31,9 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+}
+
+body:has(iframe:hover) .custom-cursor-element {
+  opacity: 0 !important;
+  transition: opacity 0.2s ease;
 }
