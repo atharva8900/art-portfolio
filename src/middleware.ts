@@ -42,9 +42,7 @@ export async function middleware(request: NextRequest) {
     // supabase.auth.getUser(). A simple mistake could make it very hard to debug
     // auth issues.
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    await supabase.auth.getUser()
 
     return response
 }
