@@ -1,7 +1,16 @@
 import { Resend } from 'resend';
 import { CommissionData } from './commissions';
+import { sendDiscordNotification } from './discord';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+function stripHtml(html: string): string {
+    return html
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
 
 export async function sendCommissionStatusEmail(commission: CommissionData, status: string) {
     let subject = '';
@@ -16,13 +25,12 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>Your commission request has been moved to the <strong>Review Queue</strong>.</p>
                 <p>Atharva will review your details within 48 hours and contact you if any further information is needed or to confirm acceptance.</p>
                 <br/>
-                <p>Check your order status anytime on the <a href="https://atharvasherlekar.com/commission text-neutral-400">Commission Page</a>.</p>
+                <p>Check your order status anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
             break;
         case 'accepted':
-            // subject and content for accepted status
             subject = 'Your Commission Slot is Ready! – Atharva Sherlekar Art';
             htmlContent = `
                 <h1>Good news—your slot is ready!</h1>
@@ -31,7 +39,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>To begin the artwork, please pay the <strong>remaining advance</strong> (to hit 50% total). Add-ons and delivery will be charged in the final invoice.</p>
                 <p>Atharva will reach out to you shortly via DM or Email with the payment link to officially start your commission.</p>
                 <br/>
-                <p>Check your order status anytime on the <a href="https://atharvasherlekar.com/commission text-neutral-400">Commission Page</a>.</p>
+                <p>Check your order status anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -44,7 +52,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>Your payment has been received and Atharva has officially <strong>started drawing</strong> your commission!</p>
                 <p>We're excited to bring your vision to life. We will keep you updated if we have any questions during the process.</p>
                 <br/>
-                <p>Check progress anytime on the <a href="https://atharvasherlekar.com/commission text-neutral-400">Commission Page</a>.</p>
+                <p>Check progress anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -83,6 +91,18 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             return null;
     }
 
+    // Push to Discord first (Manual Fallback)
+    await sendDiscordNotification({
+        content: `**Action Required: Manual Email Send**\nClient: **${commission.client_name}** (<${commission.client_email}>)\nStatus Update: **${status.toUpperCase()}**`,
+        embeds: [{
+            title: `Subject: ${subject}`,
+            description: `\`\`\`\n${stripHtml(htmlContent)}\n\`\`\``,
+            color: 0x00ff00,
+            footer: { text: 'Copy the content above and send it to the client.' }
+        }]
+    });
+
+    // Attempt automated send via Resend (might fail if domain unverified)
     try {
         const { data, error } = await resend.emails.send({
             from: 'Atharva Sherlekar Art <onboarding@resend.dev>',

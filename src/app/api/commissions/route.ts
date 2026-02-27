@@ -13,6 +13,7 @@ import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendin
 import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing'; // Import price helper
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { sendDiscordNotification } from '@/lib/discord';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -197,6 +198,23 @@ export async function POST(request: NextRequest) {
 
         // Send Email
         try {
+            // Instant Discord Alert
+            await sendDiscordNotification({
+                content: isWaitlist ? '⚠️ **New Waitlist Joiner**' : '🔔 **New Commission Request Received!**',
+                embeds: [{
+                    title: `Request from ${name}`,
+                    description: `A new ${isWaitlist ? 'waitlist' : 'commission'} request has been submitted. Check the Admin Dashboard for details.`,
+                    color: isWaitlist ? 0xFFA500 : 0x00FF00,
+                    fields: [
+                        { name: 'Client', value: `${name} (${email})`, inline: true },
+                        { name: 'Instagram', value: instagram_id || 'N/A', inline: true },
+                        { name: 'Size', value: size, inline: true },
+                        { name: 'Status', value: isWaitlist ? 'Waitlist' : 'Pending Review', inline: true }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            });
+
             const { error: resendError } = await resend.emails.send({
                 from: 'Atharva Sherlekar Art <onboarding@resend.dev>', // User will need to verify domain
                 to: process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com',
