@@ -115,6 +115,8 @@ export default function CommissionForm() {
     const [availability, setAvailability] = useState(true);
     const [status, setStatus] = useState<'open' | 'waitlist' | 'closed'>('open');
     const [slotsRemaining, setSlotsRemaining] = useState<number | null>(null);
+    const [immediateSlotsRemaining, setImmediateSlotsRemaining] = useState<number | null>(null);
+    const [waitlistSlotsRemaining, setWaitlistSlotsRemaining] = useState<number | null>(null);
     const { data: session, status: authStatus } = useSession();
     const [hasActive, setHasActive] = useState(false);
     const [activeStatus, setActiveStatus] = useState<string | null>(null);
@@ -296,6 +298,8 @@ export default function CommissionForm() {
                     setAvailability(data.is_accepting_commissions);
                     setStatus(data.status);
                     setSlotsRemaining(data.slots_remaining);
+                    setImmediateSlotsRemaining(data.immediate_slots_remaining);
+                    setWaitlistSlotsRemaining(data.waitlist_slots_remaining);
                 }
             } catch (error) {
                 console.error('Failed to fetch availability:', error);
@@ -303,6 +307,8 @@ export default function CommissionForm() {
                 setAvailability(true);
                 setStatus('open');
                 setSlotsRemaining(null);
+                setImmediateSlotsRemaining(null);
+                setWaitlistSlotsRemaining(null);
             }
         };
 
@@ -519,7 +525,7 @@ export default function CommissionForm() {
                     <div className="h-[1px] w-24 bg-foreground/20 mx-auto mt-4" />
 
                     {/* Live Slots Indicator */}
-                    {slotsRemaining !== null && status === 'open' && slotsRemaining > 0 && (
+                    {immediateSlotsRemaining !== null && status === 'open' && immediateSlotsRemaining > 0 && (
                         <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -527,7 +533,7 @@ export default function CommissionForm() {
                         >
                             <Flame size={16} className="text-emerald-400" />
                             <span className="text-sm font-medium text-emerald-400">
-                                Only {slotsRemaining} immediate {slotsRemaining === 1 ? 'slot' : 'slots'} left this month!
+                                Only {immediateSlotsRemaining} immediate {immediateSlotsRemaining === 1 ? 'slot' : 'slots'} left this month!
                             </span>
                         </motion.div>
                     )}
@@ -541,7 +547,7 @@ export default function CommissionForm() {
                                 </p>
                             </div>
 
-                            {slotsRemaining !== null && slotsRemaining > 0 && (
+                            {waitlistSlotsRemaining !== null && waitlistSlotsRemaining > 0 && (
                                 <motion.div
                                     initial={{ scale: 0.9, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
@@ -550,7 +556,7 @@ export default function CommissionForm() {
                                 >
                                     <Clock size={18} className="animate-pulse" />
                                     <span className="text-xs font-black uppercase tracking-[0.25em]">
-                                        {slotsRemaining} waitlist {slotsRemaining === 1 ? 'spot' : 'spots'} remaining
+                                        {waitlistSlotsRemaining} waitlist {waitlistSlotsRemaining === 1 ? 'spot' : 'spots'} remaining
                                     </span>
                                 </motion.div>
                             )}

@@ -1,11 +1,13 @@
 import { supabaseAdmin } from './supabase/admin';
-import { getActiveWorkloadCount, getPendingReviewCount } from './commissions';
+import { getActiveWorkloadCount, getPendingReviewCount, getActiveCommissionCount } from './commissions';
 
 export interface AvailabilityData {
     is_accepting_commissions: boolean;
     status: 'open' | 'waitlist' | 'closed';
     last_updated: string;
     slots_remaining?: number;
+    immediate_slots_remaining?: number;
+    waitlist_slots_remaining?: number;
     max_slots?: number;
 }
 
@@ -50,33 +52,41 @@ export async function getAvailability(): Promise<AvailabilityData> {
         };
     }
 
-    // Calculate Status based on Global Limit of 4
+    // Calculate Status based on:
+    // Slots 1-2: Immediate (Accepted or Pending)
+    // Slots 3-4: Waitlist
+    // Total: 4
+
+    // People currently in Review or being worked on
+    const immediateOccupied = (await getPendingReviewCount()) + (await getActiveCommissionCount());
+
+    // Total people in system (including waitlist)
     const totalActive = await getActiveWorkloadCount();
-    const pendingCount = await getPendingReviewCount();
 
     const MAX_TOTAL = 4;
-    const MAX_REVIEW = 2;
+    const MAX_IMMEDIATE = 2;
 
     let computedStatus: 'open' | 'waitlist' | 'closed' = 'open';
-    let slotsRemaining = 0;
 
-    if (totalActive < MAX_TOTAL) {
-        if (pendingCount < MAX_REVIEW) {
-            computedStatus = 'open'; // Open for Review
-        } else {
-            computedStatus = 'waitlist'; // Open for Waitlist
-        }
-        slotsRemaining = MAX_TOTAL - totalActive;
-    } else {
+    if (totalActive >= MAX_TOTAL) {
         computedStatus = 'closed';
-        slotsRemaining = 0;
+    } else if (immediateOccupied >= MAX_IMMEDIATE) {
+        computedStatus = 'waitlist';
+    } else {
+        computedStatus = 'open';
     }
+
+    const immediateSlotsRemaining = Math.max(0, MAX_IMMEDIATE - immediateOccupied);
+    const totalSlotsRemaining = Math.max(0, MAX_TOTAL - totalActive);
+    const waitlistSlotsRemaining = Math.max(0, totalSlotsRemaining - immediateSlotsRemaining);
 
     return {
         ...baseData,
         status: computedStatus,
         is_accepting_commissions: computedStatus !== 'closed',
-        slots_remaining: slotsRemaining,
+        slots_remaining: totalSlotsRemaining, // Keep for backward compatibility
+        immediate_slots_remaining: immediateSlotsRemaining,
+        waitlist_slots_remaining: waitlistSlotsRemaining,
         max_slots: MAX_TOTAL,
     };
 }
