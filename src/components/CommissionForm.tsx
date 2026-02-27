@@ -137,6 +137,7 @@ export default function CommissionForm() {
     const [consent, setConsent] = useState(false);
     const [frameConfig, setFrameConfig] = useState<FrameConfig | null>(null);
     const [showFrameModal, setShowFrameModal] = useState(false);
+    const [isSelfReferral, setIsSelfReferral] = useState(false);
 
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
     const supabase = createClient();
@@ -225,6 +226,8 @@ export default function CommissionForm() {
 
     useEffect(() => {
         const checkStorage = () => {
+            if (typeof window === 'undefined') return;
+
             const code = sessionStorage.getItem('referrer_code');
             const name = sessionStorage.getItem('referrer_name');
             const email = sessionStorage.getItem('referrer_email');
@@ -233,6 +236,7 @@ export default function CommissionForm() {
             // Block self-referral if user is logged in
             if (email && user?.email && email.toLowerCase() === user.email.toLowerCase()) {
                 console.log('Self-referral detected, blocking in UI');
+                setIsSelfReferral(true);
                 setReferralCode(null);
                 setReferrerName(null);
                 setReferrerEmail(null);
@@ -240,6 +244,7 @@ export default function CommissionForm() {
                 return;
             }
 
+            setIsSelfReferral(false);
             if (code) setReferralCode(code);
             if (name) setReferrerName(name);
             if (email) setReferrerEmail(email);
@@ -558,7 +563,7 @@ export default function CommissionForm() {
                         </div>
                     )}
 
-                    {!referralCode && sessionStorage.getItem('referrer_code') && user?.email && sessionStorage.getItem('referrer_email')?.toLowerCase() === user.email.toLowerCase() && (
+                    {isSelfReferral && (
                         <div className="mt-4 flex flex-col items-center gap-2">
                             <p className="text-sm text-red-400 font-medium bg-red-400/10 inline-block px-3 py-1 rounded-full border border-red-400/20">
                                 ⚠ You cannot refer yourself
