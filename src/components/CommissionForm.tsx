@@ -114,7 +114,6 @@ export default function CommissionForm() {
     const [error, setError] = useState('');
     const [availability, setAvailability] = useState(true);
     const [status, setStatus] = useState<'open' | 'waitlist' | 'closed'>('open');
-    const [slotsRemaining, setSlotsRemaining] = useState<number | null>(null);
     const [immediateSlotsRemaining, setImmediateSlotsRemaining] = useState<number | null>(null);
     const [waitlistSlotsRemaining, setWaitlistSlotsRemaining] = useState<number | null>(null);
     const { data: session, status: authStatus } = useSession();
@@ -297,7 +296,6 @@ export default function CommissionForm() {
                     const data = await res.json();
                     setAvailability(data.is_accepting_commissions);
                     setStatus(data.status);
-                    setSlotsRemaining(data.slots_remaining);
                     setImmediateSlotsRemaining(data.immediate_slots_remaining);
                     setWaitlistSlotsRemaining(data.waitlist_slots_remaining);
                 }
@@ -306,7 +304,6 @@ export default function CommissionForm() {
                 // Fallback to safe defaults
                 setAvailability(true);
                 setStatus('open');
-                setSlotsRemaining(null);
                 setImmediateSlotsRemaining(null);
                 setWaitlistSlotsRemaining(null);
             }
