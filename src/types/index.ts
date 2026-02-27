@@ -41,7 +41,12 @@ export interface Referral {
     code: string;
     referrer_name: string;
     referrer_email: string;
-    referrer_contact: string;
-    is_used: boolean;
+    referrer_phone?: string;
+    referrer_instagram?: string;
+    referrer_user_id?: string;
     created_at: string;
+    ip_hash: string;
+    successful_referrals_count: number;
+    used_by_emails: string[];
+    ip_submissions: any; // jsonb
 }
