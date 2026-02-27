@@ -16,20 +16,27 @@ export default function GoogleSignInButton({ onSuccess }: GoogleSignInButtonProp
             setLoading(true);
             setError('');
 
+            const productionUrl = 'https://art-website-vert.vercel.app';
+            const currentOrigin = window.location.origin;
+
+            // If we are on a preview URL, redirect to the production login page
+            // to avoid Google OAuth domain limit issues.
+            if (currentOrigin.includes('vercel.app') && !currentOrigin.includes('-vert.')) {
+                console.log('On preview URL, redirecting to production for sign-in...');
+                window.location.href = `${productionUrl}/admin/login`;
+                return;
+            }
+
             console.log('Initiating Google sign-in...');
-            // next-auth: redirect is handled automatically
             const result = await signIn('google', {
-                callbackUrl: '/admin', // Redirect to admin after login
+                callbackUrl: '/admin',
                 redirect: true
             });
-
-            console.log('SignIn result:', result);
 
             if (result?.error) {
                 throw new Error(result.error);
             }
 
-            // Success - will redirect to Google
             if (onSuccess) onSuccess();
         } catch (err: unknown) {
             const error = err as { message?: string };
