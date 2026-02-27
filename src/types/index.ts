@@ -48,5 +48,5 @@ export interface Referral {
     ip_hash: string;
     successful_referrals_count: number;
     used_by_emails: string[];
-    ip_submissions: any; // jsonb
+    ip_submissions: string[]; // Store hashed IP addresses to prevent spam
 }
