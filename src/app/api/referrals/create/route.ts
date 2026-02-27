@@ -54,6 +54,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 success: true,
                 referral_code: activeReferral.code,
+                referrer_name: activeReferral.referrer_name,
+                referrer_email: activeReferral.referrer_email,
+                referrer_phone: activeReferral.referrer_phone,
                 message: 'You already have an active referral link.'
             });
         }
@@ -110,7 +113,10 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            referral_code: referralCode
+            referral_code: referralCode,
+            referrer_name: name,
+            referrer_email: email,
+            referrer_phone: phone
         });
 
     } catch (error: unknown) {

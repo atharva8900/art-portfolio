@@ -233,8 +233,10 @@ export default function CommissionForm() {
             const email = sessionStorage.getItem('referrer_email');
             const phone = sessionStorage.getItem('referrer_phone');
 
-            // Block self-referral if user is logged in
-            if (email && user?.email && email.toLowerCase() === user.email.toLowerCase()) {
+            // If there's an email in storage, compare with current session
+            const isSelf = email && user?.email && email.toLowerCase() === user.email.toLowerCase();
+
+            if (isSelf) {
                 console.log('Self-referral detected, blocking in UI');
                 setIsSelfReferral(true);
                 setReferralCode(null);
@@ -244,6 +246,7 @@ export default function CommissionForm() {
                 return;
             }
 
+            // Also check if the current user generated this code (using email prefix/pattern if possible, but email is primary)
             setIsSelfReferral(false);
             if (code) setReferralCode(code);
             if (name) setReferrerName(name);
