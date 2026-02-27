@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { getAllReferrals, getActiveReferralForUser } from '@/lib/referrals';
 import { getAllCommissions } from '@/lib/commissions';
 
@@ -8,27 +8,14 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    get(name: string) {
-                        return cookieStore.get(name)?.value;
-                    },
-                },
-            }
-        );
+        const session = await getServerSession(authOptions);
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
+        if (!session || !session.user || !session.user.email) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const userEmail = user.email!;
-        console.log('Analytics Request for:', userEmail);
+        const userEmail = session.user.email;
+        console.log('Analytics Request (NextAuth) for:', userEmail);
 
         // 1. Get Active Referral
         const activeReferral = await getActiveReferralForUser(userEmail);

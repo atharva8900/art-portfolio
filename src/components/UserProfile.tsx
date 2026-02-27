@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { LogOut, User as UserIcon, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -89,22 +90,22 @@ export default function UserProfile() {
                             </div>
 
                             {user.email && ALLOWED_EMAILS.includes(user.email) && (
-                                <a
+                                <Link
                                     href="/admin"
                                     className="w-full px-4 py-3 flex items-center gap-2 hover:bg-surface/80 transition-colors text-left border-b border-neutral-800 text-accent"
                                 >
                                     <LayoutDashboard size={16} />
                                     <span className="text-sm font-medium">Admin Dashboard</span>
-                                </a>
+                                </Link>
                             )}
 
-                            <a
+                            <Link
                                 href="/dashboard"
                                 className="w-full px-4 py-3 flex items-center gap-2 hover:bg-surface/80 transition-colors text-left"
                             >
                                 <UserIcon size={16} />
                                 <span className="text-sm">Referral dashboard</span>
-                            </a>
+                            </Link>
                             <button
                                 onClick={handleSignOut}
                                 className="w-full px-4 py-3 flex items-center gap-2 hover:bg-surface/80 transition-colors text-left"

@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useSession } from 'next-auth/react';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -37,35 +36,17 @@ interface AnalyticsData {
 
 export default function DashboardPage() {
     const router = useRouter();
-    const supabase = createClient();
+    const { status } = useSession();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<AnalyticsData | null>(null);
 
     useEffect(() => {
-        const checkAuthAndFetch = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (!session) {
-                router.push('/');
-                return;
-            }
-
-            await fetchAnalytics();
-        };
-
-        checkAuthAndFetch();
-
-        // Listen for auth changes to kick the user out if they sign out
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-            if (!session) {
-                router.push('/');
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    }, [router, supabase]);
+        if (status === 'unauthenticated') {
+            router.push('/');
+        } else if (status === 'authenticated') {
+            fetchAnalytics();
+        }
+    }, [status, router]);
 
     const fetchAnalytics = async () => {
         try {
