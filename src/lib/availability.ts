@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase/admin';
-import { getActiveCommissionCount, getWaitlistCommissionCount } from './commissions';
+import { getActiveWorkloadCount, getPendingReviewCount } from './commissions';
 
 export interface AvailabilityData {
     is_accepting_commissions: boolean;
@@ -50,26 +50,23 @@ export async function getAvailability(): Promise<AvailabilityData> {
         };
     }
 
-    // Calculate Status based on current Supabase Workload
-    const activeCount = await getActiveCommissionCount();
-    const waitlistCount = await getWaitlistCommissionCount();
+    // Calculate Status based on Global Limit of 4
+    const totalActive = await getActiveWorkloadCount();
+    const pendingCount = await getPendingReviewCount();
 
-    // Limits:
-    // Active (Accepted/In Progress/On Delivery) < 2: Open
-    // Active >= 2 AND Waitlist < 2: Waitlist
-    // Active >= 2 AND Waitlist >= 2: Closed
+    const MAX_TOTAL = 4;
+    const MAX_REVIEW = 2;
 
     let computedStatus: 'open' | 'waitlist' | 'closed' = 'open';
     let slotsRemaining = 0;
-    const MAX_ACTIVE = 2;
-    const MAX_WAITLIST = 2;
 
-    if (activeCount < MAX_ACTIVE) {
-        computedStatus = 'open';
-        slotsRemaining = MAX_ACTIVE - activeCount;
-    } else if (waitlistCount < MAX_WAITLIST) {
-        computedStatus = 'waitlist';
-        slotsRemaining = MAX_WAITLIST - waitlistCount;
+    if (totalActive < MAX_TOTAL) {
+        if (pendingCount < MAX_REVIEW) {
+            computedStatus = 'open'; // Open for Review
+        } else {
+            computedStatus = 'waitlist'; // Open for Waitlist
+        }
+        slotsRemaining = MAX_TOTAL - totalActive;
     } else {
         computedStatus = 'closed';
         slotsRemaining = 0;
@@ -80,7 +77,7 @@ export async function getAvailability(): Promise<AvailabilityData> {
         status: computedStatus,
         is_accepting_commissions: computedStatus !== 'closed',
         slots_remaining: slotsRemaining,
-        max_slots: MAX_ACTIVE,
+        max_slots: MAX_TOTAL,
     };
 }
 

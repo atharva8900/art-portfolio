@@ -9,7 +9,7 @@ import {
     hasReachedCommissionCap,
     isReferralExpired
 } from '@/lib/referrals';
-import { saveCommission, generateCommissionId, getActiveWorkloadCount, hasActiveCommission } from '@/lib/commissions';
+import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission } from '@/lib/commissions';
 import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing'; // Import price helper
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // --- Workload Check ---
+        // --- Workload Check & Routing ---
         const activeWorkload = await getActiveWorkloadCount();
         if (activeWorkload >= 4) {
             return NextResponse.json({
@@ -90,7 +90,8 @@ export async function POST(request: NextRequest) {
             }, { status: 403 });
         }
 
-        const isWaitlist = activeWorkload >= 2;
+        const pendingReviewCount = await getPendingReviewCount();
+        const isWaitlist = pendingReviewCount >= 2;
         const commissionStatus = isWaitlist ? 'waitlist' : 'pending';
         // ----------------------
 
@@ -293,8 +294,13 @@ export async function POST(request: NextRequest) {
                 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.5;">
                     <h1>You're on the waitlist!</h1>
                     <p>Hi ${name},</p>
-                    <p>Thank you for joining the waitlist! I am currently working on my maximum of 2 active commissions for this month.</p>
-                    <p>Your request is secured in line, and I estimate I will be able to begin working on your piece next month. I will contact you to finalize details and payment when it's your turn!</p>
+                    <p>Thank you for joining the waitlist! My current review slots are full, but I have received your request and reserved a spot for you in line.</p>
+                    <p><strong>Reservation Details:</strong></p>
+                    <ul>
+                        <li><strong>Reservation Fee:</strong> 25% Deposit (Required to hold your slot)</li>
+                        <li><strong>Next Steps:</strong> I will review your request within 48 hours. If accepted, I'll contact you to confirm!</li>
+                    </ul>
+                    <p>I estimate I will be able to begin working on your piece next month. I will contact you to collect the remaining 25% advance when it's your turn!</p>
                     <br />
                     <p>Best regards,</p>
                     <p><strong>Atharva Sherlekar</strong></p>

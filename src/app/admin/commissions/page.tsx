@@ -43,7 +43,7 @@ interface CommissionData {
 const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com', 'atharvasherlekar@gmail.com'];
 
 const STATUS_OPTIONS = [
-    { value: 'pending', label: 'Waiting', colorClass: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+    { value: 'pending', label: 'Pending Review', colorClass: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
     { value: 'waitlist', label: 'Waitlist', colorClass: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
     { value: 'accepted', label: 'Accepted', colorClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
     { value: 'in_progress', label: 'In Progress', colorClass: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },

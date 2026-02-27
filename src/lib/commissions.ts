@@ -169,7 +169,7 @@ export async function getAcceptedCommissionCountForCurrentMonth(): Promise<numbe
     return count || 0;
 }
 
-// Get count of ACTIVE workload
+// Get count of ACTIVE workload (Review + Working + Waitlist)
 export async function getActiveWorkloadCount(): Promise<number> {
     const { count, error } = await supabaseAdmin
         .from('commissions')
@@ -182,6 +182,50 @@ export async function getActiveWorkloadCount(): Promise<number> {
     }
 
     return count || 0;
+}
+
+// Get count of PENDING REVIEW commissions specifically
+export async function getPendingReviewCount(): Promise<number> {
+    const { count, error } = await supabaseAdmin
+        .from('commissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+    if (error) {
+        console.error('Error counting pending review in Supabase:', error);
+        return 0;
+    }
+
+    return count || 0;
+}
+
+// Promote the oldest waitlist person if a review slot is available
+export async function promoteNextInWaitlist(): Promise<CommissionData | null> {
+    const pendingCount = await getPendingReviewCount();
+
+    if (pendingCount >= 2) return null;
+
+    // Find the oldest waitlist commission
+    const { data: nextUp, error: fetchError } = await supabaseAdmin
+        .from('commissions')
+        .select('*')
+        .eq('status', 'waitlist')
+        .order('submitted_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+    if (fetchError || !nextUp) return null;
+
+    // Promotion target depends on age (48h window)
+    const submissionDate = new Date(nextUp.submitted_at);
+    const now = new Date();
+    const hoursElapsed = (now.getTime() - submissionDate.getTime()) / (1000 * 60 * 60);
+
+    // If waitlisted person has been waiting > 48 hours, promote directly to accepted
+    // Else promote to pending (Review Queue)
+    const targetStatus = hoursElapsed > 48 ? 'accepted' : 'pending';
+
+    return await updateCommissionStatus(nextUp.id, targetStatus);
 }
 
 // Get count of ACTIVE commissions (status === 'accepted', 'in_progress', 'on_delivery')

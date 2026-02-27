@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount } from '@/lib/commissions';
+import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount, promoteNextInWaitlist, CommissionData } from '@/lib/commissions';
 import { setAvailability } from '@/lib/availability';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { sendCommissionStatusEmail } from '@/lib/emails';
 import { Resend } from 'resend';
 
 const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
@@ -67,7 +68,7 @@ export async function PATCH(request: NextRequest) {
 
         // Update Main Status
         if (status) {
-            if (!['pending', 'accepted', 'in_progress', 'on_delivery', 'completed', 'rejected'].includes(status)) {
+            if (!['pending', 'accepted', 'in_progress', 'on_delivery', 'completed', 'rejected', 'waitlist'].includes(status)) {
                 return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
             }
             try {
@@ -86,133 +87,45 @@ export async function PATCH(request: NextRequest) {
                         console.log(`Active workload: ${activeWorkload}. Auto-opening.`);
                     }
 
+                    // --- Auto-Promotion Check ---
+                    // Trigger promotion if a slot is freed (rejected/completed)
+                    if (['rejected', 'completed'].includes(status)) {
+                        console.log(`Status changed to ${status}. Checking for waitlist promotion...`);
+                        const promoted = await promoteNextInWaitlist();
+                        if (promoted) {
+                            console.log(`Promoted ${promoted.client_name} from waitlist to ${promoted.status}.`);
+                            // Send email to promoted user
+                            await sendCommissionStatusEmail(promoted, promoted.status);
+                        }
+                    }
+
                     // --- Automated Emails for Status Changes ---
-                    const emailTriggerStatuses = ['accepted', 'in_progress', 'on_delivery', 'completed'];
+                    const emailTriggerStatuses = ['pending', 'accepted', 'in_progress', 'on_delivery', 'completed'];
                     if (emailTriggerStatuses.includes(status)) {
-                        const resend = new Resend(process.env.RESEND_API_KEY);
-                        try {
-                            let subject = '';
-                            let htmlContent = '';
+                        await sendCommissionStatusEmail(updatedCommission, status);
 
-                            switch (status) {
-                                case 'accepted':
-                                    const isFromWaitlist = existingCommission.status === 'waitlist';
-                                    subject = isFromWaitlist
-                                        ? 'Your Waitlist Slot is Ready! – Atharva Sherlekar Art'
-                                        : 'Your Commission Request has been Accepted! – Atharva Sherlekar Art';
-
-                                    htmlContent = isFromWaitlist ? `
-                                        <h1>Good news—your slot is ready!</h1>
-                                        <p>Hi ${updatedCommission.client_name},</p>
-                                        <p>You were on the waitlist, and a slot has just opened up for you!</p>
-                                        <p>To begin the artwork, please pay the <strong>remaining 25%</strong> of the base portrait price (this brings your total deposit to 50%). Add-ons and delivery will be charged in the final invoice.</p>
-                                        <p>I will reach out to you shortly via DM or Email with the payment link to officially start your commission.</p>
+                        // Handle Referral Reward Email specifically
+                        if (status === 'completed' && updatedCommission.referrer_info?.email && (updatedCommission.commission_amount ?? 0) > 0) {
+                            const resend = new Resend(process.env.RESEND_API_KEY);
+                            try {
+                                await resend.emails.send({
+                                    from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+                                    to: updatedCommission.referrer_info.email,
+                                    subject: 'You Earned a Commission! 🎉 – Atharva Sherlekar Art',
+                                    html: `
+                                        <h1>Congratulations, ${updatedCommission.referrer_info.name}!</h1>
+                                        <p>The commission request you referred for <strong>${updatedCommission.client_name}</strong> is now complete!</p>
+                                        <p>You have successfully earned <strong>₹${updatedCommission.commission_amount}</strong> for this referral.</p>
+                                        <p>Please log into your referral dashboard and click <strong>"Request Payout"</strong> so I can send you your funds!</p>
                                         <br/>
-                                        <p>Check your order status anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
+                                        <p>Thank you again for supporting my art!</p>
                                         <p>Best regards,</p>
                                         <p><strong>Atharva Sherlekar</strong></p>
-                                    ` : `
-                                        <h1>Great news!</h1>
-                                        <p>Hi ${updatedCommission.client_name},</p>
-                                        <p>Your commission request has been <strong>accepted</strong>!</p>
-                                        <p>To begin the artwork, I require a <strong>50% advance payment</strong> of the base portrait price (Add-ons and delivery will be charged in the final invoice).</p>
-                                        <p>I will reach out to you shortly via DM or Email to finalize the details and provide payment instructions.</p>
-                                        <br/>
-                                        <p>Check your order status anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
-                                        <p>Best regards,</p>
-                                        <p><strong>Atharva Sherlekar</strong></p>
-                                    `;
-                                    break;
-                                case 'in_progress':
-                                    subject = 'Drawing Started! – Atharva Sherlekar Art';
-                                    htmlContent = `
-                                        <h1>Payment Received</h1>
-                                        <p>Hi ${updatedCommission.client_name},</p>
-                                        <p>Your payment has been received and I have officially <strong>started drawing</strong> your commission!</p>
-                                        <p>I\'m excited to bring your vision to life. I will keep you updated if I have any questions during the process.</p>
-                                        <br/>
-                                        <p>Check progress anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
-                                        <p>Best regards,</p>
-                                        <p><strong>Atharva Sherlekar</strong></p>
-                                    `;
-                                    break;
-                                case 'on_delivery':
-                                    subject = 'Your Artwork is Finished! Final Details – Atharva Sherlekar Art';
-                                    htmlContent = `
-                                        <h1>Your Artwork is Ready!</h1>
-                                        <p>Hi ${updatedCommission.client_name},</p>
-                                        <p>The drawing is <strong>complete</strong>! I am now preparing it for delivery.</p>
-                                        <p>I have sent you the <strong>final invoice</strong> via our previous communication channel, which includes:</p>
-                                        <ul>
-                                            <li>The remaining 50% of the portrait price</li>
-                                            <li>Add-ons (Detailed background/Timelapse)</li>
-                                            <li>Delivery/Shipping costs</li>
-                                        </ul>
-                                        <p>Once the final payment is cleared, I will ship your artwork and update you with the tracking details.</p>
-                                        <br/>
-                                        <p>Best regards,</p>
-                                        <p><strong>Atharva Sherlekar</strong></p>
-                                    `;
-                                    break;
-                                case 'completed':
-                                    subject = 'Enjoy your artwork! – Atharva Sherlekar Art';
-                                    htmlContent = `
-                                        <h1>Commission Completed</h1>
-                                        <p>Hi ${updatedCommission.client_name},</p>
-                                        <p>Your commission has been marked as <strong>completed</strong>!</p>
-                                        <p>Thank you so much for choosing my art. I hope you love the final result.</p>
-                                        <p>If you have a moment, I\'d love to see a photo of it in its new home—feel free to tag me on Instagram!</p>
-                                        <br/>
-                                        <p>Best regards,</p>
-                                        <p><strong>Atharva Sherlekar</strong></p>
-                                    `;
-                                    break;
+                                    `,
+                                });
+                            } catch (err) {
+                                console.error('Referrer email error:', err);
                             }
-
-                            const toEmail = updatedCommission.client_email;
-
-                            console.log(`[Resend Debug] Attempting to send ${status} email to ${toEmail} (intended for ${updatedCommission.client_email})...`);
-                            const { data, error } = await resend.emails.send({
-                                from: 'Atharva Sherlekar Art <onboarding@resend.dev>', // Replace with verified domain in production
-                                to: toEmail,
-                                subject,
-                                html: htmlContent,
-                            });
-
-                            if (error) {
-                                console.error(`[Resend Error] Failed to send ${status} email to ${updatedCommission.client_email}:`, JSON.stringify(error));
-                            } else {
-                                console.log(`[Resend Success] Sent ${status} email to ${updatedCommission.client_email}, ID: ${data?.id}`);
-                            }
-
-                            // --- Referrer Notification for Completed Commission ---
-                            if (status === 'completed' && updatedCommission.referrer_info?.email && (updatedCommission.commission_amount ?? 0) > 0) {
-                                try {
-                                    console.log(`[Resend Debug] Attempting to send Commission Earned email to referrer ${updatedCommission.referrer_info.email}...`);
-
-                                    await resend.emails.send({
-                                        from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
-                                        to: updatedCommission.referrer_info.email,
-                                        subject: 'You Earned a Commission! 🎉 – Atharva Sherlekar Art',
-                                        html: `
-                                            <h1>Congratulations, ${updatedCommission.referrer_info.name}!</h1>
-                                            <p>The commission request you referred for <strong>${updatedCommission.client_name}</strong> is now complete!</p>
-                                            <p>You have successfully earned <strong>₹${updatedCommission.commission_amount}</strong> for this referral.</p>
-                                            <p>Please log into your referral dashboard and click <strong>"Request Payout"</strong> so I can send you your funds!</p>
-                                            <br/>
-                                            <p>Thank you again for supporting my art!</p>
-                                            <p>Best regards,</p>
-                                            <p><strong>Atharva Sherlekar</strong></p>
-                                        `,
-                                    });
-                                    console.log(`[Resend Success] Sent Commission Earned email to referrer ${updatedCommission.referrer_info.email}.`);
-                                } catch (referrerEmailError) {
-                                    console.error('[Resend Debug] Failed to send Commission Earned email to referrer:', referrerEmailError);
-                                }
-                            }
-
-                        } catch (emailError) {
-                            console.error('[Resend Debug] Unexpected exception when sending status update email:', emailError);
                         }
                     }
                 }
