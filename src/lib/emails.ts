@@ -22,7 +22,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             `;
             break;
         case 'accepted':
-            const isFromWaitlist = (commission as any).previous_status === 'waitlist' || status === 'accepted'; // Logic handle
+            // subject and content for accepted status
             subject = 'Your Commission Slot is Ready! – Atharva Sherlekar Art';
             htmlContent = `
                 <h1>Good news—your slot is ready!</h1>

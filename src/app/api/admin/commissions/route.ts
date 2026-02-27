@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount, promoteNextInWaitlist, CommissionData } from '@/lib/commissions';
+import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount, promoteNextInWaitlist } from '@/lib/commissions';
 import { setAvailability } from '@/lib/availability';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
