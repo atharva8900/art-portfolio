@@ -5,6 +5,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import CustomCursor from "@/components/CustomCursor";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import AuthProvider from "@/components/AuthProvider";
+import { Analytics } from "@vercel/analytics/react"
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel" });
 
@@ -56,6 +57,7 @@ export default function RootLayout({
             <SmoothScroll>
               {children}
             </SmoothScroll>
+            <Analytics />
           </AuthProvider>
         </ThemeProvider>
       </body>
