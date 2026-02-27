@@ -230,6 +230,16 @@ export default function CommissionForm() {
             const email = sessionStorage.getItem('referrer_email');
             const phone = sessionStorage.getItem('referrer_phone');
 
+            // Block self-referral if user is logged in
+            if (email && user?.email && email.toLowerCase() === user.email.toLowerCase()) {
+                console.log('Self-referral detected, blocking in UI');
+                setReferralCode(null);
+                setReferrerName(null);
+                setReferrerEmail(null);
+                setReferrerPhone(null);
+                return;
+            }
+
             if (code) setReferralCode(code);
             if (name) setReferrerName(name);
             if (email) setReferrerEmail(email);
@@ -242,7 +252,7 @@ export default function CommissionForm() {
         // Listen for updates (from ReferralTracker)
         window.addEventListener('referral-updated', checkStorage);
         return () => window.removeEventListener('referral-updated', checkStorage);
-    }, []);
+    }, [user?.email]);
 
     const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB per file
 
@@ -545,6 +555,14 @@ export default function CommissionForm() {
                                 Referral Applied: {referralCode}
                             </p>
                             {referrerName && <p className="text-xs text-neutral-500">Referred by {referrerName}</p>}
+                        </div>
+                    )}
+
+                    {!referralCode && sessionStorage.getItem('referrer_code') && user?.email && sessionStorage.getItem('referrer_email')?.toLowerCase() === user.email.toLowerCase() && (
+                        <div className="mt-4 flex flex-col items-center gap-2">
+                            <p className="text-sm text-red-400 font-medium bg-red-400/10 inline-block px-3 py-1 rounded-full border border-red-400/20">
+                                ⚠ You cannot refer yourself
+                            </p>
                         </div>
                     )}
                 </div>
