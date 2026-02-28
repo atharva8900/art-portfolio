@@ -16,7 +16,7 @@ export default function GoogleSignInButton({ onSuccess }: GoogleSignInButtonProp
             setLoading(true);
             setError('');
 
-            const productionUrl = 'https://art-website-vert.vercel.app';
+            const productionUrl = 'https://atharva-sherlekar-art.vercel.app';
             const currentOrigin = window.location.origin;
 
             // If we are on a preview URL, redirect to the production login page
