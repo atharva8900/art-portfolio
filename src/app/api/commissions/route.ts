@@ -225,9 +225,9 @@ export async function POST(request: NextRequest) {
                 (framing ? `- Professional Framing: ₹${framingCost}\n` : '') +
                 `**Total: ₹${totalAmount}**\n\n` +
                 `**Next Steps:**\n` +
-                `1. Please share the high-resolution reference photo here.\n` +
+                `1. I've received your reference photo(s) and will review them shortly.\n` +
                 `2. To reserve your spot on the waitlist, a 25% reservation fee (₹${Math.round(totalAmount * 0.25)}) is required.\n` +
-                `3. Once it's your turn, I'll collect the remaining advance and start working!`;
+                `3. Once it's your turn, I'll confirm the photo details and collect the remaining advance!`;
         } else {
             emailDraft = `Hi ${firstName},\n\n` +
                 `Thank you for reaching out! I've received your request for a ${size} portrait of ${number_of_people} person${pluralPeople}.\n\n` +
@@ -239,8 +239,8 @@ export async function POST(request: NextRequest) {
                 (framing ? `- Professional Framing: ₹${framingCost}\n` : '') +
                 `**Total: ₹${totalAmount}**\n\n` +
                 `**Next Steps:**\n` +
-                `1. Please share the high-resolution reference photo here.\n` +
-                `2. Once the photo is confirmed, you can pay a 50% advance (₹${Math.round(totalAmount / 2)}) to book your slot.\n\n` +
+                `1. I've received your reference photo(s) and I'm reviewing the quality now.\n` +
+                `2. Once confirmed, you can pay a 50% advance (₹${Math.round(totalAmount / 2)}) to officially book your slot.\n\n` +
                 `Looking forward to working on this!`;
         }
 
@@ -382,7 +382,8 @@ export async function POST(request: NextRequest) {
                     <p><strong>Reservation Details:</strong></p>
                     <ul>
                         <li><strong>Reservation Fee:</strong> ₹${Math.round(totalAmount * 0.25)} (25% Deposit to hold your slot)</li>
-                        <li><strong>Next Steps:</strong> I will review your request within 48 hours. If accepted, I'll contact you to confirm!</li>
+                        <li><strong>Reference Photo:</strong> I have received your attachment(s). I will review the quality and confirm if they work for the portrait!</li>
+                        <li><strong>Next Steps:</strong> I will contact you within 48 hours to confirm your spot.</li>
                     </ul>
                     <p>I estimate I will be able to begin working on your piece next month. I will contact you to collect the remaining 25% advance when it's your turn!</p>
                     <br />
@@ -401,7 +402,7 @@ export async function POST(request: NextRequest) {
                     <p><strong>Next Steps:</strong></p>
                     <ul>
                         <li><strong>Advance Payment:</strong> ₹${Math.round(totalAmount * 0.5)} (50% Deposit to book your slot)</li>
-                        <li><strong>Review:</strong> I will review your request and get back to you shortly via email to discuss the reference photo.</li>
+                        <li><strong>Photo Review:</strong> I have received your reference photo(s). I will review the quality and get back to you shortly to confirm and discuss the timeline!</li>
                     </ul>
                     <br />
                     <p>Best regards,</p>
