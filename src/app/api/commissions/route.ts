@@ -196,6 +196,54 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // Pre-calculate prices for notifications and storage
+        const basePriceStr = await getPriceForSize(size as 'A5' | 'A4' | 'A3');
+        const basePriceForOne = basePriceStr ? parseInt(basePriceStr.replace('₹', '').replace(',', ''), 10) : 0;
+        const totalBasePrice = calculatePortraitPrice(basePriceForOne, Number(number_of_people), size as 'A5' | 'A4' | 'A3');
+        const additionalPeopleCost = totalBasePrice - basePriceForOne;
+
+        const backgroundCost = detailed_background ? 500 : 0;
+        const timelapseCost = timelapse_recording ? 500 : 0;
+        const framingCost = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3'] : 0;
+        const totalAmount = totalBasePrice + backgroundCost + timelapseCost + framingCost;
+
+        // Construct Email Draft for Artist (to copy-paste to client)
+        let emailDraft = '';
+        const firstName = name.split(' ')[0];
+        const pluralPeople = Number(number_of_people) > 1 ? 's' : '';
+
+        if (isWaitlist) {
+            emailDraft = `Hi ${firstName},\n\n` +
+                `Thank you for reaching out! I've received your request for a ${size} portrait of ${number_of_people} person${pluralPeople}.\n\n` +
+                `**Waitlist Status:**\n` +
+                `Currently, all my review slots are full, so your request has been placed on the waitlist. I'll be able to start working on your piece next month!\n\n` +
+                `**Price Breakdown:**\n` +
+                `- Base Price (${size}): ₹${basePriceForOne}\n` +
+                (Number(number_of_people) > 1 ? `- Additional People: ₹${additionalPeopleCost}\n` : '') +
+                (detailed_background ? `- Detailed Background: ₹500\n` : '') +
+                (timelapse_recording ? `- Timelapse Recording: ₹500\n` : '') +
+                (framing ? `- Professional Framing: ₹${framingCost}\n` : '') +
+                `**Total: ₹${totalAmount}**\n\n` +
+                `**Next Steps:**\n` +
+                `1. Please share the high-resolution reference photo here.\n` +
+                `2. To reserve your spot on the waitlist, a 25% reservation fee (₹${Math.round(totalAmount * 0.25)}) is required.\n` +
+                `3. Once it's your turn, I'll collect the remaining advance and start working!`;
+        } else {
+            emailDraft = `Hi ${firstName},\n\n` +
+                `Thank you for reaching out! I've received your request for a ${size} portrait of ${number_of_people} person${pluralPeople}.\n\n` +
+                `**Price Breakdown:**\n` +
+                `- Base Price (${size}): ₹${basePriceForOne}\n` +
+                (Number(number_of_people) > 1 ? `- Additional People: ₹${additionalPeopleCost}\n` : '') +
+                (detailed_background ? `- Detailed Background: ₹500\n` : '') +
+                (timelapse_recording ? `- Timelapse Recording: ₹500\n` : '') +
+                (framing ? `- Professional Framing: ₹${framingCost}\n` : '') +
+                `**Total: ₹${totalAmount}**\n\n` +
+                `**Next Steps:**\n` +
+                `1. Please share the high-resolution reference photo here.\n` +
+                `2. Once the photo is confirmed, you can pay a 50% advance (₹${Math.round(totalAmount / 2)}) to book your slot.\n\n` +
+                `Looking forward to working on this!`;
+        }
+
         // Send Email
         try {
             // Instant Discord Alert
@@ -209,7 +257,8 @@ export async function POST(request: NextRequest) {
                         { name: 'Client', value: `${name} (${email})`, inline: true },
                         { name: 'Instagram', value: instagram_id || 'N/A', inline: true },
                         { name: 'Size', value: size, inline: true },
-                        { name: 'Status', value: isWaitlist ? 'Waitlist' : 'Pending Review', inline: true }
+                        { name: 'Status', value: isWaitlist ? 'Waitlist' : 'Pending Review', inline: true },
+                        { name: 'Email Draft (Copy-Paste)', value: `\`\`\`\n${emailDraft}\n\`\`\`` }
                     ],
                     timestamp: new Date().toISOString()
                 }]
@@ -308,14 +357,31 @@ export async function POST(request: NextRequest) {
                 ? 'You\'re on the waitlist! – Atharva Sherlekar Art'
                 : 'Commission Request Received – Atharva Sherlekar Art';
 
+            const pricingHtml = `
+                <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
+                    <h3 style="margin-top: 0; font-size: 16px;">Price Breakdown</h3>
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 14px;">
+                        <li style="margin-bottom: 5px;">Base Price (${size}): <strong>₹${basePriceForOne}</strong></li>
+                        ${Number(number_of_people) > 1 ? `<li style="margin-bottom: 5px;">Additional People: <strong>₹${additionalPeopleCost}</strong></li>` : ''}
+                        ${detailed_background ? '<li style="margin-bottom: 5px;">Detailed Background: <strong>₹500</strong></li>' : ''}
+                        ${timelapse_recording ? '<li style="margin-bottom: 5px;">Timelapse Recording: <strong>₹500</strong></li>' : ''}
+                        ${framing ? `<li style="margin-bottom: 5px;">Professional Framing: <strong>₹${framingCost}</strong></li>` : ''}
+                        <li style="margin-top: 10px; border-top: 1px solid #ddd; pt: 10px; font-size: 18px;">Total: <strong>₹${totalAmount}</strong></li>
+                    </ul>
+                </div>
+            `;
+
             const clientHtml = isWaitlist ? `
                 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.5;">
                     <h1>You're on the waitlist!</h1>
                     <p>Hi ${name},</p>
                     <p>Thank you for joining the waitlist! My current review slots are full, but I have received your request and reserved a spot for you in line.</p>
+                    
+                    ${pricingHtml}
+
                     <p><strong>Reservation Details:</strong></p>
                     <ul>
-                        <li><strong>Reservation Fee:</strong> 25% Deposit (Required to hold your slot)</li>
+                        <li><strong>Reservation Fee:</strong> ₹${Math.round(totalAmount * 0.25)} (25% Deposit to hold your slot)</li>
                         <li><strong>Next Steps:</strong> I will review your request within 48 hours. If accepted, I'll contact you to confirm!</li>
                     </ul>
                     <p>I estimate I will be able to begin working on your piece next month. I will contact you to collect the remaining 25% advance when it's your turn!</p>
@@ -329,11 +395,14 @@ export async function POST(request: NextRequest) {
                     <p>Hi ${name},</p>
                     <p>Thank you for your commission request!</p>
                     <p>I have received your details for a <strong>${size}</strong> portrait of <strong>${number_of_people} people</strong>.</p>
-                    ${needed_by ? `<p>• Deadline: <strong>${new Date(needed_by).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></p>` : ''}
-                    ${detailed_background ? '<p>• Detailed Background included</p>' : ''}
-                    ${timelapse_recording ? '<p>• Timelapse Recording included</p>' : ''}
-                    ${framing ? '<p>• Professional Framing included</p>' : ''}
-                    <p>I will review your request and get back to you shortly via email to discuss the reference photo, pricing, and timeline.</p>
+                    
+                    ${pricingHtml}
+
+                    <p><strong>Next Steps:</strong></p>
+                    <ul>
+                        <li><strong>Advance Payment:</strong> ₹${Math.round(totalAmount * 0.5)} (50% Deposit to book your slot)</li>
+                        <li><strong>Review:</strong> I will review your request and get back to you shortly via email to discuss the reference photo.</li>
+                    </ul>
                     <br />
                     <p>Best regards,</p>
                     <p><strong>Atharva Sherlekar</strong></p>
@@ -424,12 +493,8 @@ export async function POST(request: NextRequest) {
         // Save commission to storage (after successful email)
         try {
             const commissionId = generateCommissionId();
-            const calculatedBasePrice = await calculateBasePrice(size, Number(number_of_people));
-            const backgroundCost = detailed_background ? 500 : 0;
-            const timelapseCost = timelapse_recording ? 500 : 0;
-            const framingCost = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3'] : 0;
             const extrasTotal = backgroundCost + timelapseCost + framingCost;
-            const commissionableAmount = calculatedBasePrice + backgroundCost;
+            const commissionableAmount = totalBasePrice + backgroundCost;
             const referrersShare = commissionEligible ? (commissionableAmount * 0.20) : 0;
 
             await saveCommission({
@@ -455,7 +520,7 @@ export async function POST(request: NextRequest) {
                 status: commissionStatus,
                 submitted_at: new Date().toISOString(),
                 needed_by: needed_by,
-                base_price: calculatedBasePrice,
+                base_price: totalBasePrice,
                 extras_total: extrasTotal,
                 commission_amount: referrersShare,
                 frame_image: frame_image
@@ -473,11 +538,4 @@ export async function POST(request: NextRequest) {
 }
 
 
-// Helper to calculate base price
-async function calculateBasePrice(size: string, people: number): Promise<number> {
-    const priceStr = await getPriceForSize(size as 'A5' | 'A4' | 'A3');
-    if (!priceStr) return 0;
-    const basePrice = parseInt(priceStr.replace('₹', '').replace(',', ''), 10);
-
-    return calculatePortraitPrice(basePrice, people, size as 'A5' | 'A4' | 'A3');
 }

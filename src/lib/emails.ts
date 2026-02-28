@@ -87,8 +87,40 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
             break;
+        case 'rejected':
+            subject = 'Update regarding your commission request – Atharva Sherlekar Art';
+            htmlContent = `
+                <h1>Update on your request</h1>
+                <p>Hi ${commission.client_name},</p>
+                <p>Thank you for your interest in my work. After reviewing your request, I'm unable to take on this commission at this time.</p>
+                
+                ${commission.admin_note ? `
+                <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0;">
+                    <p style="margin: 0; color: #991b1b; font-weight: bold;">Note from the Artist:</p>
+                    <p style="margin: 5px 0 0; color: #b91c1c;">${commission.admin_note}</p>
+                </div>
+                ` : ''}
+
+                <p>I appreciate your understanding. Feel free to check back in the future when slots reopen!</p>
+                <br/>
+                <p>Best regards,</p>
+                <p><strong>Atharva Sherlekar</strong></p>
+            `;
+            break;
         default:
             return null;
+    }
+
+    // Inject artist note into other templates if present (except rejected which already has it)
+    if (status !== 'rejected' && commission.admin_note && !htmlContent.includes(commission.admin_note)) {
+        const noteHtml = `
+            <div style="background-color: #f8fafc; border-left: 4px solid #64748b; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; color: #334155; font-weight: bold;">Note from the Artist:</p>
+                <p style="margin: 5px 0 0; color: #475569;">${commission.admin_note}</p>
+            </div>
+        `;
+        // Insert before "Best regards"
+        htmlContent = htmlContent.replace('<p>Best regards,</p>', noteHtml + '<p>Best regards,</p>');
     }
 
     // Push to Discord first (Manual Fallback)
