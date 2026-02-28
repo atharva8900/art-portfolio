@@ -274,16 +274,12 @@ export default function Portfolio() {
                             className="relative max-w-5xl max-h-[90vh] w-full flex flex-col items-center"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="relative w-full h-full flex flex-col items-center">
-                                {/* Toggle Button */}
-                                {selectedArtwork.reference_image_url && (
-                                    <button
-                                        onClick={toggleViewMode}
-                                        className="mb-4 px-6 py-2 rounded-full border border-foreground/20 bg-background/50 backdrop-blur-md text-foreground/90 hover:bg-surface/80 transition-all font-serif tracking-wider text-sm flex items-center gap-2"
-                                    >
-                                        <span>Show {viewMode === 'final' ? 'Reference Photo' : 'Final Artwork'}</span>
-                                    </button>
-                                )}
+                            <div className="relative w-full h-full flex flex-col items-center mt-2">
+                                {/* Title and Category (Moved Up) */}
+                                <div className="mb-6 text-center">
+                                    <h3 className="font-serif text-2xl tracking-wide text-foreground">{selectedArtwork.title}</h3>
+                                    <p className="text-sm text-neutral-600 dark:text-neutral-500 uppercase tracking-widest mt-2">{selectedArtwork.category.replace('_', ' ')}</p>
+                                </div>
 
                                 <div className="relative w-full min-h-[50vh] flex justify-center items-center">
                                     {isImageLoading && (
@@ -306,7 +302,7 @@ export default function Portfolio() {
                                             }}
                                             src={viewMode === 'final' ? selectedArtwork.image_url : selectedArtwork.reference_image_url}
                                             alt={selectedArtwork.title}
-                                            className="max-h-[75vh] object-contain shadow-2xl rounded-lg"
+                                            className="max-h-[70vh] object-contain shadow-2xl rounded-lg"
                                             onLoad={handleImageLoad}
                                         />
                                     </AnimatePresence>
@@ -322,10 +318,15 @@ export default function Portfolio() {
                                     </div>
                                 </div>
 
-                                <div className="mt-6 text-center">
-                                    <h3 className="font-serif text-2xl tracking-wide text-foreground">{selectedArtwork.title}</h3>
-                                    <p className="text-sm text-neutral-600 dark:text-neutral-500 uppercase tracking-widest mt-2">{selectedArtwork.category.replace('_', ' ')}</p>
-                                </div>
+                                {/* Toggle Button (Moved Down) */}
+                                {selectedArtwork.reference_image_url && (
+                                    <button
+                                        onClick={toggleViewMode}
+                                        className="mt-6 px-6 py-2 rounded-full border border-foreground/20 bg-background/50 backdrop-blur-md text-foreground/90 hover:bg-surface/80 transition-all font-serif tracking-wider text-sm flex items-center gap-2"
+                                    >
+                                        <span>Show {viewMode === 'final' ? 'Reference Photo' : 'Final Artwork'}</span>
+                                    </button>
+                                )}
                             </div>
                         </motion.div>
                     </motion.div>
