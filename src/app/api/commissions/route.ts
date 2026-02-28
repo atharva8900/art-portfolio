@@ -258,6 +258,12 @@ export async function POST(request: NextRequest) {
                         { name: 'Instagram', value: instagram_id || 'N/A', inline: true },
                         { name: 'Size', value: size, inline: true },
                         { name: 'Status', value: isWaitlist ? 'Waitlist' : 'Pending Review', inline: true },
+                        ...(validReferralCode ? [
+                            { name: 'Referral Code', value: validReferralCode, inline: true },
+                            { name: 'Referrer Email (Manual Notify)', value: referralInfo ? referralInfo.referrer_email : (referrer_email || 'N/A'), inline: false },
+                            { name: 'Referrer Name', value: referralInfo ? referralInfo.referrer_name : (referrer_name || 'N/A'), inline: true },
+                            { name: 'Commission Eligible', value: commissionEligible ? 'Yes (20%)' : 'No (Cap Reached)', inline: true }
+                        ] : []),
                         { name: 'Email Draft (Copy-Paste)', value: `\`\`\`\n${emailDraft}\n\`\`\`` }
                     ],
                     timestamp: new Date().toISOString()

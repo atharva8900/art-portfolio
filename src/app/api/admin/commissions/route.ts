@@ -105,18 +105,47 @@ export async function PATCH(request: NextRequest) {
                     if (existingCommission.status !== status && emailTriggerStatuses.includes(status)) {
                         await sendCommissionStatusEmail(updatedCommission, status);
 
-                        // Handle Referral Reward Email specifically
+                        // Handle Referral Reward specifically
                         if (status === 'completed' && updatedCommission.referrer_info?.email && (updatedCommission.commission_amount ?? 0) > 0) {
+                            const referrerEmail = updatedCommission.referrer_info.email;
+                            const referrerName = updatedCommission.referrer_info.name;
+                            const clientName = updatedCommission.client_name;
+                            const commissionAmount = updatedCommission.commission_amount;
+
+                            const referrerEmailDraft = `Hi ${referrerName},\n\nCongratulations! The commission request you referred for ${clientName} is now complete.\n\nYou have successfully earned ₹${commissionAmount} for this referral.\n\nPlease log into your referral dashboard and click "Request Payout" so I can send you your funds!\n\nThank you again for supporting my art!\n\nBest regards,\nAtharva Sherlekar`;
+
+                            // Send Discord Notification to Admin
+                            try {
+                                const { sendDiscordNotification } = await import('@/lib/discord');
+                                await sendDiscordNotification({
+                                    content: '🎉 **Referral Commission Unlocked!**',
+                                    embeds: [{
+                                        title: 'Time to notify the referrer',
+                                        description: `A commission referred by **${referrerName}** has been completed.`,
+                                        color: 0x00FF00,
+                                        fields: [
+                                            { name: 'Referrer Email (To)', value: referrerEmail, inline: true },
+                                            { name: 'Amount Earned', value: `₹${commissionAmount}`, inline: true },
+                                            { name: 'Client Name', value: clientName, inline: true },
+                                            { name: 'Email Draft (Copy-Paste)', value: `\`\`\`\n${referrerEmailDraft}\n\`\`\`` }
+                                        ],
+                                        timestamp: new Date().toISOString()
+                                    }]
+                                });
+                            } catch (discordErr) {
+                                console.error('Error sending Discord referrer notification:', discordErr);
+                            }
+
                             const resend = new Resend(process.env.RESEND_API_KEY);
                             try {
                                 await resend.emails.send({
                                     from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
-                                    to: updatedCommission.referrer_info.email,
+                                    to: referrerEmail,
                                     subject: 'You Earned a Commission! 🎉 – Atharva Sherlekar Art',
                                     html: `
-                                        <h1>Congratulations, ${updatedCommission.referrer_info.name}!</h1>
-                                        <p>The commission request you referred for <strong>${updatedCommission.client_name}</strong> is now complete!</p>
-                                        <p>You have successfully earned <strong>₹${updatedCommission.commission_amount}</strong> for this referral.</p>
+                                        <h1>Congratulations, ${referrerName}!</h1>
+                                        <p>The commission request you referred for <strong>${clientName}</strong> is now complete!</p>
+                                        <p>You have successfully earned <strong>₹${commissionAmount}</strong> for this referral.</p>
                                         <p>Please log into your referral dashboard and click <strong>"Request Payout"</strong> so I can send you your funds!</p>
                                         <br/>
                                         <p>Thank you again for supporting my art!</p>
