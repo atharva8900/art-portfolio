@@ -103,7 +103,7 @@ export default function Navbar() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
                 className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 md:py-6 md:px-12 bg-gradient-to-b from-background/90 to-transparent backdrop-blur-[2px]"
             >
-                <Link href="/" className="font-serif text-xl tracking-widest text-foreground hover:text-accent transition-colors duration-300 z-50 relative">
+                <Link href="/" className="font-serif text-sm leading-tight md:text-xl tracking-wider md:tracking-widest text-foreground hover:text-accent transition-colors duration-300 z-50 relative pr-2">
                     ATHARVA SHERLEKAR ART
                 </Link>
 
@@ -138,7 +138,7 @@ export default function Navbar() {
                 </div>
 
                 {/* Mobile Menu Toggle */}
-                <div className="flex md:hidden items-center gap-4 z-50 relative">
+                <div className="flex md:hidden items-center gap-2 sm:gap-4 shrink-0 z-50 relative">
                     <ThemeToggle />
                     <UserProfile />
                     <button
