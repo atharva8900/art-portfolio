@@ -34,7 +34,7 @@ const faqs = [
         question: "Is the deposit refundable?",
         answer: (
             <span>
-                No, the initial deposit is <strong>non-refundable</strong> as it secures materials and my dedicated time. Please <Link href="/legal/refund-policy" className="text-secondary hover:underline">read our refund policy</Link> for more details.
+                No, the initial deposit is <strong>non-refundable</strong> as it secures materials and my dedicated time. Please <Link href="/legal/refund-policy" className="text-secondary dark:text-accent font-medium underline underline-offset-4 hover:text-foreground transition-colors">read our refund policy</Link> for more details.
             </span>
         )
     }
