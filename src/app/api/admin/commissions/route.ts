@@ -101,7 +101,8 @@ export async function PATCH(request: NextRequest) {
 
                     // --- Automated Emails for Status Changes ---
                     const emailTriggerStatuses = ['pending', 'accepted', 'in_progress', 'on_delivery', 'completed', 'rejected'];
-                    if (emailTriggerStatuses.includes(status)) {
+                    // Only send email if status has actually CHANGED to prevent duplicate notifications on parallel requests
+                    if (existingCommission.status !== status && emailTriggerStatuses.includes(status)) {
                         await sendCommissionStatusEmail(updatedCommission, status);
 
                         // Handle Referral Reward Email specifically
