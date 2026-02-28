@@ -534,8 +534,6 @@ export async function POST(request: NextRequest) {
     } catch (err) {
         console.error('Handler Error:', err);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+
     }
-}
-
-
 }
