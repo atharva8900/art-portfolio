@@ -100,7 +100,7 @@ export default function Pricing() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                     {/* Left Column: Pricing */}
-                    <div className="p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
+                    <div className="p-6 sm:p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
                         <motion.div
                             variants={containerVariants}
                             initial="hidden"
@@ -133,7 +133,7 @@ export default function Pricing() {
                                         key={item.size}
                                         variants={itemVariants}
                                         whileHover={{ scale: 1.02 }}
-                                        className={`relative flex flex-col px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-all duration-300 shadow-sm dark:shadow-none ${item.badge
+                                        className={`relative flex flex-col px-5 sm:px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-all duration-300 shadow-sm dark:shadow-none ${item.badge
                                             ? 'border-accent/40 dark:border-accent/30 hover:border-accent/60'
                                             : 'border-border/80 dark:border-foreground/10 hover:border-foreground/30 dark:hover:border-accent/40'
                                             }`}
@@ -184,7 +184,7 @@ export default function Pricing() {
                     </div>
 
                     {/* Right Column: Policies */}
-                    <div className="p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
+                    <div className="p-6 sm:p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
                         <motion.div
                             variants={containerVariants}
                             initial="hidden"
