@@ -325,14 +325,20 @@ export default function AdminCommissionsPage() {
                                                                 >
                                                                     <button
                                                                         onClick={() => updateField(commission.id, confirmingAction.value)}
-                                                                        className="w-8 h-8 flex items-center justify-center bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-all"
+                                                                        disabled={updatingId === commission.id}
+                                                                        className="w-8 h-8 flex items-center justify-center bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-all disabled:opacity-50"
                                                                         title="Confirm Change"
                                                                     >
-                                                                        <Check size={16} />
+                                                                        {updatingId === commission.id ? (
+                                                                            <Loader2 size={16} className="animate-spin" />
+                                                                        ) : (
+                                                                            <Check size={16} />
+                                                                        )}
                                                                     </button>
                                                                     <button
                                                                         onClick={() => setConfirmingAction(null)}
-                                                                        className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-all"
+                                                                        disabled={updatingId === commission.id}
+                                                                        className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-all disabled:opacity-50"
                                                                         title="Cancel"
                                                                     >
                                                                         <X size={16} />
@@ -558,13 +564,19 @@ export default function AdminCommissionsPage() {
                                                         >
                                                             <button
                                                                 onClick={() => updateField(commission.id, confirmingAction.value)}
-                                                                className="p-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md hover:bg-emerald-500/30 transition-all"
+                                                                disabled={updatingId === commission.id}
+                                                                className="p-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md hover:bg-emerald-500/30 transition-all disabled:opacity-50"
                                                             >
-                                                                <Check size={14} />
+                                                                {updatingId === commission.id ? (
+                                                                    <Loader2 size={14} className="animate-spin" />
+                                                                ) : (
+                                                                    <Check size={14} />
+                                                                )}
                                                             </button>
                                                             <button
                                                                 onClick={() => setConfirmingAction(null)}
-                                                                className="p-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-md hover:bg-red-500/30 transition-all"
+                                                                disabled={updatingId === commission.id}
+                                                                className="p-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-md hover:bg-red-500/30 transition-all disabled:opacity-50"
                                                             >
                                                                 <X size={14} />
                                                             </button>
