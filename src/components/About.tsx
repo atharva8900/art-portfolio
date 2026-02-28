@@ -7,7 +7,7 @@ export default function About() {
     return (
         <section id="about" className="py-24 px-6 md:px-12 bg-surface text-foreground">
             <div className="max-w-6xl mx-auto">
-                <div className="bg-background border border-foreground/5 rounded-[2rem] p-10 md:p-16 flex flex-col md:flex-row gap-12 md:gap-24 items-center shadow-sm">
+                <div className="bg-background border border-foreground/5 rounded-[2rem] p-6 sm:p-10 md:p-16 flex flex-col md:flex-row gap-12 md:gap-24 items-center shadow-sm">
                     {/* Text Content */}
                     <div className="flex-1 space-y-8">
                         <h2 className="font-serif text-3xl md:text-5xl tracking-wide uppercase">
@@ -38,7 +38,7 @@ export default function About() {
                     {/* Image/Visual - Using a placeholder div or an img if we had one. 
             For now, a stylistic frame or empty frame to represent the artist's workspace or portrait. */}
                     {/* Process Card */}
-                    <div className="flex-1 w-full bg-surface border border-foreground/5 rounded-3xl p-8 md:p-10 flex flex-col space-y-8">
+                    <div className="flex-1 w-full bg-surface border border-foreground/5 rounded-3xl p-6 sm:p-8 md:p-10 flex flex-col space-y-6 md:space-y-8">
                         {/* Card Header */}
                         <div className="text-center space-y-4">
                             <motion.div
