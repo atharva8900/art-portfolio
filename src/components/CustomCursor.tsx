@@ -1,31 +1,84 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
+const parseColor = (color: string): { r: number, g: number, b: number, a: number } => {
+    if (color.startsWith('rgba')) {
+        const matches = color.match(/[\d.]+/g);
+        if (!matches) return { r: 0, g: 0, b: 0, a: 1 };
+        const [r, g, b, a] = matches.map(Number);
+        return { r, g, b, a };
+    } else if (color.startsWith('rgb')) {
+        const matches = color.match(/\d+/g);
+        if (!matches) return { r: 0, g: 0, b: 0, a: 1 };
+        const [r, g, b] = matches.map(Number);
+        return { r, g, b, a: 1 };
+    } else {
+        // Basic hex hex support
+        let r = 0, g = 0, b = 0;
+        if (color.length === 4) {
+            r = parseInt(color[1] + color[1], 16);
+            g = parseInt(color[2] + color[2], 16);
+            b = parseInt(color[3] + color[3], 16);
+        } else if (color.length === 7) {
+            r = parseInt(color.substring(1, 3), 16);
+            g = parseInt(color.substring(3, 5), 16);
+            b = parseInt(color.substring(5, 7), 16);
+        }
+        return { r, g, b, a: 1 };
+    }
+};
+
+const blend = (fg: string, bg: string): string => {
+    const f = parseColor(fg);
+    const b = parseColor(bg);
+    const r = Math.round(f.a * f.r + (1 - f.a) * b.r);
+    const g = Math.round(f.a * f.g + (1 - f.a) * b.g);
+    const bl = Math.round(f.a * f.b + (1 - f.a) * b.b);
+    return `rgb(${r}, ${g}, ${bl})`;
+};
+
 const getBackgroundColor = (element: HTMLElement | null): string => {
-    const bodyBg = typeof window !== 'undefined' ? window.getComputedStyle(document.body).backgroundColor : '#0a0a0a';
+    const bodyBg = typeof window !== 'undefined' ? window.getComputedStyle(document.body).backgroundColor : 'rgb(10, 10, 10)';
     if (!element) return bodyBg;
 
+    let targetColor = 'transparent';
     let current: HTMLElement | null = element;
+
+    // 1. Find the first meaningful background color
     while (current) {
         if (!(current instanceof Element)) break;
-
         const style = window.getComputedStyle(current);
         const bgColor = style.backgroundColor;
-
-        // Check for non-transparent. Lowered threshold to 0.1 to catch semi-transparent nav buttons.
         if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-            if (bgColor.startsWith('rgba')) {
-                const alpha = parseFloat(bgColor.split(',')[3]);
-                if (alpha < 0.1) {
-                    current = current.parentElement;
-                    continue;
-                }
-            }
-            return bgColor;
+            targetColor = bgColor;
+            break;
         }
         current = current.parentElement;
     }
-    return bodyBg;
+
+    if (targetColor === 'transparent') return bodyBg;
+
+    const targetParsed = parseColor(targetColor);
+    if (targetParsed.a >= 0.99) return targetColor;
+
+    // 2. If semi-transparent, find the solid background behind it to blend
+    let underlyingBg = bodyBg;
+    current = current?.parentElement || null;
+    while (current) {
+        if (!(current instanceof Element)) break;
+        const style = window.getComputedStyle(current);
+        const bgColor = style.backgroundColor;
+        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+            const parsed = parseColor(bgColor);
+            if (parsed.a >= 0.99) {
+                underlyingBg = bgColor;
+                break;
+            }
+        }
+        current = current.parentElement;
+    }
+
+    return blend(targetColor, underlyingBg);
 };
 
 export default function CustomCursor() {
