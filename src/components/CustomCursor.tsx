@@ -2,22 +2,21 @@
 import { useEffect, useRef, useState } from "react";
 
 const getBackgroundColor = (element: HTMLElement | null): string => {
-    if (!element) return '#0a0a0a';
+    const bodyBg = typeof window !== 'undefined' ? window.getComputedStyle(document.body).backgroundColor : '#0a0a0a';
+    if (!element) return bodyBg;
 
     let current: HTMLElement | null = element;
     while (current) {
-        // Safety check: ensure current is an element
         if (!(current instanceof Element)) break;
 
         const style = window.getComputedStyle(current);
         const bgColor = style.backgroundColor;
 
-        // Check specifically for non-transparent
+        // Check for non-transparent. Lowered threshold to 0.1 to catch semi-transparent nav buttons.
         if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-            // Check for low alpha values in rgba
             if (bgColor.startsWith('rgba')) {
                 const alpha = parseFloat(bgColor.split(',')[3]);
-                if (alpha < 0.9) {
+                if (alpha < 0.1) {
                     current = current.parentElement;
                     continue;
                 }
@@ -26,7 +25,7 @@ const getBackgroundColor = (element: HTMLElement | null): string => {
         }
         current = current.parentElement;
     }
-    return '#0a0a0a'; // Fallback to black
+    return bodyBg;
 };
 
 export default function CustomCursor() {
@@ -35,12 +34,19 @@ export default function CustomCursor() {
     const eraserRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const prevMouse = useRef({ x: 0, y: 0 });
-    const eraserColor = useRef("#0a0a0a");
-
     const mouse = useRef({ x: 0, y: 0 });
     const points = useRef<{ x: number; y: number }[]>([]);
-    const trailLength = 35; // Between 20 and 40 for a balanced trail speed
+    const trailLength = 35;
     const rafId = useRef<number>(0);
+
+    // Initial fallback that will be updated on mount
+    const eraserColor = useRef("#0a0a0a");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            eraserColor.current = window.getComputedStyle(document.body).backgroundColor;
+        }
+    }, []);
 
     const isPointerRef = useRef(false);
     const [isPointer, setIsPointer] = useState(false);
