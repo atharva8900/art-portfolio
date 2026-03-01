@@ -9,6 +9,15 @@ import { createClient } from '@/lib/supabase/client';
 import GoogleSignInButton from './GoogleSignInButton';
 import { createPortal } from 'react-dom';
 import ArtVisualizer, { FrameConfig } from './ArtVisualizer';
+import Script from 'next/script';
+
+declare global {
+    interface Window {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Razorpay: any;
+    }
+}
+
 
 
 // Custom paper size dropdown — portal-based so it escapes any overflow container
@@ -139,6 +148,7 @@ export default function CommissionForm() {
     const [frameConfig, setFrameConfig] = useState<FrameConfig | null>(null);
     const [showFrameModal, setShowFrameModal] = useState(false);
     const [isSelfReferral, setIsSelfReferral] = useState(false);
+    const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
     const supabase = createClient();
@@ -361,88 +371,212 @@ export default function CommissionForm() {
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
 
-        // Auto-attach referral code from sessionStorage
-        const referralCode = sessionStorage.getItem('referrer_code');
-        if (referralCode) {
-            data.referral_code = referralCode;
-        }
-        if (referrerName) data.referrer_name = referrerName;
-        if (referrerEmail) data.referrer_email = referrerEmail;
-        if (referrerPhone) data.referrer_phone = referrerPhone;
-
-        // Upload files to Supabase Storage if they are base64
-        let finalFrameImageUrl: string | null = frameConfig?.frameSnapshot || frameConfig?.image || null;
-        let frameImageBase64: string | null = null; // fallback if upload fails
-
-        if (finalFrameImageUrl && finalFrameImageUrl.startsWith('data:')) {
-            const originalBase64 = finalFrameImageUrl;
-            const uploadedUrl = await uploadToSupabase(finalFrameImageUrl, 'frame-design.jpg');
-            if (uploadedUrl) {
-                finalFrameImageUrl = uploadedUrl;
-            } else {
-                // Upload failed — keep base64 for email attachment fallback
-                finalFrameImageUrl = null;
-                frameImageBase64 = originalBase64;
+        try {
+            // Auto-attach referral code from sessionStorage
+            const referralCodeStored = sessionStorage.getItem('referrer_code');
+            if (referralCodeStored) {
+                data.referral_code = referralCodeStored;
             }
-        }
+            if (referrerName) data.referrer_name = referrerName;
+            if (referrerEmail) data.referrer_email = referrerEmail;
+            if (referrerPhone) data.referrer_phone = referrerPhone;
 
-        // Upload all reference images to Supabase Storage
-        const attachment_urls: string[] = [];
-        const attachment_base64: { name: string; content: string }[] = []; // fallback
+            // Upload files to Supabase Storage if they are base64
+            let finalFrameImageUrl: string | null = frameConfig?.frameSnapshot || frameConfig?.image || null;
+            let frameImageBase64: string | null = null;
 
-        for (const att of attachments) {
-            if (att.content.startsWith('data:')) {
-                const uploadedUrl = await uploadToSupabase(att.content, att.name);
+            if (finalFrameImageUrl && finalFrameImageUrl.startsWith('data:')) {
+                const uploadedUrl = await uploadToSupabase(finalFrameImageUrl, 'frame-design.jpg');
                 if (uploadedUrl) {
-                    attachment_urls.push(uploadedUrl);
+                    finalFrameImageUrl = uploadedUrl;
                 } else {
-                    // Upload failed — keep base64 for email attachment fallback
-                    attachment_base64.push({ name: att.name, content: att.content });
+                    frameImageBase64 = finalFrameImageUrl;
+                    finalFrameImageUrl = null;
                 }
             }
-        }
 
-        // Add explicitly tracked state fields to data
-        Object.assign(data, {
-            detailed_background: detailedBackground,
-            timelapse_recording: timelapse,
-            framing: framing,
-            consent: consent,
-            frame_style: frameConfig?.frameStyle ?? null,
-            frame_size: frameConfig?.size ?? null,
-            frame_matting_color: frameConfig?.mattingColor ?? null,
-            frame_matting_size: frameConfig?.mattingSize ?? null,
-            frame_width: frameConfig?.frameWidth ?? null,
-            frame_image: finalFrameImageUrl,
-            frame_image_base64: frameImageBase64,  // fallback if Supabase upload failed
-            attachment_urls,
-            attachment_base64,  // fallback if Supabase upload failed
-        });
+            const attachment_urls: string[] = [];
+            const attachment_base64: { name: string; content: string }[] = [];
 
-        try {
+            for (const att of attachments) {
+                if (att.content.startsWith('data:')) {
+                    const uploadedUrl = await uploadToSupabase(att.content, att.name);
+                    if (uploadedUrl) {
+                        attachment_urls.push(uploadedUrl);
+                    } else {
+                        attachment_base64.push({ name: att.name, content: att.content });
+                    }
+                }
+            }
+
+            // Send Commission Submission Data
             const res = await fetch('/api/commissions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                body: JSON.stringify({
+                    ...data,
+                    detailed_background: detailedBackground,
+                    timelapse_recording: timelapse,
+                    framing: framing,
+                    consent: consent,
+                    frame_style: frameConfig?.frameStyle ?? null,
+                    frame_size: frameConfig?.size ?? null,
+                    frame_matting_color: frameConfig?.mattingColor ?? null,
+                    frame_matting_size: frameConfig?.mattingSize ?? null,
+                    frame_width: frameConfig?.frameWidth ?? null,
+                    frame_image: finalFrameImageUrl,
+                    frame_image_base64: frameImageBase64,
+                    attachment_urls,
+                    attachment_base64,
+                    razorpay_order_id: data.razorpay_order_id || null,
+                    razorpay_payment_id: data.razorpay_payment_id || null,
+                    razorpay_signature: data.razorpay_signature || null,
+                    payment_type: status === 'waitlist' ? 'reservation' : null,
+                }),
             });
 
             if (!res.ok) {
                 const errorData = await res.json();
-                throw new Error(errorData.error || 'Failed to submit commission');
+                throw new Error(errorData.error || 'Failed to save commission. Please contact us.');
             }
-
-            // Check if backend returned a status (e.g. waitlist)
-            // const responseData = await res.json(); // Body already read?
-            // Re-reading response body is not possible if we already called res.json() which we didn't in success case usually? 
-            // Wait, we didn't call res.json() on success above, so we can do it now if needed.
-            // Actually, we don't need to read the body for success, unless we want to confirm status.
-            // But let's just assume success.
 
             setSuccess(true);
         } catch (error: unknown) {
-            const err = error as { message?: string };
-            setError(err.message || 'Something went wrong. Please try again or DM on Instagram.');
+            console.error('Submission error:', error);
+            setError((error as Error).message || 'Something went wrong. Please try again.');
         } finally {
+            setLoading(false);
+        }
+    }
+
+    // Waitlist specific submit handler with Razorpay
+    async function handleWaitlistSubmit(e: FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        const formElement = e.currentTarget; // Capture form element synchronously
+        setLoading(true);
+        setError('');
+
+        if (!window.Razorpay) {
+            setError('Payment system is still loading. Please wait a moment.');
+            setLoading(false);
+            return;
+        }
+
+        const reservationAmount = Math.round(estimatedTotal * 0.25);
+
+        try {
+            // 1. Create Order
+            const orderRes = await fetch('/api/razorpay/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: reservationAmount,
+                    currency: 'INR',
+                    receipt: `waitlist_${Date.now()}`
+                })
+            });
+
+            if (!orderRes.ok) throw new Error('Failed to create payment order');
+            const orderData = await orderRes.json();
+
+            // 2. Open Razorpay
+            const options = {
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: orderData.amount,
+                currency: orderData.currency,
+                name: "Atharva Sherlekar Art",
+                description: "Waitlist Reservation Fee (25%)",
+                order_id: orderData.id,
+                handler: async function (response: { razorpay_order_id?: string; razorpay_payment_id?: string; razorpay_signature?: string; }) {
+                    // Success! Now submit the actual commission form
+                    const formData = new FormData(formElement);
+                    const data = Object.fromEntries(formData.entries());
+
+                    // Auto-attach referral code from sessionStorage
+                    const referralCodeStored = sessionStorage.getItem('referrer_code');
+                    if (referralCodeStored) {
+                        data.referral_code = referralCodeStored;
+                    }
+                    if (referrerName) data.referrer_name = referrerName;
+                    if (referrerEmail) data.referrer_email = referrerEmail;
+                    if (referrerPhone) data.referrer_phone = referrerPhone;
+
+                    // Upload files
+                    let finalFrameImageUrl: string | null = frameConfig?.frameSnapshot || frameConfig?.image || null;
+                    let frameImageBase64: string | null = null;
+
+                    if (finalFrameImageUrl && finalFrameImageUrl.startsWith('data:')) {
+                        const uploadedUrl = await uploadToSupabase(finalFrameImageUrl, 'frame-design.jpg');
+                        if (uploadedUrl) finalFrameImageUrl = uploadedUrl;
+                        else {
+                            frameImageBase64 = finalFrameImageUrl;
+                            finalFrameImageUrl = null;
+                        }
+                    }
+
+                    const attachment_urls: string[] = [];
+                    const attachment_base64: { name: string; content: string }[] = [];
+
+                    for (const att of attachments) {
+                        if (att.content.startsWith('data:')) {
+                            const uploadedUrl = await uploadToSupabase(att.content, att.name);
+                            if (uploadedUrl) attachment_urls.push(uploadedUrl);
+                            else attachment_base64.push({ name: att.name, content: att.content });
+                        }
+                    }
+
+                    const res = await fetch('/api/commissions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ...data,
+                            detailed_background: detailedBackground,
+                            timelapse_recording: timelapse,
+                            framing: framing,
+                            consent: consent,
+                            frame_style: frameConfig?.frameStyle ?? null,
+                            frame_size: frameConfig?.size ?? null,
+                            frame_matting_color: frameConfig?.mattingColor ?? null,
+                            frame_matting_size: frameConfig?.mattingSize ?? null,
+                            frame_width: frameConfig?.frameWidth ?? null,
+                            frame_image: finalFrameImageUrl,
+                            frame_image_base64: frameImageBase64,
+                            attachment_urls,
+                            attachment_base64,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            payment_type: 'reservation'
+                        }),
+                    });
+
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        setError(errorData.error || 'Payment recorded but form failed. PLEASE CONTACT ME with your Payment ID.');
+                        setLoading(false);
+                    } else {
+                        setSuccess(true);
+                        setLoading(false);
+                    }
+                },
+                prefill: {
+                    name: userName,
+                    email: userEmail,
+                },
+                theme: { color: "#000000" },
+                modal: {
+                    ondismiss: function () {
+                        setLoading(false);
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+
+        } catch (error: unknown) {
+            console.error('Waitlist payment error:', error);
+            setError((error as Error).message || 'Payment initiation failed.');
             setLoading(false);
         }
     }
@@ -648,7 +782,7 @@ export default function CommissionForm() {
                         )}
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="space-y-8">
+                    <form onSubmit={status === 'waitlist' ? handleWaitlistSubmit : handleSubmit} className="space-y-8">
                         {/* the rest of the form stays inside but needs indentation update visually but we can just leave the tags */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -1105,10 +1239,16 @@ export default function CommissionForm() {
 
                         <button
                             type="submit"
-                            disabled={loading || attachments.length === 0}
+                            disabled={loading || attachments.length === 0 || (status === 'waitlist' && !razorpayLoaded)}
                             className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-neutral-200 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {loading ? <Loader2 className="animate-spin" /> : (status === 'waitlist' ? 'Reserve Waitlist Slot' : 'Submit Request')}
+                            {loading ? (
+                                <Loader2 className="animate-spin" />
+                            ) : status === 'waitlist' ? (
+                                <>Pay ₹{Math.round(estimatedTotal * 0.25)} & Join Waitlist</>
+                            ) : (
+                                'Submit Request'
+                            )}
                         </button>
                     </form>
                 )}
@@ -1160,6 +1300,11 @@ export default function CommissionForm() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </section>
+
+            <Script
+                src="https://checkout.razorpay.com/v1/checkout.js"
+                onLoad={() => setRazorpayLoaded(true)}
+            />
+        </section >
     );
 }

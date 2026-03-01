@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest) {
 
         // Update Main Status
         if (status) {
-            if (!['pending', 'accepted', 'in_progress', 'on_delivery', 'completed', 'rejected', 'waitlist'].includes(status)) {
+            if (!['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'completed', 'rejected', 'waitlist', 'cancelled'].includes(status)) {
                 return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
             }
             try {
@@ -99,8 +99,62 @@ export async function PATCH(request: NextRequest) {
                         }
                     }
 
+                    // --- AUTOMATED LINK GENERATION FOR WAITLIST ACCEPTANCE ---
+                    if (existingCommission.status !== 'accepted' && status === 'accepted' && updatedCommission.payment_status === 'reservation_paid') {
+                        try {
+                            const Razorpay = (await import('razorpay')).default;
+                            const razorpay = new Razorpay({
+                                key_id: process.env.RAZORPAY_KEY_ID!,
+                                key_secret: process.env.RAZORPAY_KEY_SECRET!,
+                            });
+
+                            const totalAmount = (updatedCommission.base_price || 0) + (updatedCommission.extras_total || 0);
+                            const alreadyPaid = Math.round(totalAmount * 0.25);
+                            const depositAmount = Math.ceil(totalAmount / 2) - alreadyPaid;
+
+                            if (depositAmount > 0) {
+                                const amountInPaise = depositAmount * 100;
+                                const options = {
+                                    amount: amountInPaise,
+                                    currency: 'INR',
+                                    accept_partial: false,
+                                    description: `Remaining 25% Deposit for Commission ${id} (Waitlist)`,
+                                    customer: {
+                                        name: updatedCommission.client_name,
+                                        email: updatedCommission.client_email,
+                                        contact: updatedCommission.phone || undefined
+                                    },
+                                    notify: { sms: false, email: false },
+                                    reminder_enable: false,
+                                    reference_id: id,
+                                    notes: { commission_id: id, payment_type: 'reservation_completion' }
+                                };
+
+                                const paymentLink = await razorpay.paymentLink.create(options);
+                                const { supabaseAdmin } = await import('@/lib/supabase/admin');
+
+                                await supabaseAdmin
+                                    .from('commissions')
+                                    .update({
+                                        razorpay_payment_link_id: paymentLink.id,
+                                        razorpay_payment_link_url: paymentLink.short_url,
+                                        payment_status: 'pending',
+                                        updated_at: new Date().toISOString()
+                                    })
+                                    .eq('id', id);
+
+                                const { getCommissionById } = await import('@/lib/commissions');
+                                const refreshed = await getCommissionById(id);
+                                if (refreshed) updatedCommission = refreshed;
+                                console.log(`Auto-generated Razorpay link for ${id}: ${paymentLink.short_url}`);
+                            }
+                        } catch (linkError) {
+                            console.error('Error auto-generating payment link:', linkError);
+                        }
+                    }
+
                     // --- Automated Emails for Status Changes ---
-                    const emailTriggerStatuses = ['pending', 'accepted', 'in_progress', 'on_delivery', 'completed', 'rejected'];
+                    const emailTriggerStatuses = ['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'completed', 'rejected', 'cancelled'];
                     // Only send email if status has actually CHANGED to prevent duplicate notifications on parallel requests
                     if (existingCommission.status !== status && emailTriggerStatuses.includes(status)) {
                         await sendCommissionStatusEmail(updatedCommission, status);
@@ -139,7 +193,7 @@ export async function PATCH(request: NextRequest) {
                             const resend = new Resend(process.env.RESEND_API_KEY);
                             try {
                                 await resend.emails.send({
-                                    from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+                                    from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
                                     to: referrerEmail,
                                     subject: 'You Earned a Commission! 🎉 – Atharva Sherlekar Art',
                                     html: `
@@ -171,6 +225,10 @@ export async function PATCH(request: NextRequest) {
             if (!['unpaid', 'requested', 'paid'].includes(payout_status)) {
                 return NextResponse.json({ error: 'Invalid payout status value' }, { status: 400 });
             }
+
+            // MANUAL-ASSIST PAYOUT LOGIC:
+            // We no longer trigger RazorpayX automatically to avoid needing escrow balances
+            // and to support PayPal/International transfers via manual process.
             const success = await updateCommissionPayoutStatus(id, payout_status);
             if (success) {
                 const refreshed = await getCommissionById(id);

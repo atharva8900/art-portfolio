@@ -20,7 +20,12 @@ interface EarningsHistoryProps {
 
 export default function EarningsHistory({ history, onPayoutRequested }: EarningsHistoryProps) {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [paymentDetails, setPaymentDetails] = useState('');
+    const [payoutMethod, setPayoutMethod] = useState<'upi' | 'bank' | 'paypal'>('upi');
+    const [upiId, setUpiId] = useState('');
+    const [bankAccount, setBankAccount] = useState('');
+    const [bankIfsc, setBankIfsc] = useState('');
+    const [bankName, setBankName] = useState('');
+    const [paypalEmail, setPaypalEmail] = useState('');
     const [isRequesting, setIsRequesting] = useState<boolean | 'success'>(false);
     const [showPayoutModal, setShowPayoutModal] = useState(false);
 
@@ -46,6 +51,18 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
     const handlePayoutRequest = async () => {
         if (!selectedIds.length) return;
 
+        let finalDetails = '';
+        if (payoutMethod === 'upi') {
+            if (!upiId) return;
+            finalDetails = JSON.stringify({ type: 'upi', vpa: upiId });
+        } else if (payoutMethod === 'bank') {
+            if (!bankAccount || !bankIfsc || !bankName) return;
+            finalDetails = JSON.stringify({ type: 'bank', account: bankAccount, ifsc: bankIfsc, name: bankName });
+        } else {
+            if (!paypalEmail || !paypalEmail.includes('@')) return;
+            finalDetails = JSON.stringify({ type: 'paypal', email: paypalEmail });
+        }
+
         setIsRequesting(true);
         try {
             const res = await fetch('/api/user/payout', {
@@ -53,7 +70,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     commissionIds: selectedIds,
-                    paymentDetails
+                    paymentDetails: finalDetails
                 })
             });
 
@@ -66,7 +83,11 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
             onPayoutRequested();
             setIsRequesting('success');
             setSelectedIds([]);
-            setPaymentDetails('');
+            setUpiId('');
+            setBankAccount('');
+            setBankIfsc('');
+            setBankName('');
+            setPaypalEmail('');
 
         } catch (error: unknown) {
             console.error('Payout Request Failed:', error);
@@ -78,7 +99,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
 
     const getStatusBadge = (status: string, payoutStatus: string) => {
         if (status !== 'completed') {
-            return <span className="px-2 py-1 rounded text-xs bg-surface hover:bg-surface\/80 text-neutral-400 capitalize">{status}</span>;
+            return <span className="px-2 py-1 rounded text-xs bg-foreground/5 text-foreground/50 capitalize font-medium">{status}</span>;
         }
 
         // If completed, show payout status
@@ -112,31 +133,31 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
             <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-foreground/10 text-neutral-400 text-sm">
-                            <th className="py-4 px-4 font-normal">Date</th>
-                            <th className="py-4 px-4 font-normal">Client</th>
-                            <th className="py-4 px-4 font-normal">Referral Code</th>
-                            <th className="py-4 px-4 font-normal">Amount</th>
-                            <th className="py-4 px-4 font-normal">Status</th>
+                        <tr className="border-b border-foreground/10 text-foreground/50 text-xs uppercase tracking-wider">
+                            <th className="py-4 px-4 font-bold">Date</th>
+                            <th className="py-4 px-4 font-bold">Client</th>
+                            <th className="py-4 px-4 font-bold">Code Used</th>
+                            <th className="py-4 px-4 font-bold">Amount</th>
+                            <th className="py-4 px-4 font-bold text-right">Status</th>
                         </tr>
                     </thead>
                     <tbody className="text-sm">
                         {history.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="py-8 text-center text-neutral-500">
+                                <td colSpan={5} className="py-8 text-center text-foreground/50">
                                     No commissions yet. Share your code to start earning!
                                 </td>
                             </tr>
                         ) : (
                             history.map(item => (
                                 <tr key={item.id} className="border-b border-foreground/5 hover:bg-foreground/5 transition-colors">
-                                    <td className="py-4 px-4 text-neutral-300">
+                                    <td className="py-4 px-4 text-foreground/60 font-mono text-xs">
                                         {new Date(item.date).toLocaleDateString('en-GB')}
                                     </td>
                                     <td className="py-4 px-4 text-foreground font-medium">{item.client_name}</td>
-                                    <td className="py-4 px-4 text-neutral-400 font-mono text-xs">{item.code_used}</td>
-                                    <td className="py-4 px-4 text-accent">₹{item.amount}</td>
-                                    <td className="py-4 px-4">
+                                    <td className="py-4 px-4 text-foreground/40 font-mono text-xs">{item.code_used}</td>
+                                    <td className="py-4 px-4 text-accent font-bold">₹{item.amount}</td>
+                                    <td className="py-4 px-4 text-right">
                                         {getStatusBadge(item.status, item.payout_status)}
                                     </td>
                                 </tr>
@@ -149,7 +170,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
             {/* Mobile Card View */}
             <div className="md:hidden space-y-4">
                 {history.length === 0 ? (
-                    <div className="text-center py-8 text-neutral-500 text-sm">
+                    <div className="text-center py-8 text-foreground/50 text-sm">
                         No commissions yet.
                     </div>
                 ) : (
@@ -158,15 +179,15 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                             <div className="flex justify-between items-start mb-3">
                                 <div>
                                     <div className="text-foreground font-medium">{item.client_name}</div>
-                                    <div className="text-neutral-500 text-xs">{new Date(item.date).toLocaleDateString('en-GB')}</div>
+                                    <div className="text-foreground/40 text-[10px] items-center gap-1 font-mono uppercase tracking-tighter">{new Date(item.date).toLocaleDateString('en-GB')} • {item.code_used}</div>
                                 </div>
                                 <div className="text-right">
                                     <div className="text-accent font-bold">₹{item.amount}</div>
                                     <div className="mt-1">{getStatusBadge(item.status, item.payout_status)}</div>
                                 </div>
                             </div>
-                            <div className="flex justify-between items-center text-xs text-neutral-400 border-t border-foreground/5 pt-3 mt-1">
-                                <span>Code: <span className="font-mono text-neutral-300">{item.code_used}</span></span>
+                            <div className="flex justify-between items-center text-xs text-foreground/40 border-t border-foreground/5 pt-3 mt-1">
+                                <span>Code: <span className="font-mono text-foreground/60">{item.code_used}</span></span>
                                 {/* Payout Eligible Indicator for Mobile */}
                                 {item.status === 'completed' && item.payout_status === 'unpaid' && item.amount > 0 && (
                                     <span className="text-accent flex items-center gap-1">
@@ -191,7 +212,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                     <CheckIcon size={32} />
                                 </div>
                                 <h3 className="text-2xl font-serif text-foreground mb-2">Payout Requested!</h3>
-                                <p className="text-neutral-400 text-sm mb-6 max-w-xs mx-auto">
+                                <p className="text-foreground/60 text-sm mb-6 max-w-xs mx-auto">
                                     Your request has been sent to the admin. You will receive an email confirmation shortly.
                                 </p>
                                 <button
@@ -199,7 +220,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                         setShowPayoutModal(false);
                                         setIsRequesting(false);
                                     }}
-                                    className="px-8 py-3 bg-foreground text-background font-bold rounded hover:bg-neutral-200 transition-colors"
+                                    className="px-8 py-3 bg-foreground text-background font-bold rounded hover:bg-foreground/80 transition-colors"
                                 >
                                     Close
                                 </button>
@@ -207,7 +228,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                         ) : (
                             <>
                                 <h3 className="text-xl font-serif text-foreground mb-4">Request Payout</h3>
-                                <p className="text-neutral-400 text-sm mb-6">
+                                <p className="text-foreground/60 text-sm mb-6">
                                     Select commissions you want to withdraw earnings for.
                                 </p>
 
@@ -232,23 +253,63 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
 
                                 {eligibleForPayout.length > 0 && (
                                     <div className="flex justify-between items-center mb-4 px-1">
-                                        <button onClick={handleSelectAll} className="text-xs text-accent hover:underline">
+                                        <button onClick={handleSelectAll} className="text-xs text-accent hover:underline font-medium">
                                             {selectedIds.length === eligibleForPayout.length ? 'Deselect All' : 'Select All'}
                                         </button>
-                                        <span className="text-sm text-neutral-300">
-                                            Total: <span className="text-foreground font-bold ml-1">₹{eligibleForPayout.filter(i => selectedIds.includes(i.id)).reduce((sum, i) => sum + i.amount, 0)}</span>
+                                        <span className="text-sm text-foreground/60">
+                                            Total Selected: <span className="text-foreground font-bold ml-1">₹{eligibleForPayout.filter(i => selectedIds.includes(i.id)).reduce((sum, i) => sum + i.amount, 0)}</span>
                                         </span>
                                     </div>
                                 )}
 
-                                <div className="mb-6">
-                                    <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Payment Details (UPI ID / Bank Info)</label>
-                                    <textarea
-                                        value={paymentDetails}
-                                        onChange={(e) => setPaymentDetails(e.target.value)}
-                                        placeholder="e.g. 9876543210@upi or Bank Account Details..."
-                                        className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none min-h-[80px]"
-                                    />
+                                <div className="mb-6 space-y-4">
+                                    <div>
+                                        <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Payout Method</label>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setPayoutMethod('upi')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'upi' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
+                                                UPI
+                                            </button>
+                                            <button onClick={() => setPayoutMethod('bank')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'bank' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
+                                                Bank
+                                            </button>
+                                            <button onClick={() => setPayoutMethod('paypal')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'paypal' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
+                                                PayPal
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {payoutMethod === 'upi' && (
+                                        <div>
+                                            <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">UPI ID</label>
+                                            <input type="text" value={upiId} onChange={e => setUpiId(e.target.value)} placeholder="e.g. yourname@upi" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
+                                            <p className="text-[10px] text-neutral-500 mt-1">Note: Must be a valid UPI Virtual Payment Address.</p>
+                                        </div>
+                                    )}
+
+                                    {payoutMethod === 'bank' && (
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Account Holder Name</label>
+                                                <input type="text" value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Name on bank account" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Account Number</label>
+                                                <input type="text" value={bankAccount} onChange={e => setBankAccount(e.target.value)} placeholder="0123456789" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">IFSC Code</label>
+                                                <input type="text" value={bankIfsc} onChange={e => setBankIfsc(e.target.value)} placeholder="HDFC0001234" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none uppercase" />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {payoutMethod === 'paypal' && (
+                                        <div>
+                                            <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">PayPal Email Address</label>
+                                            <input type="email" value={paypalEmail} onChange={e => setPaypalEmail(e.target.value)} placeholder="yourname@example.com" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
+                                            <p className="text-[10px] text-neutral-500 mt-1">Note: Used for international payouts.</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex gap-3">
@@ -260,7 +321,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                     </button>
                                     <button
                                         onClick={handlePayoutRequest}
-                                        disabled={!!isRequesting || selectedIds.length === 0 || !paymentDetails.trim()}
+                                        disabled={!!isRequesting || selectedIds.length === 0 || (payoutMethod === 'upi' ? !upiId.trim() : (payoutMethod === 'bank' ? (!bankAccount.trim() || !bankIfsc.trim() || !bankName.trim()) : !paypalEmail.trim() || !paypalEmail.includes('@')))}
                                         className="flex-1 py-3 bg-accent hover:bg-foreground text-background rounded font-bold uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
                                         {isRequesting === true ? <Loader2 className="animate-spin" size={20} /> : 'Submit Request'}

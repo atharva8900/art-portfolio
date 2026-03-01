@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import crypto from 'crypto';
 import {
     validateNotSelfReferral,
     getReferralByCode,
@@ -9,7 +10,7 @@ import {
     hasReachedCommissionCap,
     isReferralExpired
 } from '@/lib/referrals';
-import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission } from '@/lib/commissions';
+import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount } from '@/lib/commissions';
 import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing'; // Import price helper
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -57,10 +58,26 @@ export async function POST(request: NextRequest) {
             frame_matting_size,
             frame_width,
             frame_image,
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
             attachment_urls,
             attachment_base64,
             frame_image_base64,
         } = body;
+
+        // Verify Razorpay Payment if provided
+        if (razorpay_order_id && razorpay_payment_id && razorpay_signature) {
+            const text = razorpay_order_id + "|" + razorpay_payment_id;
+            const generated_signature = crypto
+                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+                .update(text)
+                .digest("hex");
+
+            if (generated_signature !== razorpay_signature) {
+                return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
+            }
+        }
 
         // ... existing validation code ...
 
@@ -92,8 +109,19 @@ export async function POST(request: NextRequest) {
         }
 
         const pendingReviewCount = await getPendingReviewCount();
-        const isWaitlist = pendingReviewCount >= 2;
+        const activeCount = await getActiveCommissionCount();
+        const isWaitlist = (pendingReviewCount + activeCount) >= 2;
         const commissionStatus = isWaitlist ? 'waitlist' : 'pending';
+
+        // Enforcement of 25% Deposit for Waitlist Slots 3 & 4
+        if (isWaitlist) {
+            if (!razorpay_payment_id || !razorpay_signature || !razorpay_order_id) {
+                return NextResponse.json({
+                    error: 'A 25% reservation fee is required for waitlist slots 3 & 4. Please complete the payment to submit your request.'
+                }, { status: 402 }); // 402 Payment Required
+            }
+            // Signature verification already happened at line 70
+        }
         // ----------------------
 
         let validReferralCode = null;
@@ -164,7 +192,7 @@ export async function POST(request: NextRequest) {
                 }
                 // Backwards compatibility with legacy codes
                 else if (referrer_name || referrer_email) {
-                    validReferralCode = referral_code;
+                    validReferralCode = null; // Don't save to the FK column if it doesn't exist in referrals table
                     commissionEligible = true; // Legacy codes always count for commission
                 }
 
@@ -223,11 +251,13 @@ export async function POST(request: NextRequest) {
                 (detailed_background ? `- Detailed Background: ₹500\n` : '') +
                 (timelapse_recording ? `- Timelapse Recording: ₹500\n` : '') +
                 (framing ? `- Professional Framing: ₹${framingCost}\n` : '') +
-                `**Total: ₹${totalAmount}**\n\n` +
+                `**Waitlist Reservation Confirmed:**\n` +
+                `- Total Artwork: ₹${totalAmount}\n` +
+                `- Reservation Fee Paid (25%): ₹${Math.round(totalAmount * 0.25)}\n\n` +
                 `**Next Steps:**\n` +
-                `1. I've received your reference photo(s) and will review them shortly.\n` +
-                `2. To reserve your spot on the waitlist, a 25% reservation fee (₹${Math.round(totalAmount * 0.25)}) is required.\n` +
-                `3. Once it's your turn, I'll confirm the photo details and collect the remaining advance!`;
+                `1. You are now officially on the waitlist (Slot 3 or 4).\n` +
+                `2. Once I'm ready to begin, I'll notify you to pay the remaining 25% to complete your 50% deposit.\n` +
+                `3. After the full deposit is received, I'll start working on your portrait!`;
         } else {
             emailDraft = `Hi ${firstName},\n\n` +
                 `Thank you for reaching out! I've received your request for a ${size} portrait of ${number_of_people} person${pluralPeople}.\n\n` +
@@ -248,10 +278,12 @@ export async function POST(request: NextRequest) {
         try {
             // Instant Discord Alert
             await sendDiscordNotification({
-                content: isWaitlist ? '⚠️ **New Waitlist Joiner**' : '🔔 **New Commission Request Received!**',
+                content: isWaitlist ? '⚠️ **New Waitlist Reservation Received (25% Paid)**' : '🔔 **New Commission Request Received!**',
                 embeds: [{
                     title: `Request from ${name}`,
-                    description: `A new ${isWaitlist ? 'waitlist' : 'commission'} request has been submitted. Check the Admin Dashboard for details.`,
+                    description: isWaitlist
+                        ? `A new waitlist request has been submitted with a **25% reservation payment**. Check the Admin Dashboard to review.`
+                        : `A new commission request has been submitted. Check the Admin Dashboard for details.`,
                     color: isWaitlist ? 0xFFA500 : 0x00FF00,
                     fields: [
                         { name: 'Client', value: `${name} (${email})`, inline: true },
@@ -271,7 +303,7 @@ export async function POST(request: NextRequest) {
             });
 
             const { error: resendError } = await resend.emails.send({
-                from: 'Atharva Sherlekar Art <onboarding@resend.dev>', // User will need to verify domain
+                from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>', // User will need to verify domain
                 to: process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com',
                 subject: isWaitlist ? 'New Waitlist Joiner – Atharva Sherlekar Art' : 'New Commission Request – Atharva Sherlekar Art',
                 attachments: emailAttachments,
@@ -354,8 +386,7 @@ export async function POST(request: NextRequest) {
             });
 
             if (resendError) {
-                console.error('Resend API Error:', resendError);
-                return NextResponse.json({ error: `Resend Error: ${resendError.message}` }, { status: 500 });
+                console.warn('Artist Notification Email Failed (Non-fatal):', resendError);
             }
 
             // Send Confirmation to Client
@@ -419,7 +450,7 @@ export async function POST(request: NextRequest) {
             const toEmail = email;
 
             const { error: clientEmailError } = await resend.emails.send({
-                from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+                from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
                 to: toEmail, // Client's email
                 subject: clientSubject,
                 html: clientHtml,
@@ -442,7 +473,7 @@ export async function POST(request: NextRequest) {
                     const estimatedCommission = estimatedCommissionableAmt > 0 ? (estimatedCommissionableAmt * 0.20) : 0;
 
                     await resend.emails.send({
-                        from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+                        from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
                         to: toEmail as string,
                         subject: 'Someone used your referral link! 👀 – Atharva Sherlekar Art',
                         html: `
@@ -470,7 +501,7 @@ export async function POST(request: NextRequest) {
             if (validReferralCode && referralInfo && justExpired) {
                 try {
                     await resend.emails.send({
-                        from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+                        from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
                         to: referralInfo.referrer_email,
                         subject: 'Referral Link Expired – Atharva Sherlekar Art',
                         html: `
@@ -492,9 +523,8 @@ export async function POST(request: NextRequest) {
                 }
             }
         } catch (emailError: unknown) {
-            const err = emailError as { message?: string };
-            console.error('Email Sending Error:', emailError);
-            return NextResponse.json({ error: `Email failed: ${err.message || JSON.stringify(emailError)}` }, { status: 500 });
+            console.error('Email Sending Error (Non-fatal for save):', emailError);
+            // We continue to save the commission even if email fails
         }
 
         // Save commission to storage (after successful email)
@@ -530,10 +560,16 @@ export async function POST(request: NextRequest) {
                 base_price: totalBasePrice,
                 extras_total: extrasTotal,
                 commission_amount: referrersShare,
-                frame_image: frame_image
+                frame_image: frame_image,
+                razorpay_order_id: razorpay_order_id,
+                razorpay_payment_id: razorpay_payment_id,
+                payment_status: isWaitlist ? 'reservation_paid' : 'pending'
             });
         } catch (storageError) {
             console.error('Failed to save commission data:', storageError);
+            return NextResponse.json({
+                error: 'Your payment was successful, but we encountered an error saving your request. Please contact support with your payment ID: ' + razorpay_payment_id
+            }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, status: commissionStatus });

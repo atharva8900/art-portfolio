@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
         // Send Email to Artist
         const { error: emailError } = await resend.emails.send({
-            from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+            from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
             to: 'atharvasherlekarart@gmail.com',
             subject: 'New Referral Link Generated',
             html: `

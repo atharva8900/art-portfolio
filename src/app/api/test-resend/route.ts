@@ -5,7 +5,7 @@ export async function GET() {
     try {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const data = await resend.emails.send({
-            from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+            from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
             to: 'atharvajs8900@gmail.com', // Developer's email
             subject: 'Test Email Triggered via NextJS API',
             html: '<p>This confirms Resend works inside Next.js API route.</p>',

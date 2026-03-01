@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { Resend } from 'resend';
-import { getAllCommissions, updateCommissionPayoutStatus } from '@/lib/commissions';
-import { getAllReferrals } from '@/lib/referrals';
+import { getAllCommissions, CommissionData } from '@/lib/commissions';
+import { getAllReferrals, ReferralData } from '@/lib/referrals';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -45,16 +46,16 @@ export async function POST(request: NextRequest) {
 
         const allCommissions = await getAllCommissions();
         const referrals = await getAllReferrals();
-        const allReferrals = referrals.filter(r =>
+        const allReferrals = referrals.filter((r: ReferralData) =>
             r.referrer_email.toLowerCase() === userEmail.toLowerCase()
         );
-        const userReferralCodes = allReferrals.map(r => r.code);
+        const userReferralCodes = allReferrals.map((r: ReferralData) => r.code);
 
         const commissionsToUpdate = [];
         let totalAmount = 0;
 
         for (const id of commissionIds) {
-            const commission = allCommissions.find(c => c.id === id);
+            const commission = allCommissions.find((c: CommissionData) => c.id === id);
 
             if (!commission) continue;
 
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
 
         // Send Email to Admin
         const { error: emailError } = await resend.emails.send({
-            from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+            from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
             to: 'atharvasherlekarart@gmail.com',
             subject: `Payout Request from ${userEmail}`,
             html: `
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
                         <li>
                             <strong>${c.client_name}</strong> - ₹${c.commission_amount} <br/>
                             ID: ${c.id} <br/>
-                            Date: ${new Date(c.submitted_at).toLocaleDateString()}
+                            Date: ${new Date(c.submitted_at).toLocaleDateString('en-GB')}
                         </li>
                     `).join('')}
                 </ul>
@@ -132,8 +133,20 @@ export async function POST(request: NextRequest) {
         let updatedCount = 0;
 
         for (const target of commissionsToUpdate) {
-            const success = await updateCommissionPayoutStatus(target.id, 'requested');
-            if (success) updatedCount++;
+            const { error: updateError } = await supabaseAdmin
+                .from('commissions')
+                .update({
+                    payout_status: 'requested',
+                    payout_details: paymentDetails,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', target.id);
+
+            if (!updateError) {
+                updatedCount++;
+            } else {
+                console.error(`Failed to update payout details for ${target.id}:`, updateError);
+            }
         }
 
         return NextResponse.json({

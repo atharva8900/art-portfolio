@@ -16,6 +16,8 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
     let subject = '';
     let htmlContent = '';
 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://atharvasherlekar.com';
+
     switch (status) {
         case 'pending':
             subject = 'Your Commission is under review! – Atharva Sherlekar Art';
@@ -25,7 +27,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>Your commission request has been moved to the <strong>Review Queue</strong>.</p>
                 <p>Atharva will review your details within 48 hours and contact you if any further information is needed or to confirm acceptance.</p>
                 <br/>
-                <p>Check your order status anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
+                <p>Check your order status anytime on the <a href="${baseUrl}/commission">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -39,7 +41,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>To begin the artwork, please pay the <strong>remaining advance</strong> (to hit 50% total). Add-ons and delivery will be charged in the final invoice.</p>
                 <p>Atharva will reach out to you shortly via DM or Email with the payment link to officially start your commission.</p>
                 <br/>
-                <p>Check your order status anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
+                <p>Check your order status anytime on the <a href="${baseUrl}/commission">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -52,24 +54,40 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>Your payment has been received and Atharva has officially <strong>started drawing</strong> your commission!</p>
                 <p>We're excited to bring your vision to life. We will keep you updated if we have any questions during the process.</p>
                 <br/>
-                <p>Check progress anytime on the <a href="https://atharvasherlekar.com/commission">Commission Page</a>.</p>
+                <p>Check progress anytime on the <a href="${baseUrl}/commission">Commission Page</a>.</p>
+                <p>Best regards,</p>
+                <p><strong>Atharva Sherlekar</strong></p>
+            `;
+            break;
+        case 'finished':
+            subject = 'Your Artwork is Finished! Final Approval & Invoice – Atharva Sherlekar Art';
+            htmlContent = `
+                <h1>Your Artwork is Ready!</h1>
+                <p>Hi ${commission.client_name},</p>
+                <p>Great news! The drawing is <strong>officially complete</strong>.</p>
+                <p>Atharva will be sending you a picture of the final sketch for your <strong>approval</strong> shortly. Please check your email or DM for the image.</p>
+                <p>Your <strong>final invoice</strong> is now ready on your dashboard. It includes:</p>
+                <ul>
+                    <li>The remaining 50% of the portrait price</li>
+                    <li>Any add-ons (Detailed background/Timelapse)</li>
+                    <li>Actual Delivery/Shipping costs via DTDC</li>
+                </ul>
+                <p>You can view the invoice and pay the final balance securely via your <a href="${baseUrl}/client/dashboard">Client Dashboard</a>.</p>
+                <p>Once the final payment is cleared, we will ship your artwork immediately!</p>
+                <br/>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
             break;
         case 'on_delivery':
-            subject = 'Your Artwork is Finished! Final Details – Atharva Sherlekar Art';
+            subject = 'Your Artwork has been Shipped! 🚚 – Atharva Sherlekar Art';
             htmlContent = `
-                <h1>Your Artwork is Ready!</h1>
+                <h1>It\'s on the way!</h1>
                 <p>Hi ${commission.client_name},</p>
-                <p>The drawing is <strong>complete</strong>! We are now preparing it for delivery.</p>
-                <p>Atharva has sent you the <strong>final invoice</strong> via our previous communication channel, which includes:</p>
-                <ul>
-                    <li>The remaining 50% of the portrait price</li>
-                    <li>Add-ons (Detailed background/Timelapse)</li>
-                    <li>Delivery/Shipping costs</li>
-                </ul>
-                <p>Once the final payment is cleared, we will ship your artwork and update you with the tracking details.</p>
+                <p>Your artwork has been carefully packed and <strong>handed over to DTDC for delivery</strong>.</p>
+                <p>I will share the tracking number with you shortly via DM or Email so you can follow its journey.</p>
+                <p><strong>Please do let me know once the artwork reaches you!</strong></p>
+                <p>Thank you for your patience and for letting Atharva create this for you!</p>
                 <br/>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
@@ -107,6 +125,19 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
             break;
+        case 'cancelled':
+            subject = 'Commission Cancelled & Refund Refined – Atharva Sherlekar Art';
+            htmlContent = `
+                <h1>Commission Cancelled</h1>
+                <p>Hi ${commission.client_name},</p>
+                <p>Your commission has been <strong>cancelled</strong> and a full refund has been initiated to your original payment method.</p>
+                <p>Refunds typically take <strong>5-7 business days</strong> to reflect in your account, depending on your bank.</p>
+                <p>Thank you for your interest, and we hope to work with you again in the future!</p>
+                <br/>
+                <p>Best regards,</p>
+                <p><strong>Atharva Sherlekar</strong></p>
+            `;
+            break;
         default:
             return null;
     }
@@ -137,8 +168,9 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
     // Attempt automated send via Resend (might fail if domain unverified)
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Atharva Sherlekar Art <onboarding@resend.dev>',
+            from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
             to: commission.client_email,
+            bcc: status === 'cancelled' ? process.env.NEXT_PUBLIC_ARTIST_EMAIL : undefined,
             subject,
             html: htmlContent,
         });

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { LogOut, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { LogOut, User as UserIcon, LayoutDashboard, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ALLOWED_EMAILS = [
@@ -98,6 +98,14 @@ export default function UserProfile() {
                                     <span className="text-sm font-medium">Admin Dashboard</span>
                                 </Link>
                             )}
+
+                            <Link
+                                href="/client/dashboard"
+                                className="w-full px-4 py-3 flex items-center gap-2 hover:bg-surface/80 transition-colors text-left border-b border-neutral-800"
+                            >
+                                <Palette size={16} />
+                                <span className="text-sm">My Commissions</span>
+                            </Link>
 
                             <Link
                                 href="/dashboard"

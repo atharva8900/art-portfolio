@@ -25,7 +25,7 @@ export async function sendDiscordNotification(message: DiscordMessage) {
             body: JSON.stringify({
                 ...message,
                 username: 'Commission Alert Bot',
-                avatar_url: 'https://atharvasherlekar.com/logo.png', // Fallback to logo
+                avatar_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://atharvasherlekar.com'}/logo.png`, // Fallback to logo
             }),
         });
 
