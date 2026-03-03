@@ -1269,7 +1269,7 @@ export default function CommissionForm() {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                            className="bg-background border border-foreground/10 rounded-2xl md:rounded-3xl w-full max-w-6xl h-[96dvh] md:max-h-[90vh] md:h-auto overflow-hidden flex flex-col shadow-2xl relative"
+                            className="bg-background border border-foreground/10 rounded-2xl md:rounded-3xl w-full max-w-6xl h-[96dvh] md:h-[90vh] overflow-hidden flex flex-col shadow-2xl relative"
                         >
                             <div className="flex-none sticky top-0 z-10 bg-background/95 backdrop-blur-sm flex items-center justify-between px-3 md:px-6 py-2 md:py-4 border-b border-foreground/10">
                                 <div>
@@ -1284,7 +1284,7 @@ export default function CommissionForm() {
                                     <X size={20} />
                                 </button>
                             </div>
-                            <div className="flex-1 min-h-0 flex flex-col p-0 md:p-6">
+                            <div className="flex-1 min-h-0 overflow-hidden flex flex-col p-0 md:p-6">
                                 <ArtVisualizer
                                     className="flex-1 min-h-0 flex flex-col h-full"
                                     embedded
