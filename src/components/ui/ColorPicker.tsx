@@ -188,7 +188,7 @@ export function ColorPicker({ color, onChange, presetColors = [] }: ColorPickerP
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 bg-surface border border-foreground/10 rounded-2xl p-4 shadow-2xl z-50 w-[240px] md:w-[280px]"
+                        className="absolute bottom-full mb-3 -left-4 md:left-0 bg-surface border border-foreground/10 rounded-2xl p-4 shadow-2xl z-50 w-[240px] md:w-[280px]"
                     >
                         {/* Saturation/Value Area */}
                         <div

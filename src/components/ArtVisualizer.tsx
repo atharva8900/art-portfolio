@@ -148,7 +148,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
             <div className={`flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-8 h-full lg:h-auto items-start overflow-hidden`}>
                 {/* Preview Area - locked top half on mobile, natural on desktop */}
                 <div className={`lg:col-span-8 w-full shrink-0 h-[45%] lg:h-auto md:min-h-[500px] flex flex-col items-center justify-center relative lg:p-0`}>
-                    <div className={`relative w-full h-full lg:h-auto ${orientation === 'portrait' ? 'lg:aspect-[2/3]' : 'lg:aspect-[3/2]'} lg:max-h-[600px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500`}>
+                    <div className={`relative w-full h-auto lg:h-auto ${orientation === 'portrait' ? 'aspect-[2/3]' : 'aspect-[3/2]'} max-h-full lg:max-h-[600px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500`}>
                         <AnimatePresence mode="wait">
                             {!image ? (
                                 <motion.div
@@ -264,7 +264,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                     <div className="flex justify-center pt-3 pb-1 lg:hidden">
                         <div className="w-10 h-1 rounded-full bg-foreground/20" />
                     </div>
-                    <div className="p-4 lg:p-6 pb-20 lg:pb-6 space-y-5">
+                    <div className="p-4 lg:p-6 pb-28 lg:pb-6 space-y-5">
                         <div className="flex items-center gap-3 text-accent border-b border-foreground/5 pb-3">
                             <Settings2 size={16} />
                             <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
