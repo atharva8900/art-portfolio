@@ -1262,6 +1262,7 @@ export default function CommissionForm() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[5000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
+                        onWheel={(e) => e.stopPropagation()}
                         onClick={(e) => { if (e.target === e.currentTarget) setShowFrameModal(false); }}
                     >
                         <motion.div

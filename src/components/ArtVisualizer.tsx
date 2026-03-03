@@ -311,7 +311,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
                     </div>
                     {/* Scrollable controls area */}
-                    <div className="flex-1 overflow-y-scroll overscroll-contain custom-scrollbar p-4 lg:p-6 space-y-5">
+                    <div className="flex-1 overflow-y-scroll overscroll-contain custom-scrollbar p-4 lg:p-6 space-y-5" onWheel={(e) => e.stopPropagation()}>
 
                         {!forcedSize && (
                             <div className="space-y-3">
