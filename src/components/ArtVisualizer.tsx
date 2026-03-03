@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Upload,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { ColorPicker } from './ui/ColorPicker';
+import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 
 type FrameStyle = 'minimal-black' | 'classic-wood' | 'premium-gold' | 'sleek-white';
 type PortraitSize = 'A5' | 'A4' | 'A3';
@@ -63,9 +64,11 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
     const [frameWidth, setFrameWidth] = useState(initialConfig?.frameWidth || 20);
     const [frameItState, setFrameItState] = useState<'idle' | 'capturing' | 'done'>('idle');
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isImageTransformed, setIsImageTransformed] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const previewRef = useRef<HTMLDivElement>(null);
+    const transformRef = useRef<ReactZoomPanPinchRef>(null);
 
     // Re-sync state if the initialConfig or forcedSize changes from parent form
     useEffect(() => {
@@ -95,8 +98,14 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
     const resetImage = () => {
         setImage(null);
+        setIsImageTransformed(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
+
+    const resetImageTransform = useCallback(() => {
+        transformRef.current?.resetTransform();
+        setIsImageTransformed(false);
+    }, []);
 
     const getFrameStyles = () => {
         switch (frameStyle) {
@@ -250,17 +259,48 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             className="w-full h-full relative transition-all duration-300 shadow-inner flex items-center justify-center"
                                             style={{ padding: `${mattingSize}px`, backgroundColor: mattingColor }}
                                         >
-                                            {/* The "Artwork" with Graphite Filter */}
-                                            <div className="w-full h-full relative overflow-hidden shadow-sm">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img
-                                                    src={image}
-                                                    alt="Portrait preview"
-                                                    className="w-full h-full object-cover"
-                                                    style={{ filter: 'grayscale(100%) contrast(1.15) brightness(1.05)' }}
-                                                />
+                                            {/* The "Artwork" — zoomable/pannable */}
+                                            <div className="w-full h-full relative overflow-hidden shadow-sm touch-none">
+                                                <TransformWrapper
+                                                    ref={transformRef}
+                                                    initialScale={1}
+                                                    minScale={0.5}
+                                                    maxScale={5}
+                                                    centerOnInit
+                                                    onTransformed={(_, state) => {
+                                                        setIsImageTransformed(
+                                                            state.scale !== 1 || state.positionX !== 0 || state.positionY !== 0
+                                                        );
+                                                    }}
+                                                    wheel={{ step: 0.1 }}
+                                                    pinch={{ step: 5 }}
+                                                >
+                                                    <TransformComponent
+                                                        wrapperStyle={{ width: '100%', height: '100%' }}
+                                                        contentStyle={{ width: '100%', height: '100%' }}
+                                                    >
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={image}
+                                                            alt="Portrait preview"
+                                                            className="w-full h-full object-cover select-none"
+                                                            style={{ filter: 'grayscale(100%) contrast(1.15) brightness(1.05)' }}
+                                                            draggable={false}
+                                                        />
+                                                    </TransformComponent>
+                                                </TransformWrapper>
                                                 {/* Graphite Texture Overlay */}
                                                 <div className="absolute inset-0 bg-repeat opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper-fibers.png")' }} />
+                                                {/* Reset zoom hint / button */}
+                                                {isImageTransformed && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={resetImageTransform}
+                                                        className="absolute bottom-2 right-2 z-20 text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-full bg-black/60 text-white/80 hover:bg-black/80 transition-all"
+                                                    >
+                                                        Reset
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
