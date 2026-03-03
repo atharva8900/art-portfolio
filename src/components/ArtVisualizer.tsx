@@ -277,12 +277,12 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         </AnimatePresence>
                     </div>
 
-                    {/* Config summary badge — always shown when image uploaded */}
+                    {/* Config summary badge — desktop only, below the preview */}
                     {image && (
                         <motion.div
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-wrap gap-2 justify-center w-full px-2"
+                            className="hidden lg:flex flex-wrap gap-2 justify-center w-full px-2"
                         >
                             {[
                                 { label: 'Size', value: size },
@@ -405,7 +405,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                 className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
                             />
 
-                            {/* Matting Color */}
+                            {/* Matting Color swatches */}
                             <div className="flex flex-wrap gap-2">
                                 {['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f'].map((c) => (
                                     <button
@@ -417,12 +417,6 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                         title={c}
                                     />
                                 ))}
-                                {/* Custom Color Picker */}
-                                <ColorPicker
-                                    color={mattingColor}
-                                    onChange={setMattingColor}
-                                    presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
-                                />
                             </div>
                         </div>
 
@@ -442,6 +436,15 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                             />
                         </div>
 
+                    </div>
+
+                    {/* Color Picker sits OUTSIDE overflow-y-auto to prevent stacking context from blocking fixed popup */}
+                    <div className="px-4 lg:px-6 pb-2">
+                        <ColorPicker
+                            color={mattingColor}
+                            onChange={setMattingColor}
+                            presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
+                        />
                     </div>
 
                     {/* CTA — sticky at the bottom of the sidebar */}
