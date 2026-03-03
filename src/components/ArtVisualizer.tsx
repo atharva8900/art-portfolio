@@ -177,9 +177,9 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                 </div>
             )}
 
-            <div id="visualizer-container" className={`flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-8 h-full lg:h-auto items-start overflow-hidden bg-background`}>
+            <div id="visualizer-container" className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-8 h-full lg:h-auto lg:max-h-[85vh] items-start overflow-hidden bg-background">
                 {/* Preview Area - locked top half on mobile, natural on desktop */}
-                <div className={`lg:col-span-8 w-full shrink-0 h-[45%] lg:h-auto md:min-h-[500px] flex flex-col items-center justify-center relative lg:p-0 bg-surface/50`}>
+                <div className="lg:col-span-8 w-full shrink-0 h-[45%] lg:h-auto flex flex-col items-center justify-center gap-4 relative bg-surface/50 lg:overflow-y-auto lg:max-h-[85vh] lg:py-8 lg:px-4">
                     {/* Fullscreen Toggle Button */}
                     <button
                         onClick={toggleFullscreen}
@@ -189,7 +189,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         {isFullscreen ? <Minimize size={20} /> : <Expand size={20} />}
                     </button>
 
-                    <div className={`relative w-full h-auto lg:h-auto ${orientation === 'portrait' ? 'aspect-[2/3]' : 'aspect-[3/2]'} max-h-full lg:max-h-[600px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500`}>
+                    <div className={`relative w-full h-auto ${orientation === 'portrait' ? 'aspect-[2/3] lg:max-h-[500px]' : 'aspect-[3/2] lg:max-h-[420px]'} max-h-full rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500`}>
                         <AnimatePresence mode="wait">
                             {!image ? (
                                 <motion.div
@@ -277,12 +277,12 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         </AnimatePresence>
                     </div>
 
-                    {/* Config summary badge — shown after image uploaded — Hidden on mobile to save space */}
+                    {/* Config summary badge — always shown when image uploaded */}
                     {image && (
                         <motion.div
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="hidden md:flex flex-wrap gap-2 justify-center mt-4"
+                            className="flex flex-wrap gap-2 justify-center w-full px-2"
                         >
                             {[
                                 { label: 'Size', value: size },
@@ -300,12 +300,13 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                 </div>
 
                 {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
-                <div className="lg:col-span-4 flex-1 h-full lg:h-auto min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl overflow-y-auto lg:self-start shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm custom-scrollbar">
+                <div className="lg:col-span-4 flex-1 h-full lg:h-[85vh] min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl lg:self-start shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm flex flex-col">
                     {/* Pill handle — mobile only */}
                     <div className="flex justify-center pt-3 pb-1 lg:hidden">
                         <div className="w-10 h-1 rounded-full bg-foreground/20" />
                     </div>
-                    <div className="p-4 lg:p-6 pb-6 space-y-5">
+                    {/* Scrollable controls area */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 space-y-5">
                         <div className="flex items-center gap-3 text-accent border-b border-foreground/5 pb-3">
                             <Settings2 size={16} />
                             <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
@@ -441,30 +442,31 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                             />
                         </div>
 
-                        {/* CTA */}
-                        <div className="pt-2 border-t border-foreground/5">
-                            <button
-                                type="button"
-                                onClick={handleFrameIt}
-                                className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
-                                    ? 'bg-emerald-500 text-white'
-                                    : frameItState === 'capturing'
-                                        ? 'bg-accent/60 text-background cursor-wait'
-                                        : 'bg-accent text-background hover:opacity-90'
-                                    }`}
-                            >
-                                {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
-                            </button>
-                            {embedded ? (
-                                <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                                    Your frame preferences will be included with your order
-                                </p>
-                            ) : (
-                                <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                                    Your frame preferences will be sent with your commission request
-                                </p>
-                            )}
-                        </div>
+                    </div>
+
+                    {/* CTA — sticky at the bottom of the sidebar */}
+                    <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
+                        <button
+                            type="button"
+                            onClick={handleFrameIt}
+                            className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
+                                ? 'bg-emerald-500 text-white'
+                                : frameItState === 'capturing'
+                                    ? 'bg-accent/60 text-background cursor-wait'
+                                    : 'bg-accent text-background hover:opacity-90'
+                                }`}
+                        >
+                            {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
+                        </button>
+                        {embedded ? (
+                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                                Your frame preferences will be included with your order
+                            </p>
+                        ) : (
+                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                                Your frame preferences will be sent with your commission request
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

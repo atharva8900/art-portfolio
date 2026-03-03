@@ -191,8 +191,9 @@ export function ColorPicker({ color, onChange, presetColors = [] }: ColorPickerP
                         transition={{ duration: 0.2 }}
                         className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:absolute md:inset-auto md:bottom-full md:mb-3 md:left-0 md:translate-y-0 bg-surface border border-foreground/10 rounded-3xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[9999] w-auto max-w-[320px] mx-auto md:mx-0 md:w-[280px]"
                     >
-                        {/* Mobile Backdrop */}
-                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10 md:hidden" onClick={() => setIsOpen(false)} />
+                        {/* Mobile Backdrop - no blur so frame is visible while picking */}
+                        <div className="fixed inset-0 bg-black/40 -z-10 md:hidden" onClick={() => setIsOpen(false)} />
+
                         {/* Saturation/Value Area */}
                         <div
                             ref={satValAreaRef}
