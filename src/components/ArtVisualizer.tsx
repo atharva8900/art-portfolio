@@ -418,6 +418,12 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                         title={c}
                                     />
                                 ))}
+                                {/* Custom Color Picker — sits in the same row as swatches */}
+                                <ColorPicker
+                                    color={mattingColor}
+                                    onChange={setMattingColor}
+                                    presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
+                                />
                             </div>
                         </div>
 
@@ -439,14 +445,6 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
                     </div>
 
-                    {/* Color Picker sits OUTSIDE overflow-y-auto to prevent stacking context from blocking fixed popup */}
-                    <div className="px-4 lg:px-6 pb-2">
-                        <ColorPicker
-                            color={mattingColor}
-                            onChange={setMattingColor}
-                            presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
-                        />
-                    </div>
 
                     {/* CTA — sticky at the bottom of the sidebar */}
                     <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
