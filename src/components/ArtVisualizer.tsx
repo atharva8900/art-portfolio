@@ -305,12 +305,13 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                     <div className="flex justify-center pt-3 pb-1 lg:hidden">
                         <div className="w-10 h-1 rounded-full bg-foreground/20" />
                     </div>
+                    {/* Sticky header — not part of the scroll area */}
+                    <div className="flex items-center gap-3 text-accent border-b border-foreground/5 px-4 lg:px-6 py-3">
+                        <Settings2 size={16} />
+                        <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
+                    </div>
                     {/* Scrollable controls area */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 space-y-5">
-                        <div className="flex items-center gap-3 text-accent border-b border-foreground/5 pb-3">
-                            <Settings2 size={16} />
-                            <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
-                        </div>
+                    <div className="flex-1 overflow-y-scroll overscroll-contain custom-scrollbar p-4 lg:p-6 space-y-5">
 
                         {!forcedSize && (
                             <div className="space-y-3">
