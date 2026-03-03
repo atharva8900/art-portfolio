@@ -2,7 +2,16 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Maximize2, Frame, Settings2, Trash2, LayoutTemplate } from 'lucide-react';
+import {
+    Upload,
+    Maximize2,
+    Frame,
+    Settings2,
+    Trash2,
+    LayoutTemplate,
+    Expand,
+    Minimize
+} from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { ColorPicker } from './ui/ColorPicker';
 
@@ -53,6 +62,8 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
     const [mattingColor, setMattingColor] = useState(initialConfig?.mattingColor || '#f5f5f4');
     const [frameWidth, setFrameWidth] = useState(initialConfig?.frameWidth || 20);
     const [frameItState, setFrameItState] = useState<'idle' | 'capturing' | 'done'>('idle');
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const previewRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +113,27 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
         }
     };
 
+    const toggleFullscreen = () => {
+        const element = document.getElementById('visualizer-container');
+        if (!element) return;
+
+        if (!document.fullscreenElement) {
+            element.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
     const handleFrameIt = async () => {
         let frameSnapshot: string | null = null;
         if (image && previewRef.current) {
@@ -145,9 +177,18 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                 </div>
             )}
 
-            <div className={`flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-8 h-full lg:h-auto items-start overflow-hidden`}>
+            <div id="visualizer-container" className={`flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-8 h-full lg:h-auto items-start overflow-hidden bg-background`}>
                 {/* Preview Area - locked top half on mobile, natural on desktop */}
-                <div className={`lg:col-span-8 w-full shrink-0 h-[45%] lg:h-auto md:min-h-[500px] flex flex-col items-center justify-center relative lg:p-0`}>
+                <div className={`lg:col-span-8 w-full shrink-0 h-[45%] lg:h-auto md:min-h-[500px] flex flex-col items-center justify-center relative lg:p-0 bg-surface/50`}>
+                    {/* Fullscreen Toggle Button */}
+                    <button
+                        onClick={toggleFullscreen}
+                        className="absolute top-4 left-4 z-30 p-3 rounded-xl bg-background/80 backdrop-blur-md border border-foreground/10 text-foreground/60 shadow-lg active:scale-95 transition-all lg:hidden"
+                        title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                    >
+                        {isFullscreen ? <Minimize size={20} /> : <Expand size={20} />}
+                    </button>
+
                     <div className={`relative w-full h-auto lg:h-auto ${orientation === 'portrait' ? 'aspect-[2/3]' : 'aspect-[3/2]'} max-h-full lg:max-h-[600px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500`}>
                         <AnimatePresence mode="wait">
                             {!image ? (
@@ -241,7 +282,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         <motion.div
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="hidden md:flex flex-wrap gap-2 justify-center"
+                            className="hidden md:flex flex-wrap gap-2 justify-center mt-4"
                         >
                             {[
                                 { label: 'Size', value: size },
@@ -259,12 +300,12 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                 </div>
 
                 {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
-                <div className="lg:col-span-4 flex-1 min-h-[50vh] bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl overflow-y-auto lg:self-start shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm custom-scrollbar">
+                <div className="lg:col-span-4 flex-1 h-full lg:h-auto min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl overflow-y-auto lg:self-start shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm custom-scrollbar">
                     {/* Pill handle — mobile only */}
                     <div className="flex justify-center pt-3 pb-1 lg:hidden">
                         <div className="w-10 h-1 rounded-full bg-foreground/20" />
                     </div>
-                    <div className="p-4 lg:p-6 pb-28 lg:pb-6 space-y-5">
+                    <div className="p-4 lg:p-6 pb-6 space-y-5">
                         <div className="flex items-center gap-3 text-accent border-b border-foreground/5 pb-3">
                             <Settings2 size={16} />
                             <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
@@ -399,31 +440,31 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                 className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
                             />
                         </div>
-                    </div>
 
-                    {/* CTA */}
-                    <div className="pt-4 border-t border-foreground/5">
-                        <button
-                            type="button"
-                            onClick={handleFrameIt}
-                            className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
-                                ? 'bg-emerald-500 text-white'
-                                : frameItState === 'capturing'
-                                    ? 'bg-accent/60 text-background cursor-wait'
-                                    : 'bg-accent text-background hover:opacity-90'
-                                }`}
-                        >
-                            {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
-                        </button>
-                        {embedded ? (
-                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                                Your frame preferences will be included with your order
-                            </p>
-                        ) : (
-                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                                Your frame preferences will be sent with your commission request
-                            </p>
-                        )}
+                        {/* CTA */}
+                        <div className="pt-2 border-t border-foreground/5">
+                            <button
+                                type="button"
+                                onClick={handleFrameIt}
+                                className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
+                                    ? 'bg-emerald-500 text-white'
+                                    : frameItState === 'capturing'
+                                        ? 'bg-accent/60 text-background cursor-wait'
+                                        : 'bg-accent text-background hover:opacity-90'
+                                    }`}
+                            >
+                                {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
+                            </button>
+                            {embedded ? (
+                                <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                                    Your frame preferences will be included with your order
+                                </p>
+                            ) : (
+                                <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                                    Your frame preferences will be sent with your commission request
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
