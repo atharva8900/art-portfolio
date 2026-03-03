@@ -2,16 +2,19 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Maximize2, Frame, Settings2, Trash2 } from 'lucide-react';
+import { Upload, Maximize2, Frame, Settings2, Trash2, LayoutTemplate } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
+import { ColorPicker } from './ui/ColorPicker';
 
 type FrameStyle = 'minimal-black' | 'classic-wood' | 'premium-gold' | 'sleek-white';
 type PortraitSize = 'A5' | 'A4' | 'A3';
+type Orientation = 'portrait' | 'landscape';
 
 const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=1000&auto=format&fit=crop";
 
 export interface FrameConfig {
     size: PortraitSize;
+    orientation: Orientation;
     frameStyle: FrameStyle;
     mattingColor: string;
     mattingSize: number;
@@ -44,6 +47,7 @@ interface ArtVisualizerProps {
 const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt, className = '' }: ArtVisualizerProps) => {
     const [image, setImage] = useState<string | null>(initialConfig?.image || null);
     const [size, setSize] = useState<PortraitSize>(initialConfig?.size || forcedSize || 'A4');
+    const [orientation, setOrientation] = useState<Orientation>(initialConfig?.orientation || 'portrait');
     const [frameStyle, setFrameStyle] = useState<FrameStyle>(initialConfig?.frameStyle || 'minimal-black');
     const [mattingSize, setMattingSize] = useState(initialConfig?.mattingSize || 40);
     const [mattingColor, setMattingColor] = useState(initialConfig?.mattingColor || '#f5f5f4');
@@ -56,6 +60,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
     useEffect(() => {
         if (initialConfig) {
             setSize(initialConfig.size);
+            setOrientation(initialConfig.orientation || 'portrait');
             setFrameStyle(initialConfig.frameStyle);
             setMattingSize(initialConfig.mattingSize);
             setMattingColor(initialConfig.mattingColor);
@@ -119,7 +124,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                 console.warn('Frame snapshot failed, falling back to raw image', err);
             }
         }
-        const config: FrameConfig = { size, frameStyle, mattingColor, mattingSize, frameWidth, image, frameSnapshot };
+        const config: FrameConfig = { size, orientation, frameStyle, mattingColor, mattingSize, frameWidth, image, frameSnapshot };
         if (onFrameIt) {
             onFrameIt(config);
         }
@@ -143,7 +148,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
             <div className={`flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-8 h-full lg:h-auto items-start overflow-hidden`}>
                 {/* Preview Area - locked top half on mobile, natural on desktop */}
                 <div className={`lg:col-span-8 w-full shrink-0 h-[45%] lg:h-auto md:min-h-[500px] flex flex-col items-center justify-center relative lg:p-0`}>
-                    <div className="relative w-full h-full lg:h-auto lg:aspect-[4/3] lg:max-h-[600px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500">
+                    <div className={`relative w-full h-full lg:h-auto ${orientation === 'portrait' ? 'lg:aspect-[2/3]' : 'lg:aspect-[3/2]'} lg:max-h-[600px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500`}>
                         <AnimatePresence mode="wait">
                             {!image ? (
                                 <motion.div
@@ -189,10 +194,10 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="relative flex items-center justify-center"
                                     style={{
-                                        height: '85%',
-                                        width: 'auto',
+                                        height: orientation === 'portrait' ? '85%' : 'auto',
+                                        width: orientation === 'landscape' ? '85%' : 'auto',
                                         minWidth: '200px',
-                                        aspectRatio: '3/4',
+                                        aspectRatio: orientation === 'portrait' ? '2/3' : '3/2',
                                     }}
                                 >
                                     <div
@@ -240,6 +245,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         >
                             {[
                                 { label: 'Size', value: size },
+                                { label: 'Orientation', value: orientation },
                                 { label: 'Frame', value: FRAME_STYLE_NAMES[frameStyle] },
                                 { label: 'Frame Width', value: `${frameWidth}px` },
                                 { label: 'Matting', value: `${mattingSize}px` },
@@ -253,7 +259,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                 </div>
 
                 {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
-                <div className="lg:col-span-4 flex-1 min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl overflow-y-auto lg:self-start shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm">
+                <div className="lg:col-span-4 flex-1 min-h-[50vh] bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl overflow-y-auto lg:self-start shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm custom-scrollbar">
                     {/* Pill handle — mobile only */}
                     <div className="flex justify-center pt-3 pb-1 lg:hidden">
                         <div className="w-10 h-1 rounded-full bg-foreground/20" />
@@ -264,7 +270,6 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                             <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
                         </div>
 
-                        {/* Size Selection - Hidden if forcedSize is provided */}
                         {!forcedSize && (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
@@ -288,6 +293,29 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                 </div>
                             </div>
                         )}
+
+                        {/* Orientation Selection */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <LayoutTemplate size={16} className="text-foreground/40" />
+                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Orientation</label>
+                            </div>
+                            <div className="flex gap-2">
+                                {(['portrait', 'landscape'] as Orientation[]).map((o) => (
+                                    <button
+                                        key={o}
+                                        type="button"
+                                        onClick={() => setOrientation(o)}
+                                        className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${orientation === o
+                                            ? 'bg-foreground text-background border-foreground active:scale-95'
+                                            : 'border-foreground/10 text-foreground/40 hover:border-foreground/30 hover:text-foreground'
+                                            }`}
+                                    >
+                                        {o}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         {/* Frame Style Selection */}
                         <div className="space-y-3">
@@ -337,21 +365,21 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
                             {/* Matting Color */}
                             <div className="flex flex-wrap gap-2">
-                                {['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f'].map((color) => (
+                                {['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f'].map((c) => (
                                     <button
-                                        key={color}
+                                        key={c}
                                         type="button"
-                                        onClick={() => setMattingColor(color)}
-                                        className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${mattingColor === color ? 'border-accent scale-110' : 'border-transparent'}`}
-                                        style={{ backgroundColor: color }}
-                                        title={color}
+                                        onClick={() => setMattingColor(c)}
+                                        className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${mattingColor === c ? 'border-accent scale-110' : 'border-transparent'}`}
+                                        style={{ backgroundColor: c }}
+                                        title={c}
                                     />
                                 ))}
-                                <input
-                                    type="color"
-                                    value={mattingColor}
-                                    onChange={(e) => setMattingColor(e.target.value)}
-                                    className="w-7 h-7 rounded-full overflow-hidden cursor-pointer border-2 border-foreground/10 p-0 bg-transparent"
+                                {/* Custom Color Picker */}
+                                <ColorPicker
+                                    color={mattingColor}
+                                    onChange={setMattingColor}
+                                    presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
                                 />
                             </div>
                         </div>
