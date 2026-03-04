@@ -35,13 +35,6 @@ export interface FrameConfig {
     frameSnapshot?: string | null;
 }
 
-const FRAME_STYLE_NAMES: Record<FrameStyle, string> = {
-    'minimal-black': 'Ink Black',
-    'classic-wood': 'Oak Wood',
-    'premium-gold': 'Vintage Gold',
-    'sleek-white': 'Cloud White',
-};
-
 interface ArtVisualizerProps {
     /** When true, renders as a compact embedded view (no section wrapper, no outer heading) */
     embedded?: boolean;
