@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Lock, RefreshCcw, Check, X, DollarSign, ExternalLink, ChevronDown, ChevronUp, Copy } from 'lucide-react';
+import { Loader2, Lock, RefreshCcw, Check, X, DollarSign, ExternalLink, ChevronDown, ChevronUp, Copy, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession, signOut } from 'next-auth/react';
@@ -28,6 +28,8 @@ interface CommissionData {
     base_price?: number;
     extras_total?: number;
     payout_details?: string;
+    is_self_referral_flag?: boolean;
+    flag_reason?: string | null;
 }
 
 interface GroupedReferrals {
@@ -145,21 +147,14 @@ export default function AdminPayoutsPage() {
                     </div>
                 );
             }
-            if (details.type === 'paypal') {
-                return (
-                    <div className="flex flex-col gap-1">
-                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">PayPal Email</span>
-                        <span className="text-blue-400 font-mono text-xs">{details.email}</span>
-                    </div>
-                );
-            }
+
             if (details.type === 'bank') {
                 return (
                     <div className="flex flex-col gap-1">
                         <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Bank Transfer</span>
                         <div className="flex flex-col">
                             <span className="text-white font-mono text-xs">{details.account}</span>
-                            <span className="text-neutral-400 text-[10px]">{details.ifsc} • {details.bankName || 'Unknown Bank'}</span>
+                            <span className="text-neutral-400 text-[10px]">{details.ifsc} • {details.name || 'Unknown'}</span>
                         </div>
                     </div>
                 );
@@ -175,7 +170,7 @@ export default function AdminPayoutsPage() {
         try {
             const details = JSON.parse(detailsJson);
             if (details.type === 'upi') return details.vpa;
-            if (details.type === 'paypal') return details.email;
+
             if (details.type === 'bank') return `${details.account} ${details.ifsc}`;
             return detailsJson;
         } catch {
@@ -318,6 +313,12 @@ export default function AdminPayoutsPage() {
                                                                             <td className="py-4 pr-4 text-sm text-foreground">
                                                                                 <div>{c.client_name}</div>
                                                                                 <div className="text-xs text-neutral-500">{c.client_email}</div>
+                                                                                {c.is_self_referral_flag && (
+                                                                                    <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full border border-orange-400/20 w-fit" title={c.flag_reason || 'Potential Self-Referral'}>
+                                                                                        <AlertTriangle size={10} />
+                                                                                        SELF-REFERRAL FLAG
+                                                                                    </div>
+                                                                                )}
                                                                             </td>
                                                                             <td className="py-4 pr-4 text-sm text-neutral-400">
                                                                                 {new Date(c.submitted_at).toLocaleDateString('en-GB')}

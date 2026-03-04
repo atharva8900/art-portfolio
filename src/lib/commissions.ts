@@ -41,6 +41,9 @@ export interface CommissionData {
     shipping_cost?: number;
     final_payment_link_id?: string;
     final_payment_link_url?: string;
+    // Safety Flags
+    is_self_referral_flag?: boolean;
+    flag_reason?: string | null;
 }
 
 // Get all commissions

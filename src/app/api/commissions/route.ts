@@ -128,6 +128,8 @@ export async function POST(request: NextRequest) {
         let referralInfo = null;
         let commissionEligible = false; // Whether referrer earns commission
         let justExpired = false; // Track if link just expired on this submission
+        let isSelfReferralFlag = false;
+        let flagReason = null;
 
         // Referral Logic with Multi-Layer Anti-Abuse Protection
         if (referral_code) {
@@ -183,6 +185,12 @@ export async function POST(request: NextRequest) {
                     // Referrer only earns if under cap
                     // BUYER GETS NO DISCOUNT (Per new Referral System Rules)
                     commissionEligible = !(await hasReachedCommissionCap(referral_code));
+
+                    // LAYER 5: IP Match Flagging (Anti-Self-Referral)
+                    if (referralInfo.ip_hash === ipHash) {
+                        isSelfReferralFlag = true;
+                        flagReason = 'IP Match (Client IP matches Referrer creation IP)';
+                    }
 
                     // Increment count BEFORE checking expiration
                     await incrementReferralCount(referral_code, email, ipHash);
@@ -563,7 +571,9 @@ export async function POST(request: NextRequest) {
                 frame_image: frame_image,
                 razorpay_order_id: razorpay_order_id,
                 razorpay_payment_id: razorpay_payment_id,
-                payment_status: isWaitlist ? 'reservation_paid' : 'pending'
+                payment_status: isWaitlist ? 'reservation_paid' : 'pending',
+                is_self_referral_flag: isSelfReferralFlag,
+                flag_reason: flagReason
             });
         } catch (storageError) {
             console.error('Failed to save commission data:', storageError);

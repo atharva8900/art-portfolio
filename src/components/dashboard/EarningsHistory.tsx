@@ -20,12 +20,11 @@ interface EarningsHistoryProps {
 
 export default function EarningsHistory({ history, onPayoutRequested }: EarningsHistoryProps) {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [payoutMethod, setPayoutMethod] = useState<'upi' | 'bank' | 'paypal'>('upi');
+    const [payoutMethod, setPayoutMethod] = useState<'upi' | 'bank'>('upi');
     const [upiId, setUpiId] = useState('');
     const [bankAccount, setBankAccount] = useState('');
     const [bankIfsc, setBankIfsc] = useState('');
     const [bankName, setBankName] = useState('');
-    const [paypalEmail, setPaypalEmail] = useState('');
     const [isRequesting, setIsRequesting] = useState<boolean | 'success'>(false);
     const [showPayoutModal, setShowPayoutModal] = useState(false);
 
@@ -55,12 +54,9 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
         if (payoutMethod === 'upi') {
             if (!upiId) return;
             finalDetails = JSON.stringify({ type: 'upi', vpa: upiId });
-        } else if (payoutMethod === 'bank') {
+        } else {
             if (!bankAccount || !bankIfsc || !bankName) return;
             finalDetails = JSON.stringify({ type: 'bank', account: bankAccount, ifsc: bankIfsc, name: bankName });
-        } else {
-            if (!paypalEmail || !paypalEmail.includes('@')) return;
-            finalDetails = JSON.stringify({ type: 'paypal', email: paypalEmail });
         }
 
         setIsRequesting(true);
@@ -87,7 +83,6 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
             setBankAccount('');
             setBankIfsc('');
             setBankName('');
-            setPaypalEmail('');
 
         } catch (error: unknown) {
             console.error('Payout Request Failed:', error);
@@ -188,7 +183,6 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                             </div>
                             <div className="flex justify-between items-center text-xs text-foreground/40 border-t border-foreground/5 pt-3 mt-1">
                                 <span>Code: <span className="font-mono text-foreground/60">{item.code_used}</span></span>
-                                {/* Payout Eligible Indicator for Mobile */}
                                 {item.status === 'completed' && item.payout_status === 'unpaid' && item.amount > 0 && (
                                     <span className="text-accent flex items-center gap-1">
                                         Payout Available
@@ -215,6 +209,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                 <p className="text-foreground/60 text-sm mb-6 max-w-xs mx-auto">
                                     Your request has been sent to the admin. You will receive an email confirmation shortly.
                                 </p>
+                                <p className="text-[10px] text-neutral-500 mb-6">Note: Payouts are currently processed for Indian bank accounts and UPI only.</p>
                                 <button
                                     onClick={() => {
                                         setShowPayoutModal(false);
@@ -263,6 +258,10 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                 )}
 
                                 <div className="mb-6 space-y-4">
+                                    <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg mb-4">
+                                        <p className="text-xs text-accent font-medium">Notice: Payouts are available for Indian bank accounts and UPI only.</p>
+                                    </div>
+
                                     <div>
                                         <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Payout Method</label>
                                         <div className="flex gap-2">
@@ -271,9 +270,6 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                             </button>
                                             <button onClick={() => setPayoutMethod('bank')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'bank' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
                                                 Bank
-                                            </button>
-                                            <button onClick={() => setPayoutMethod('paypal')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'paypal' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
-                                                PayPal
                                             </button>
                                         </div>
                                     </div>
@@ -302,14 +298,6 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                             </div>
                                         </div>
                                     )}
-
-                                    {payoutMethod === 'paypal' && (
-                                        <div>
-                                            <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">PayPal Email Address</label>
-                                            <input type="email" value={paypalEmail} onChange={e => setPaypalEmail(e.target.value)} placeholder="yourname@example.com" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
-                                            <p className="text-[10px] text-neutral-500 mt-1">Note: Used for international payouts.</p>
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div className="flex gap-3">
@@ -321,7 +309,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                     </button>
                                     <button
                                         onClick={handlePayoutRequest}
-                                        disabled={!!isRequesting || selectedIds.length === 0 || (payoutMethod === 'upi' ? !upiId.trim() : (payoutMethod === 'bank' ? (!bankAccount.trim() || !bankIfsc.trim() || !bankName.trim()) : !paypalEmail.trim() || !paypalEmail.includes('@')))}
+                                        disabled={!!isRequesting || selectedIds.length === 0 || (payoutMethod === 'upi' ? !upiId.trim() : (!bankAccount.trim() || !bankIfsc.trim() || !bankName.trim()))}
                                         className="flex-1 py-3 bg-accent hover:bg-foreground text-background rounded font-bold uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
                                         {isRequesting === true ? <Loader2 className="animate-spin" size={20} /> : 'Submit Request'}
