@@ -98,6 +98,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
     const resetImageTransform = useCallback(() => {
         transformRef.current?.resetTransform();
+        transformRef.current?.centerView(1);
         setIsImageTransformed(false);
     }, []);
 
@@ -261,7 +262,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                     minScale={1}
                                                     maxScale={5}
                                                     centerOnInit
-                                                    limitToBounds={false}
+                                                    limitToBounds={true}
                                                     onTransformed={(_, state) => {
                                                         setIsImageTransformed(
                                                             state.scale !== 1 || state.positionX !== 0 || state.positionY !== 0
@@ -272,14 +273,20 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 >
                                                     <TransformComponent
                                                         wrapperStyle={{ width: '100%', height: '100%' }}
-                                                        contentStyle={{ width: '100%', height: '100%' }}
+                                                        contentStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
                                                     >
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={image}
                                                             alt="Portrait preview"
-                                                            className="w-full h-full object-cover select-none"
-                                                            style={{ filter: 'grayscale(100%) contrast(1.15) brightness(1.05)' }}
+                                                            className="select-none block"
+                                                            style={{
+                                                                filter: 'grayscale(100%) contrast(1.15) brightness(1.05)',
+                                                                minWidth: '100%',
+                                                                minHeight: '100%',
+                                                                width: 'auto',
+                                                                height: 'auto',
+                                                            }}
                                                             draggable={false}
                                                         />
                                                     </TransformComponent>
