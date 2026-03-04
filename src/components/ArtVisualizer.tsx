@@ -133,6 +133,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
     const resetImageTransform = useCallback(() => {
         transformRef.current?.resetTransform();
+        transformRef.current?.centerView(1);
         setIsImageTransformed(false);
     }, []);
 
@@ -217,7 +218,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
             <div id="visualizer-container" className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-8 h-full items-stretch overflow-hidden bg-background">
                 {/* Preview Area - locked top half on mobile, natural on desktop */}
-                <div className="lg:col-span-8 w-full shrink-0 h-[45%] lg:h-full flex flex-col items-center justify-center gap-4 relative bg-surface/50 lg:overflow-y-auto lg:py-8 lg:px-4">
+                <div className="lg:col-span-8 w-full shrink-0 flex-grow min-h-[45%] lg:h-full flex flex-col items-center justify-center gap-4 relative bg-surface/50 lg:overflow-y-auto lg:py-8 lg:px-4">
                     {/* Fullscreen Toggle Button */}
                     <button
                         onClick={toggleFullscreen}
@@ -227,7 +228,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         {isFullscreen ? <Minimize size={20} /> : <Expand size={20} />}
                     </button>
 
-                    <div className={`relative w-full h-auto ${orientation === 'portrait' ? 'aspect-[2/3] lg:max-h-[500px]' : 'aspect-[3/2] lg:max-h-[420px]'} max-h-full rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500`}>
+                    <div className={`relative w-full h-auto flex-grow flex items-center justify-center ${orientation === 'portrait' ? 'aspect-[2/3] lg:max-h-[500px]' : 'aspect-[3/2] lg:max-h-[420px]'} max-h-full rounded-2xl lg:rounded-3xl overflow-hidden p-3 lg:p-8 bg-surface transition-all duration-500`}>
                         <AnimatePresence mode="wait">
                             {!image ? (
                                 <motion.div
@@ -291,7 +292,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             {/* The "Artwork" — zoomable/pannable */}
                                             <div ref={previewAreaRef} className="w-full h-full relative overflow-hidden shadow-sm touch-none">
                                                 <TransformWrapper
-                                                    key={`${orientation}-${mattingSize}-${wrapperSize.w}-${wrapperSize.h}-${contentW}-${contentH}`}
+                                                    key={`${orientation}-${image}`}
                                                     ref={transformRef}
                                                     initialScale={1}
                                                     minScale={1}
