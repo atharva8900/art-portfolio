@@ -88,13 +88,15 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
         const imgAspect = imgSize.w / imgSize.h;
 
         if (imgAspect > wrapperAspect) {
-            // Image is wider than container
-            contentH = Math.ceil(wrapperSize.h);
-            contentW = Math.ceil(wrapperSize.h * imgAspect);
-        } else {
-            // Image is taller than container
+            // Image is wider than frame (landscape art in square/portrait frame)
+            // Fit to Width, Height will have bars
             contentW = Math.ceil(wrapperSize.w);
             contentH = Math.ceil(wrapperSize.w / imgAspect);
+        } else {
+            // Image is taller than frame (portrait art in square/landscape frame)
+            // Fit to Height, Width will have bars
+            contentH = Math.ceil(wrapperSize.h);
+            contentW = Math.ceil(wrapperSize.h * imgAspect);
         }
     }
 
@@ -333,7 +335,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                                 filter: 'grayscale(100%) contrast(1.15) brightness(1.05)',
                                                                 width: typeof contentW === 'number' ? `${contentW}px` : '100%',
                                                                 height: typeof contentH === 'number' ? `${contentH}px` : '100%',
-                                                                objectFit: 'cover'
+                                                                objectFit: 'contain'
                                                             }}
                                                             onLoad={(e) => setImgSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
                                                             draggable={false}
