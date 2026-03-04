@@ -10,7 +10,8 @@ import {
     Trash2,
     LayoutTemplate,
     Expand,
-    Minimize
+    Minimize,
+    RefreshCcw
 } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { ColorPicker } from './ui/ColorPicker';
@@ -264,9 +265,10 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 <TransformWrapper
                                                     ref={transformRef}
                                                     initialScale={1}
-                                                    minScale={0.5}
+                                                    minScale={1}
                                                     maxScale={5}
                                                     centerOnInit
+                                                    limitToBounds={true}
                                                     onTransformed={(_, state) => {
                                                         setIsImageTransformed(
                                                             state.scale !== 1 || state.positionX !== 0 || state.positionY !== 0
@@ -277,13 +279,13 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 >
                                                     <TransformComponent
                                                         wrapperStyle={{ width: '100%', height: '100%' }}
-                                                        contentStyle={{ width: '100%', height: '100%' }}
+                                                        contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                     >
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={image}
                                                             alt="Portrait preview"
-                                                            className="w-full h-full object-cover select-none"
+                                                            className="max-w-none min-w-full min-h-full object-cover select-none"
                                                             style={{ filter: 'grayscale(100%) contrast(1.15) brightness(1.05)' }}
                                                             draggable={false}
                                                         />
@@ -291,19 +293,20 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 </TransformWrapper>
                                                 {/* Graphite Texture Overlay */}
                                                 <div className="absolute inset-0 bg-repeat opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper-fibers.png")' }} />
-                                                {/* Reset zoom hint / button */}
-                                                {isImageTransformed && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={resetImageTransform}
-                                                        className="absolute bottom-2 right-2 z-20 text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-full bg-black/60 text-white/80 hover:bg-black/80 transition-all"
-                                                    >
-                                                        Reset
-                                                    </button>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Reset zoom — now outside the frame */}
+                                    {isImageTransformed && (
+                                        <button
+                                            type="button"
+                                            onClick={resetImageTransform}
+                                            className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-20 text-[10px] uppercase tracking-[0.2em] font-bold px-4 py-2 rounded-full bg-foreground text-background shadow-xl hover:bg-accent transition-all flex items-center gap-2 whitespace-nowrap"
+                                        >
+                                            <RefreshCcw size={12} /> Reset View
+                                        </button>
+                                    )}
 
                                     <button
                                         onClick={resetImage}
@@ -316,6 +319,15 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                             )}
                         </AnimatePresence>
                     </div>
+
+                    {/* Interaction Hint */}
+                    {image && (
+                        <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex items-center gap-4 py-2 border-t border-foreground/5 w-full justify-center">
+                            <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
+                            <span className="w-1 h-1 rounded-full bg-foreground/20" />
+                            <span className="flex items-center gap-1.5"><Maximize2 size={12} /> Drag to Reposition</span>
+                        </div>
+                    )}
 
                     {/* Config summary badge — desktop only, below the preview */}
                     {image && (
@@ -512,7 +524,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 
     if (embedded) {
