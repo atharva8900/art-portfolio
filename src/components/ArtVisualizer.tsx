@@ -258,9 +258,10 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 <TransformWrapper
                                                     ref={transformRef}
                                                     initialScale={1}
-                                                    minScale={0.5}
+                                                    minScale={1}
                                                     maxScale={5}
                                                     centerOnInit
+                                                    limitToBounds={false}
                                                     onTransformed={(_, state) => {
                                                         setIsImageTransformed(
                                                             state.scale !== 1 || state.positionX !== 0 || state.positionY !== 0
@@ -285,16 +286,6 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 </TransformWrapper>
                                                 {/* Graphite Texture Overlay */}
                                                 <div className="absolute inset-0 bg-repeat opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper-fibers.png")' }} />
-                                                {/* Reset zoom hint / button */}
-                                                {isImageTransformed && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={resetImageTransform}
-                                                        className="absolute bottom-2 right-2 z-20 text-[9px] uppercase tracking-widest font-bold px-2 py-1 rounded-full bg-black/60 text-white/80 hover:bg-black/80 transition-all"
-                                                    >
-                                                        Reset
-                                                    </button>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
