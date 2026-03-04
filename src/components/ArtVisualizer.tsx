@@ -132,8 +132,8 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
     };
 
     const resetImageTransform = useCallback(() => {
-        transformRef.current?.resetTransform();
-        transformRef.current?.centerView(1);
+        transformRef.current?.resetTransform(0);
+        transformRef.current?.centerView(1, 0);
         setIsImageTransformed(false);
     }, []);
 
@@ -298,11 +298,10 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                     minScale={1}
                                                     maxScale={5}
                                                     centerOnInit
-                                                    limitToBounds={true}
+                                                    limitToBounds={false}
                                                     onTransformed={(_, state) => {
-                                                        setIsImageTransformed(
-                                                            state.scale !== 1 || state.positionX !== 0 || state.positionY !== 0
-                                                        );
+                                                        const isTransformed = state.scale !== 1 || Math.abs(state.positionX) > 1 || Math.abs(state.positionY) > 1;
+                                                        setIsImageTransformed(isTransformed);
                                                     }}
                                                     wheel={{ step: 0.1 }}
                                                     pinch={{ step: 5 }}
@@ -332,45 +331,51 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 </TransformWrapper>
                                                 {/* Graphite Texture Overlay */}
                                                 <div className="absolute inset-0 bg-repeat opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper-fibers.png")' }} />
-
-                                                {/* Interaction Hint & Reset Controls - now absolute to prevent squishing */}
-                                                {image && (
-                                                    <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 w-full z-30 pointer-events-none">
-                                                        <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex flex-wrap items-center gap-4 justify-center px-4 drop-shadow-sm">
-                                                            <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
-                                                            <span className="hidden sm:block w-1 h-1 rounded-full bg-foreground/20" />
-                                                            <span className="flex items-center gap-1.5"><Maximize2 size={12} /> Drag to Reposition</span>
-                                                        </div>
-                                                        {isImageTransformed && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    resetImageTransform();
-                                                                }}
-                                                                className="pointer-events-auto text-[10px] uppercase tracking-[0.2em] font-bold px-5 py-2.5 rounded-full bg-foreground text-background shadow-2xl hover:bg-accent hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95 border border-background/10"
-                                                                title="Reset View"
-                                                            >
-                                                                <RefreshCcw size={12} /> Reset View
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <button
-                                        onClick={resetImage}
-                                        className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
-                                        title="Clear image"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    {/* Action Buttons - outside the frame boundary to prevent overlap */}
+                                    <div className="absolute -bottom-4 -right-4 flex flex-col items-end gap-2 z-40">
+                                        {isImageTransformed && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    resetImageTransform();
+                                                }}
+                                                className="text-[10px] uppercase tracking-[0.2em] font-bold px-5 py-2.5 rounded-full bg-foreground text-background shadow-2xl hover:bg-accent hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95 border border-background/10"
+                                                title="Reset View"
+                                            >
+                                                <RefreshCcw size={12} /> Reset View
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                resetImage();
+                                            }}
+                                            className="bg-red-500 text-white p-2.5 rounded-full shadow-lg hover:bg-red-600 transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                                            title="Clear image"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
+
+                    {/* Interaction Hint - Back to stable Footer area below frame */}
+                    {image && (
+                        <div className="flex flex-col items-center py-4 w-full h-[60px] shrink-0">
+                            <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex flex-wrap items-center gap-4 justify-center px-4">
+                                <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
+                                <span className="hidden sm:block w-1 h-1 rounded-full bg-foreground/20" />
+                                <span className="flex items-center gap-1.5"><Maximize2 size={12} /> Drag to Reposition</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
