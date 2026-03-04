@@ -292,7 +292,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             {/* The "Artwork" — zoomable/pannable */}
                                             <div ref={previewAreaRef} className="w-full h-full relative overflow-hidden shadow-sm touch-none">
                                                 <TransformWrapper
-                                                    key={`${orientation}-${image}-${contentW}-${contentH}`}
+                                                    key={`${orientation}-${image}-${wrapperSize.w}-${wrapperSize.h}`}
                                                     ref={transformRef}
                                                     initialScale={1}
                                                     minScale={1}
@@ -332,32 +332,32 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 </TransformWrapper>
                                                 {/* Graphite Texture Overlay */}
                                                 <div className="absolute inset-0 bg-repeat opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper-fibers.png")' }} />
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                        {/* Interaction Hint & Reset Controls - now absolute to prevent squishing */}
-                                        {image && (
-                                            <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 w-full z-30 pointer-events-none">
-                                                <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex flex-wrap items-center gap-4 justify-center px-4 drop-shadow-sm">
-                                                    <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
-                                                    <span className="hidden sm:block w-1 h-1 rounded-full bg-foreground/20" />
-                                                    <span className="flex items-center gap-1.5"><Maximize2 size={12} /> Drag to Reposition</span>
-                                                </div>
-                                                {isImageTransformed && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            resetImageTransform();
-                                                        }}
-                                                        className="pointer-events-auto text-[10px] uppercase tracking-[0.2em] font-bold px-5 py-2.5 rounded-full bg-foreground text-background shadow-2xl hover:bg-accent hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95 border border-background/10"
-                                                    >
-                                                        <RefreshCcw size={12} /> Reset View
-                                                    </button>
+                                                {/* Interaction Hint & Reset Controls - now absolute to prevent squishing */}
+                                                {image && (
+                                                    <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 w-full z-30 pointer-events-none">
+                                                        <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex flex-wrap items-center gap-4 justify-center px-4 drop-shadow-sm">
+                                                            <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
+                                                            <span className="hidden sm:block w-1 h-1 rounded-full bg-foreground/20" />
+                                                            <span className="flex items-center gap-1.5"><Maximize2 size={12} /> Drag to Reposition</span>
+                                                        </div>
+                                                        {isImageTransformed && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    resetImageTransform();
+                                                                }}
+                                                                className="pointer-events-auto text-[10px] uppercase tracking-[0.2em] font-bold px-5 py-2.5 rounded-full bg-foreground text-background shadow-2xl hover:bg-accent hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95 border border-background/10"
+                                                                title="Reset View"
+                                                            >
+                                                                <RefreshCcw size={12} /> Reset View
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
 
                                     <button
@@ -369,195 +369,195 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                     </button>
                                 </motion.div>
                             )}
-                    </AnimatePresence>
+                        </AnimatePresence>
+                    </div>
                 </div>
-            </div>
 
-            {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
-            <div className="lg:col-span-4 flex-1 h-full lg:h-full min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl lg:self-stretch shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm flex flex-col">
-                {/* Pill handle — mobile only */}
-                <div className="flex justify-center pt-3 pb-1 lg:hidden">
-                    <div className="w-10 h-1 rounded-full bg-foreground/20" />
-                </div>
-                {/* Sticky header — not part of the scroll area */}
-                <div className="flex items-center gap-3 text-accent border-b border-foreground/5 px-4 lg:px-6 py-3">
-                    <Settings2 size={16} />
-                    <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
-                </div>
-                {/* Scrollable controls area */}
-                <div className="flex-1 overflow-y-scroll overscroll-contain custom-scrollbar p-4 lg:p-6 space-y-5" onWheel={(e) => e.stopPropagation()}>
+                {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
+                <div className="lg:col-span-4 flex-1 h-full lg:h-full min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl lg:self-stretch shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm flex flex-col">
+                    {/* Pill handle — mobile only */}
+                    <div className="flex justify-center pt-3 pb-1 lg:hidden">
+                        <div className="w-10 h-1 rounded-full bg-foreground/20" />
+                    </div>
+                    {/* Sticky header — not part of the scroll area */}
+                    <div className="flex items-center gap-3 text-accent border-b border-foreground/5 px-4 lg:px-6 py-3">
+                        <Settings2 size={16} />
+                        <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
+                    </div>
+                    {/* Scrollable controls area */}
+                    <div className="flex-1 overflow-y-scroll overscroll-contain custom-scrollbar p-4 lg:p-6 space-y-5" onWheel={(e) => e.stopPropagation()}>
 
-                    {!forcedSize && (
+                        {!forcedSize && (
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Maximize2 size={16} className="text-foreground/40" />
+                                    <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Paper Size</label>
+                                </div>
+                                <div className="flex gap-2">
+                                    {(['A5', 'A4', 'A3'] as PortraitSize[]).map((s) => (
+                                        <button
+                                            key={s}
+                                            type="button"
+                                            onClick={() => setSize(s)}
+                                            className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${size === s
+                                                ? 'bg-foreground text-background border-foreground active:scale-95'
+                                                : 'border-foreground/10 text-foreground/40 hover:border-foreground/30 hover:text-foreground'
+                                                }`}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Orientation Selection */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2">
-                                <Maximize2 size={16} className="text-foreground/40" />
-                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Paper Size</label>
+                                <LayoutTemplate size={16} className="text-foreground/40" />
+                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Orientation</label>
                             </div>
                             <div className="flex gap-2">
-                                {(['A5', 'A4', 'A3'] as PortraitSize[]).map((s) => (
+                                {(['portrait', 'landscape'] as Orientation[]).map((o) => (
                                     <button
-                                        key={s}
+                                        key={o}
                                         type="button"
-                                        onClick={() => setSize(s)}
-                                        className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${size === s
+                                        onClick={() => setOrientation(o)}
+                                        className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${orientation === o
                                             ? 'bg-foreground text-background border-foreground active:scale-95'
                                             : 'border-foreground/10 text-foreground/40 hover:border-foreground/30 hover:text-foreground'
                                             }`}
                                     >
-                                        {s}
+                                        {o}
                                     </button>
                                 ))}
                             </div>
                         </div>
-                    )}
 
-                    {/* Orientation Selection */}
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <LayoutTemplate size={16} className="text-foreground/40" />
-                            <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Orientation</label>
+                        {/* Frame Style Selection */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <Frame size={16} className="text-foreground/40" />
+                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Frame Style</label>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                {[
+                                    { id: 'minimal-black', name: 'Ink Black', color: 'bg-zinc-900' },
+                                    { id: 'classic-wood', name: 'Oak Wood', color: 'bg-[#5D4037]' },
+                                    { id: 'premium-gold', name: 'Vintage Gold', color: 'bg-[#D4AF37]' },
+                                    { id: 'sleek-white', name: 'Cloud White', color: 'bg-stone-100 border border-black/5' },
+                                ].map((style) => (
+                                    <button
+                                        key={style.id}
+                                        type="button"
+                                        onClick={() => setFrameStyle(style.id as FrameStyle)}
+                                        className={`p-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${frameStyle === style.id
+                                            ? 'border-accent bg-accent/5 active:scale-95'
+                                            : 'border-foreground/10 hover:border-foreground/20'
+                                            }`}
+                                    >
+                                        <div className={`w-4 h-4 rounded-full ${style.color}`} />
+                                        <span className={`text-[10px] font-bold uppercase tracking-tight ${frameStyle === style.id ? 'text-accent' : 'text-foreground/60'}`}>
+                                            {style.name}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex gap-2">
-                            {(['portrait', 'landscape'] as Orientation[]).map((o) => (
-                                <button
-                                    key={o}
-                                    type="button"
-                                    onClick={() => setOrientation(o)}
-                                    className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${orientation === o
-                                        ? 'bg-foreground text-background border-foreground active:scale-95'
-                                        : 'border-foreground/10 text-foreground/40 hover:border-foreground/30 hover:text-foreground'
-                                        }`}
-                                >
-                                    {o}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
 
-                    {/* Frame Style Selection */}
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <Frame size={16} className="text-foreground/40" />
-                            <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Frame Style</label>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            {[
-                                { id: 'minimal-black', name: 'Ink Black', color: 'bg-zinc-900' },
-                                { id: 'classic-wood', name: 'Oak Wood', color: 'bg-[#5D4037]' },
-                                { id: 'premium-gold', name: 'Vintage Gold', color: 'bg-[#D4AF37]' },
-                                { id: 'sleek-white', name: 'Cloud White', color: 'bg-stone-100 border border-black/5' },
-                            ].map((style) => (
-                                <button
-                                    key={style.id}
-                                    type="button"
-                                    onClick={() => setFrameStyle(style.id as FrameStyle)}
-                                    className={`p-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${frameStyle === style.id
-                                        ? 'border-accent bg-accent/5 active:scale-95'
-                                        : 'border-foreground/10 hover:border-foreground/20'
-                                        }`}
-                                >
-                                    <div className={`w-4 h-4 rounded-full ${style.color}`} />
-                                    <span className={`text-[10px] font-bold uppercase tracking-tight ${frameStyle === style.id ? 'text-accent' : 'text-foreground/60'}`}>
-                                        {style.name}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                        {/* Matting Controls */}
+                        <div className="space-y-3 pt-3 border-t border-foreground/5">
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Inner Matting</label>
+                                <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold">{mattingSize}px</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="80"
+                                value={mattingSize}
+                                onChange={(e) => setMattingSize(parseInt(e.target.value))}
+                                className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
+                            />
 
-                    {/* Matting Controls */}
-                    <div className="space-y-3 pt-3 border-t border-foreground/5">
-                        <div className="flex justify-between items-center">
-                            <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Inner Matting</label>
-                            <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold">{mattingSize}px</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="0"
-                            max="80"
-                            value={mattingSize}
-                            onChange={(e) => setMattingSize(parseInt(e.target.value))}
-                            className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
-                        />
-
-                        {/* Matting Color swatches */}
-                        <div className="flex flex-wrap gap-2">
-                            {['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f'].map((c) => (
-                                <button
-                                    key={c}
-                                    type="button"
-                                    onClick={() => setMattingColor(c)}
-                                    className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${mattingColor === c ? 'border-accent scale-110' : 'border-transparent'}`}
-                                    style={{ backgroundColor: c }}
-                                    title={c}
+                            {/* Matting Color swatches */}
+                            <div className="flex flex-wrap gap-2">
+                                {['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f'].map((c) => (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => setMattingColor(c)}
+                                        className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${mattingColor === c ? 'border-accent scale-110' : 'border-transparent'}`}
+                                        style={{ backgroundColor: c }}
+                                        title={c}
+                                    />
+                                ))}
+                                {/* Custom Color Picker — sits in the same row as swatches */}
+                                <ColorPicker
+                                    color={mattingColor}
+                                    onChange={setMattingColor}
+                                    presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
                                 />
-                            ))}
-                            {/* Custom Color Picker — sits in the same row as swatches */}
-                            <ColorPicker
-                                color={mattingColor}
-                                onChange={setMattingColor}
-                                presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
+                            </div>
+                        </div>
+
+                        {/* Frame Width */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Frame Width</label>
+                                <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold">{frameWidth}px</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="5"
+                                max="40"
+                                value={frameWidth}
+                                onChange={(e) => setFrameWidth(parseInt(e.target.value))}
+                                className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
                             />
                         </div>
+
                     </div>
 
-                    {/* Frame Width */}
-                    <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                            <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Frame Width</label>
-                            <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold">{frameWidth}px</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="5"
-                            max="40"
-                            value={frameWidth}
-                            onChange={(e) => setFrameWidth(parseInt(e.target.value))}
-                            className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
-                        />
+
+                    {/* CTA — sticky at the bottom of the sidebar */}
+                    <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
+                        <button
+                            type="button"
+                            onClick={handleFrameIt}
+                            className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
+                                ? 'bg-emerald-500 text-white'
+                                : frameItState === 'capturing'
+                                    ? 'bg-accent/60 text-background cursor-wait'
+                                    : 'bg-accent text-background hover:opacity-90'
+                                }`}
+                        >
+                            {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
+                        </button>
+                        {embedded ? (
+                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                                Your frame preferences will be included with your order
+                            </p>
+                        ) : (
+                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                                Your frame preferences will be sent with your commission request
+                            </p>
+                        )}
                     </div>
-
-                </div>
-
-
-                {/* CTA — sticky at the bottom of the sidebar */}
-                <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
-                    <button
-                        type="button"
-                        onClick={handleFrameIt}
-                        className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
-                            ? 'bg-emerald-500 text-white'
-                            : frameItState === 'capturing'
-                                ? 'bg-accent/60 text-background cursor-wait'
-                                : 'bg-accent text-background hover:opacity-90'
-                            }`}
-                    >
-                        {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
-                    </button>
-                    {embedded ? (
-                        <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                            Your frame preferences will be included with your order
-                        </p>
-                    ) : (
-                        <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                            Your frame preferences will be sent with your commission request
-                        </p>
-                    )}
                 </div>
             </div>
-        </div>
         </div >
     );
 
-if (embedded) {
-    return <div className={`w-full h-full flex flex-col ${className}`}>{content}</div>;
-}
+    if (embedded) {
+        return <div className={`w-full h-full flex flex-col ${className}`}>{content}</div>;
+    }
 
-return (
-    <section id="visualizer" className="py-24 px-6 md:px-12 bg-background relative overflow-hidden">
-        {content}
-    </section>
-);
+    return (
+        <section id="visualizer" className="py-24 px-6 md:px-12 bg-background relative overflow-hidden">
+            {content}
+        </section>
+    );
 };
 
 export default ArtVisualizer;
