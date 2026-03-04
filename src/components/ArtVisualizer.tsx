@@ -88,15 +88,15 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
         const imgAspect = imgSize.w / imgSize.h;
 
         if (imgAspect > wrapperAspect) {
-            // Image is wider than frame (landscape art in square/portrait frame)
-            // Fit to Width, Height will have bars
-            contentW = Math.ceil(wrapperSize.w);
-            contentH = Math.ceil(wrapperSize.w / imgAspect);
-        } else {
-            // Image is taller than frame (portrait art in square/landscape frame)
-            // Fit to Height, Width will have bars
+            // Image is wider than container (landscape art in portrait/square frame)
+            // Fill height, let width overflow (crop sides)
             contentH = Math.ceil(wrapperSize.h);
             contentW = Math.ceil(wrapperSize.h * imgAspect);
+        } else {
+            // Image is taller than container (portrait art in landscape/square frame)
+            // Fill width, let height overflow (crop top/bottom)
+            contentW = Math.ceil(wrapperSize.w);
+            contentH = Math.ceil(wrapperSize.w / imgAspect);
         }
     }
 
@@ -335,7 +335,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                                 filter: 'grayscale(100%) contrast(1.15) brightness(1.05)',
                                                                 width: typeof contentW === 'number' ? `${contentW}px` : '100%',
                                                                 height: typeof contentH === 'number' ? `${contentH}px` : '100%',
-                                                                objectFit: 'contain'
+                                                                objectFit: 'cover'
                                                             }}
                                                             onLoad={(e) => setImgSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
                                                             draggable={false}
