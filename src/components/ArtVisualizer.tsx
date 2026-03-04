@@ -292,13 +292,13 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             {/* The "Artwork" — zoomable/pannable */}
                                             <div ref={previewAreaRef} className="w-full h-full relative overflow-hidden shadow-sm touch-none">
                                                 <TransformWrapper
-                                                    key={`${orientation}-${image}-${wrapperSize.w}-${wrapperSize.h}`}
+                                                    key={`${orientation}-${image}-${wrapperSize.w}-${wrapperSize.h}-${imgSize.w}-${imgSize.h}`}
                                                     ref={transformRef}
                                                     initialScale={1}
                                                     minScale={1}
                                                     maxScale={5}
                                                     centerOnInit
-                                                    limitToBounds={false}
+                                                    limitToBounds={true}
                                                     onTransformed={(_, state) => {
                                                         const isTransformed = state.scale !== 1 || Math.abs(state.positionX) > 1 || Math.abs(state.positionY) > 1;
                                                         setIsImageTransformed(isTransformed);
@@ -335,35 +335,33 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                         </div>
                                     </div>
 
-                                    {/* Action Buttons - outside the frame boundary to prevent overlap */}
-                                    <div className="absolute -bottom-4 -right-4 flex flex-col items-end gap-2 z-40">
-                                        {isImageTransformed && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    resetImageTransform();
-                                                }}
-                                                className="text-[10px] uppercase tracking-[0.2em] font-bold px-5 py-2.5 rounded-full bg-foreground text-background shadow-2xl hover:bg-accent hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95 border border-background/10"
-                                                title="Reset View"
-                                            >
-                                                <RefreshCcw size={12} /> Reset View
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                resetImage();
-                                            }}
-                                            className="bg-red-500 text-white p-2.5 rounded-full shadow-lg hover:bg-red-600 transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
-                                            title="Clear image"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            resetImage();
+                                        }}
+                                        className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-all hover:scale-110 active:scale-95 z-40"
+                                        title="Clear image"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </motion.div>
                             )}
                         </AnimatePresence>
+
+                        {/* Reset View Button - Fixed at bottom right of container */}
+                        {image && isImageTransformed && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    resetImageTransform();
+                                }}
+                                className="absolute bottom-4 right-4 text-[10px] uppercase tracking-[0.2em] font-bold px-6 py-3 rounded-full bg-foreground text-background shadow-2xl hover:bg-accent hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95 border border-background/10 z-50 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                            >
+                                <RefreshCcw size={12} /> Reset View
+                            </button>
+                        )}
                     </div>
 
                     {/* Interaction Hint - Back to stable Footer area below frame */}
