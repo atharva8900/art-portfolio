@@ -137,6 +137,18 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
         setIsImageTransformed(false);
     }, []);
 
+    // Explicitly center the image whenever the container or image metadata changes
+    useEffect(() => {
+        if (wrapperSize.w > 0 && wrapperSize.h > 0 && imgSize.w > 0 && imgSize.h > 0) {
+            // Give the library a tiny frame to digest the new content dimensions
+            const timer = setTimeout(() => {
+                transformRef.current?.centerView(1, 0);
+                setIsImageTransformed(false);
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [wrapperSize.w, wrapperSize.h, imgSize.w, imgSize.h, orientation, image]);
+
     const getFrameStyles = () => {
         switch (frameStyle) {
             case 'minimal-black':
@@ -292,12 +304,11 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             {/* The "Artwork" — zoomable/pannable */}
                                             <div ref={previewAreaRef} className="w-full h-full relative overflow-hidden shadow-sm touch-none">
                                                 <TransformWrapper
-                                                    key={`${orientation}-${image}-${wrapperSize.w}-${wrapperSize.h}-${imgSize.w}-${imgSize.h}`}
+                                                    key={`${orientation}-${image}-${Math.round(wrapperSize.w)}-${Math.round(wrapperSize.h)}-${Math.round(imgSize.w)}-${Math.round(imgSize.h)}`}
                                                     ref={transformRef}
                                                     initialScale={1}
                                                     minScale={1}
                                                     maxScale={5}
-                                                    centerOnInit
                                                     limitToBounds={true}
                                                     onTransformed={(_, state) => {
                                                         const isTransformed = state.scale !== 1 || Math.abs(state.positionX) > 1 || Math.abs(state.positionY) > 1;
@@ -320,8 +331,8 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                             className="select-none block"
                                                             style={{
                                                                 filter: 'grayscale(100%) contrast(1.15) brightness(1.05)',
-                                                                width: '100%',
-                                                                height: '100%',
+                                                                width: typeof contentW === 'number' ? `${contentW}px` : '100%',
+                                                                height: typeof contentH === 'number' ? `${contentH}px` : '100%',
                                                                 objectFit: 'cover'
                                                             }}
                                                             onLoad={(e) => setImgSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
