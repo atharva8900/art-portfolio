@@ -279,14 +279,18 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 >
                                                     <TransformComponent
                                                         wrapperStyle={{ width: '100%', height: '100%' }}
-                                                        contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                        contentStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                     >
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={image}
                                                             alt="Portrait preview"
-                                                            className="max-w-none min-w-full min-h-full object-cover select-none"
-                                                            style={{ filter: 'grayscale(100%) contrast(1.15) brightness(1.05)' }}
+                                                            className="max-w-none min-w-full min-h-full select-none"
+                                                            style={{
+                                                                filter: 'grayscale(100%) contrast(1.15) brightness(1.05)',
+                                                                width: 'auto',
+                                                                height: 'auto'
+                                                            }}
                                                             draggable={false}
                                                         />
                                                     </TransformComponent>
@@ -296,17 +300,6 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Reset zoom — now outside the frame */}
-                                    {isImageTransformed && (
-                                        <button
-                                            type="button"
-                                            onClick={resetImageTransform}
-                                            className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-20 text-[10px] uppercase tracking-[0.2em] font-bold px-4 py-2 rounded-full bg-foreground text-background shadow-xl hover:bg-accent transition-all flex items-center gap-2 whitespace-nowrap"
-                                        >
-                                            <RefreshCcw size={12} /> Reset View
-                                        </button>
-                                    )}
 
                                     <button
                                         onClick={resetImage}
@@ -320,12 +313,23 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         </AnimatePresence>
                     </div>
 
-                    {/* Interaction Hint */}
+                    {/* Interaction Hint & Reset Controls */}
                     {image && (
-                        <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex items-center gap-4 py-2 border-t border-foreground/5 w-full justify-center">
-                            <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
-                            <span className="w-1 h-1 rounded-full bg-foreground/20" />
-                            <span className="flex items-center gap-1.5"><Maximize2 size={12} /> Drag to Reposition</span>
+                        <div className="flex flex-col items-center gap-3 py-4 border-t border-foreground/5 w-full">
+                            <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex flex-wrap items-center gap-4 justify-center px-4">
+                                <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
+                                <span className="hidden sm:block w-1 h-1 rounded-full bg-foreground/20" />
+                                <span className="flex items-center gap-1.5"><Maximize2 size={12} /> Drag to Reposition</span>
+                            </div>
+                            {isImageTransformed && (
+                                <button
+                                    type="button"
+                                    onClick={resetImageTransform}
+                                    className="text-[10px] uppercase tracking-[0.2em] font-bold px-5 py-2.5 rounded-full bg-foreground text-background shadow-xl hover:bg-accent transition-all flex items-center gap-2 whitespace-nowrap active:scale-95"
+                                >
+                                    <RefreshCcw size={12} /> Reset View
+                                </button>
+                            )}
                         </div>
                     )}
 
