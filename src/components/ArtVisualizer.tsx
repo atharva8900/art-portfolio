@@ -138,13 +138,13 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
     }, []);
 
     // Explicitly center the image whenever the container or image metadata changes
+    // This solves the "stuck at 1x" bug by forcing a boundary refresh AFTER the DOM has settled
     useEffect(() => {
         if (wrapperSize.w > 0 && wrapperSize.h > 0 && imgSize.w > 0 && imgSize.h > 0) {
-            // Give the library a tiny frame to digest the new content dimensions
             const timer = setTimeout(() => {
                 transformRef.current?.centerView(1, 0);
                 setIsImageTransformed(false);
-            }, 50);
+            }, 100); // 100ms delay ensures the library "sees" the overflow content properly
             return () => clearTimeout(timer);
         }
     }, [wrapperSize.w, wrapperSize.h, imgSize.w, imgSize.h, orientation, image]);
@@ -346,12 +346,13 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                         </div>
                                     </div>
 
+                                    {/* Delete Button - Back at top-right of the frame */}
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             resetImage();
                                         }}
-                                        className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-all hover:scale-110 active:scale-95 z-40"
+                                        className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-all hover:scale-110 active:scale-95 z-40 bg-red-500"
                                         title="Clear image"
                                     >
                                         <Trash2 size={16} />
@@ -360,7 +361,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                             )}
                         </AnimatePresence>
 
-                        {/* Reset View Button - Fixed at bottom right of container */}
+                        {/* Reset View Button - Fixed at bottom right of the entire visualizer container */}
                         {image && isImageTransformed && (
                             <button
                                 type="button"
@@ -368,7 +369,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                     e.stopPropagation();
                                     resetImageTransform();
                                 }}
-                                className="absolute bottom-4 right-4 text-[10px] uppercase tracking-[0.2em] font-bold px-6 py-3 rounded-full bg-foreground text-background shadow-2xl hover:bg-accent hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95 border border-background/10 z-50 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                                className="absolute bottom-4 right-4 text-[10px] uppercase tracking-[0.2em] font-bold px-6 py-3 rounded-full bg-foreground text-background shadow-2xl hover:bg-accent hover:scale-105 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95 border border-background/10 z-50 animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-auto"
                             >
                                 <RefreshCcw size={12} /> Reset View
                             </button>
