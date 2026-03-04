@@ -199,7 +199,21 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         {isFullscreen ? <Minimize size={20} /> : <Expand size={20} />}
                     </button>
 
-                    <div className={`relative w-full h-auto ${orientation === 'portrait' ? 'aspect-[2/3] lg:max-h-[500px]' : 'aspect-[3/2] lg:max-h-[420px]'} max-h-full rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center p-3 lg:p-8 bg-surface transition-all duration-500`}>
+                    <div className={`relative w-full h-auto ${orientation === 'portrait' ? 'aspect-[2/3] lg:max-h-[600px]' : 'aspect-[3/2] lg:max-h-[420px]'} max-h-full rounded-2xl lg:rounded-3xl overflow-hidden flex flex-col items-center justify-center p-3 lg:p-4 bg-surface transition-all duration-500`}>
+                        {image && (
+                            <div className="hidden lg:flex flex-wrap gap-x-4 gap-y-1 justify-center w-full mb-4 px-2 opacity-60">
+                                {[
+                                    { label: 'Size', value: size },
+                                    { label: 'Orientation', value: orientation },
+                                    { label: 'Frame', value: FRAME_STYLE_NAMES[frameStyle] },
+                                    { label: 'Matting', value: `${mattingSize}px` },
+                                ].map((item) => (
+                                    <span key={item.label} className="text-[9px] uppercase tracking-widest font-bold">
+                                        {item.label}: <span className="text-foreground">{item.value}</span>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                         <AnimatePresence mode="wait">
                             {!image ? (
                                 <motion.div
@@ -265,10 +279,10 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 <TransformWrapper
                                                     ref={transformRef}
                                                     initialScale={1}
-                                                    minScale={1}
+                                                    minScale={0.5}
                                                     maxScale={5}
                                                     centerOnInit
-                                                    limitToBounds={true}
+                                                    limitToBounds={false}
                                                     onTransformed={(_, state) => {
                                                         setIsImageTransformed(
                                                             state.scale !== 1 || state.positionX !== 0 || state.positionY !== 0
@@ -285,11 +299,12 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                         <img
                                                             src={image}
                                                             alt="Portrait preview"
-                                                            className="max-w-none min-w-full min-h-full select-none"
+                                                            className="max-w-none select-none"
                                                             style={{
                                                                 filter: 'grayscale(100%) contrast(1.15) brightness(1.05)',
-                                                                width: 'auto',
-                                                                height: 'auto'
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'contain'
                                                             }}
                                                             draggable={false}
                                                         />
@@ -333,202 +348,184 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         </div>
                     )}
 
-                    {/* Config summary badge — desktop only, below the preview */}
-                    {image && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="hidden lg:flex flex-wrap gap-2 justify-center w-full px-2"
-                        >
-                            {[
-                                { label: 'Size', value: size },
-                                { label: 'Orientation', value: orientation },
-                                { label: 'Frame', value: FRAME_STYLE_NAMES[frameStyle] },
-                                { label: 'Frame Width', value: `${frameWidth}px` },
-                                { label: 'Matting', value: `${mattingSize}px` },
-                            ].map((item) => (
-                                <span key={item.label} className="text-[10px] uppercase tracking-widest font-medium px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-foreground/60">
-                                    {item.label}: <span className="text-foreground/90">{item.value}</span>
-                                </span>
-                            ))}
-                        </motion.div>
-                    )}
                 </div>
 
-                {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
-                <div className="lg:col-span-4 flex-1 h-full lg:h-full min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl lg:self-stretch shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm flex flex-col">
-                    {/* Pill handle — mobile only */}
-                    <div className="flex justify-center pt-3 pb-1 lg:hidden">
-                        <div className="w-10 h-1 rounded-full bg-foreground/20" />
-                    </div>
-                    {/* Sticky header — not part of the scroll area */}
-                    <div className="flex items-center gap-3 text-accent border-b border-foreground/5 px-4 lg:px-6 py-3">
-                        <Settings2 size={16} />
-                        <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
-                    </div>
-                    {/* Scrollable controls area */}
-                    <div className="flex-1 overflow-y-scroll overscroll-contain custom-scrollbar p-4 lg:p-6 space-y-5" onWheel={(e) => e.stopPropagation()}>
+                {/* Interaction Hint & Reset Controls */}
+            </div>
 
-                        {!forcedSize && (
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Maximize2 size={16} className="text-foreground/40" />
-                                    <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Paper Size</label>
-                                </div>
-                                <div className="flex gap-2">
-                                    {(['A5', 'A4', 'A3'] as PortraitSize[]).map((s) => (
-                                        <button
-                                            key={s}
-                                            type="button"
-                                            onClick={() => setSize(s)}
-                                            className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${size === s
-                                                ? 'bg-foreground text-background border-foreground active:scale-95'
-                                                : 'border-foreground/10 text-foreground/40 hover:border-foreground/30 hover:text-foreground'
-                                                }`}
-                                        >
-                                            {s}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+            {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
+            <div className="lg:col-span-4 flex-1 h-full lg:h-full min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl lg:self-stretch shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm flex flex-col">
+                {/* Pill handle — mobile only */}
+                <div className="flex justify-center pt-3 pb-1 lg:hidden">
+                    <div className="w-10 h-1 rounded-full bg-foreground/20" />
+                </div>
+                {/* Sticky header — not part of the scroll area */}
+                <div className="flex items-center gap-3 text-accent border-b border-foreground/5 px-4 lg:px-6 py-3">
+                    <Settings2 size={16} />
+                    <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
+                </div>
+                {/* Scrollable controls area */}
+                <div className="flex-1 overflow-y-scroll overscroll-contain custom-scrollbar p-4 lg:p-6 space-y-5" onWheel={(e) => e.stopPropagation()}>
 
-                        {/* Orientation Selection */}
+                    {!forcedSize && (
                         <div className="space-y-3">
                             <div className="flex items-center gap-2">
-                                <LayoutTemplate size={16} className="text-foreground/40" />
-                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Orientation</label>
+                                <Maximize2 size={16} className="text-foreground/40" />
+                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Paper Size</label>
                             </div>
                             <div className="flex gap-2">
-                                {(['portrait', 'landscape'] as Orientation[]).map((o) => (
+                                {(['A5', 'A4', 'A3'] as PortraitSize[]).map((s) => (
                                     <button
-                                        key={o}
+                                        key={s}
                                         type="button"
-                                        onClick={() => setOrientation(o)}
-                                        className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${orientation === o
+                                        onClick={() => setSize(s)}
+                                        className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${size === s
                                             ? 'bg-foreground text-background border-foreground active:scale-95'
                                             : 'border-foreground/10 text-foreground/40 hover:border-foreground/30 hover:text-foreground'
                                             }`}
                                     >
-                                        {o}
+                                        {s}
                                     </button>
                                 ))}
                             </div>
                         </div>
+                    )}
 
-                        {/* Frame Style Selection */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <Frame size={16} className="text-foreground/40" />
-                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Frame Style</label>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                {[
-                                    { id: 'minimal-black', name: 'Ink Black', color: 'bg-zinc-900' },
-                                    { id: 'classic-wood', name: 'Oak Wood', color: 'bg-[#5D4037]' },
-                                    { id: 'premium-gold', name: 'Vintage Gold', color: 'bg-[#D4AF37]' },
-                                    { id: 'sleek-white', name: 'Cloud White', color: 'bg-stone-100 border border-black/5' },
-                                ].map((style) => (
-                                    <button
-                                        key={style.id}
-                                        type="button"
-                                        onClick={() => setFrameStyle(style.id as FrameStyle)}
-                                        className={`p-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${frameStyle === style.id
-                                            ? 'border-accent bg-accent/5 active:scale-95'
-                                            : 'border-foreground/10 hover:border-foreground/20'
-                                            }`}
-                                    >
-                                        <div className={`w-4 h-4 rounded-full ${style.color}`} />
-                                        <span className={`text-[10px] font-bold uppercase tracking-tight ${frameStyle === style.id ? 'text-accent' : 'text-foreground/60'}`}>
-                                            {style.name}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
+                    {/* Orientation Selection */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <LayoutTemplate size={16} className="text-foreground/40" />
+                            <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Orientation</label>
                         </div>
+                        <div className="flex gap-2">
+                            {(['portrait', 'landscape'] as Orientation[]).map((o) => (
+                                <button
+                                    key={o}
+                                    type="button"
+                                    onClick={() => setOrientation(o)}
+                                    className={`flex-1 py-3 rounded-xl border transition-all duration-200 uppercase font-bold text-xs tracking-tighter ${orientation === o
+                                        ? 'bg-foreground text-background border-foreground active:scale-95'
+                                        : 'border-foreground/10 text-foreground/40 hover:border-foreground/30 hover:text-foreground'
+                                        }`}
+                                >
+                                    {o}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-                        {/* Matting Controls */}
-                        <div className="space-y-3 pt-3 border-t border-foreground/5">
-                            <div className="flex justify-between items-center">
-                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Inner Matting</label>
-                                <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold">{mattingSize}px</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="0"
-                                max="80"
-                                value={mattingSize}
-                                onChange={(e) => setMattingSize(parseInt(e.target.value))}
-                                className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
-                            />
+                    {/* Frame Style Selection */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Frame size={16} className="text-foreground/40" />
+                            <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Frame Style</label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {[
+                                { id: 'minimal-black', name: 'Ink Black', color: 'bg-zinc-900' },
+                                { id: 'classic-wood', name: 'Oak Wood', color: 'bg-[#5D4037]' },
+                                { id: 'premium-gold', name: 'Vintage Gold', color: 'bg-[#D4AF37]' },
+                                { id: 'sleek-white', name: 'Cloud White', color: 'bg-stone-100 border border-black/5' },
+                            ].map((style) => (
+                                <button
+                                    key={style.id}
+                                    type="button"
+                                    onClick={() => setFrameStyle(style.id as FrameStyle)}
+                                    className={`p-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${frameStyle === style.id
+                                        ? 'border-accent bg-accent/5 active:scale-95'
+                                        : 'border-foreground/10 hover:border-foreground/20'
+                                        }`}
+                                >
+                                    <div className={`w-4 h-4 rounded-full ${style.color}`} />
+                                    <span className={`text-[10px] font-bold uppercase tracking-tight ${frameStyle === style.id ? 'text-accent' : 'text-foreground/60'}`}>
+                                        {style.name}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-                            {/* Matting Color swatches */}
-                            <div className="flex flex-wrap gap-2">
-                                {['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f'].map((c) => (
-                                    <button
-                                        key={c}
-                                        type="button"
-                                        onClick={() => setMattingColor(c)}
-                                        className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${mattingColor === c ? 'border-accent scale-110' : 'border-transparent'}`}
-                                        style={{ backgroundColor: c }}
-                                        title={c}
-                                    />
-                                ))}
-                                {/* Custom Color Picker — sits in the same row as swatches */}
-                                <ColorPicker
-                                    color={mattingColor}
-                                    onChange={setMattingColor}
-                                    presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
+                    {/* Matting Controls */}
+                    <div className="space-y-3 pt-3 border-t border-foreground/5">
+                        <div className="flex justify-between items-center">
+                            <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Inner Matting</label>
+                            <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold">{mattingSize}px</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="80"
+                            value={mattingSize}
+                            onChange={(e) => setMattingSize(parseInt(e.target.value))}
+                            className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
+                        />
+
+                        {/* Matting Color swatches */}
+                        <div className="flex flex-wrap gap-2">
+                            {['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f'].map((c) => (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setMattingColor(c)}
+                                    className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${mattingColor === c ? 'border-accent scale-110' : 'border-transparent'}`}
+                                    style={{ backgroundColor: c }}
+                                    title={c}
                                 />
-                            </div>
-                        </div>
-
-                        {/* Frame Width */}
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Frame Width</label>
-                                <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold">{frameWidth}px</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="5"
-                                max="40"
-                                value={frameWidth}
-                                onChange={(e) => setFrameWidth(parseInt(e.target.value))}
-                                className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
+                            ))}
+                            {/* Custom Color Picker — sits in the same row as swatches */}
+                            <ColorPicker
+                                color={mattingColor}
+                                onChange={setMattingColor}
+                                presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
                             />
                         </div>
-
                     </div>
 
-
-                    {/* CTA — sticky at the bottom of the sidebar */}
-                    <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
-                        <button
-                            type="button"
-                            onClick={handleFrameIt}
-                            className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
-                                ? 'bg-emerald-500 text-white'
-                                : frameItState === 'capturing'
-                                    ? 'bg-accent/60 text-background cursor-wait'
-                                    : 'bg-accent text-background hover:opacity-90'
-                                }`}
-                        >
-                            {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
-                        </button>
-                        {embedded ? (
-                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                                Your frame preferences will be included with your order
-                            </p>
-                        ) : (
-                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                                Your frame preferences will be sent with your commission request
-                            </p>
-                        )}
+                    {/* Frame Width */}
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                            <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Frame Width</label>
+                            <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-bold">{frameWidth}px</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="5"
+                            max="40"
+                            value={frameWidth}
+                            onChange={(e) => setFrameWidth(parseInt(e.target.value))}
+                            className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
+                        />
                     </div>
+
+                </div>
+
+
+                {/* CTA — sticky at the bottom of the sidebar */}
+                <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
+                    <button
+                        type="button"
+                        onClick={handleFrameIt}
+                        className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
+                            ? 'bg-emerald-500 text-white'
+                            : frameItState === 'capturing'
+                                ? 'bg-accent/60 text-background cursor-wait'
+                                : 'bg-accent text-background hover:opacity-90'
+                            }`}
+                    >
+                        {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
+                    </button>
+                    {embedded ? (
+                        <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                            Your frame preferences will be included with your order
+                        </p>
+                    ) : (
+                        <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                            Your frame preferences will be sent with your commission request
+                        </p>
+                    )}
                 </div>
             </div>
-        </div >
+        </div>
     );
 
     if (embedded) {
