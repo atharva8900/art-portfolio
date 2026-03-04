@@ -291,6 +291,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             {/* The "Artwork" — zoomable/pannable */}
                                             <div ref={previewAreaRef} className="w-full h-full relative overflow-hidden shadow-sm touch-none">
                                                 <TransformWrapper
+                                                    key={`${orientation}-${mattingSize}-${wrapperSize.w}-${wrapperSize.h}-${contentW}-${contentH}`}
                                                     ref={transformRef}
                                                     initialScale={1}
                                                     minScale={1}
@@ -348,7 +349,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
                     {/* Interaction Hint & Reset Controls */}
                     {image && (
-                        <div className="flex flex-col items-center gap-2 py-3 w-full">
+                        <div className="flex flex-col items-center gap-2 py-3 w-full min-h-[80px] shrink-0">
                             <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex flex-wrap items-center gap-4 justify-center px-4">
                                 <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
                                 <span className="hidden sm:block w-1 h-1 rounded-full bg-foreground/20" />
