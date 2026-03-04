@@ -63,6 +63,41 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
     const fileInputRef = useRef<HTMLInputElement>(null);
     const previewRef = useRef<HTMLDivElement>(null);
     const transformRef = useRef<ReactZoomPanPinchRef>(null);
+    const previewAreaRef = useRef<HTMLDivElement>(null);
+
+    const [wrapperSize, setWrapperSize] = useState({ w: 0, h: 0 });
+    const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
+
+    useEffect(() => {
+        if (!previewAreaRef.current) return;
+        const observer = new ResizeObserver((entries) => {
+            if (entries[0]) {
+                const { width, height } = entries[0].contentRect;
+                setWrapperSize({ w: width, h: height });
+            }
+        });
+        observer.observe(previewAreaRef.current);
+        return () => observer.disconnect();
+    }, []);
+
+    let contentW: string | number = '100%';
+    let contentH: string | number = '100%';
+
+    if (wrapperSize.w > 0 && wrapperSize.h > 0 && imgSize.w > 0 && imgSize.h > 0) {
+        const wrapperAspect = wrapperSize.w / wrapperSize.h;
+        const imgAspect = imgSize.w / imgSize.h;
+
+        if (imgAspect > wrapperAspect) {
+            // Image is wider than container
+            contentH = Math.ceil(wrapperSize.h);
+            contentW = Math.ceil(wrapperSize.h * imgAspect);
+        } else {
+            // Image is taller than container
+            contentW = Math.ceil(wrapperSize.w);
+            contentH = Math.ceil(wrapperSize.w / imgAspect);
+        }
+    }
+
 
     // Re-sync state if the initialConfig or forcedSize changes from parent form
     useEffect(() => {
@@ -98,7 +133,6 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
     const resetImageTransform = useCallback(() => {
         transformRef.current?.resetTransform();
-        transformRef.current?.centerView(1);
         setIsImageTransformed(false);
     }, []);
 
@@ -255,7 +289,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             style={{ padding: `${mattingSize}px`, backgroundColor: mattingColor }}
                                         >
                                             {/* The "Artwork" — zoomable/pannable */}
-                                            <div className="w-full h-full relative overflow-hidden shadow-sm touch-none">
+                                            <div ref={previewAreaRef} className="w-full h-full relative overflow-hidden shadow-sm touch-none">
                                                 <TransformWrapper
                                                     ref={transformRef}
                                                     initialScale={1}
@@ -273,7 +307,10 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                 >
                                                     <TransformComponent
                                                         wrapperStyle={{ width: '100%', height: '100%' }}
-                                                        contentStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
+                                                        contentStyle={{
+                                                            width: typeof contentW === 'number' ? `${contentW}px` : contentW,
+                                                            height: typeof contentH === 'number' ? `${contentH}px` : contentH
+                                                        }}
                                                     >
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
@@ -282,11 +319,11 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                             className="select-none block"
                                                             style={{
                                                                 filter: 'grayscale(100%) contrast(1.15) brightness(1.05)',
-                                                                minWidth: '100%',
-                                                                minHeight: '100%',
-                                                                width: 'auto',
-                                                                height: 'auto',
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'cover'
                                                             }}
+                                                            onLoad={(e) => setImgSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
                                                             draggable={false}
                                                         />
                                                     </TransformComponent>
