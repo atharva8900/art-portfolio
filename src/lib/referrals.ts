@@ -52,6 +52,21 @@ export async function saveReferral(referral: ReferralData): Promise<void> {
     }
 }
 
+// Delete a referral by code
+export async function deleteReferral(code: string): Promise<boolean> {
+    const { error } = await supabaseAdmin
+        .from('referrals')
+        .delete()
+        .eq('code', code);
+
+    if (error) {
+        console.error('Error deleting referral from Supabase:', error);
+        return false;
+    }
+
+    return true;
+}
+
 // Get referral by code
 export async function getReferralByCode(code: string): Promise<ReferralData | null> {
     const { data, error } = await supabaseAdmin

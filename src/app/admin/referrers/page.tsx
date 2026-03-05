@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Copy, Users, Check, Lock, ExternalLink, Calendar } from 'lucide-react';
+import { Loader2, Copy, Users, Check, Lock, ExternalLink, Calendar, Trash2 } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -70,6 +70,25 @@ export default function AdminReferrersPage() {
             setError(err.message || 'Failed to load referrers');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteReferral = async (code: string) => {
+        const confirmDelete = window.confirm(`Are you sure you want to permanently delete affiliate "${code}"? This action cannot be undone.`);
+        if (!confirmDelete) return;
+
+        try {
+            const res = await fetch(`/api/admin/referrers/${code}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) throw new Error('Failed to delete affiliate');
+
+            setReferrers((prev) => prev.filter((r) => r.code !== code));
+            showNotification('Affiliate successfully deleted', 'success');
+        } catch (error) {
+            console.error('Failed to delete affiliate:', error);
+            showNotification('Failed to delete affiliate. Please try again.', 'error');
         }
     };
 
@@ -178,6 +197,7 @@ export default function AdminReferrersPage() {
                                         <th className="py-4 px-4 text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Performance</th>
                                         <th className="py-4 px-4 text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Contact Info</th>
                                         <th className="py-4 px-4 text-[10px] text-neutral-500 uppercase tracking-widest font-bold text-right">Created</th>
+                                        <th className="py-4 px-4 text-[10px] text-neutral-500 uppercase tracking-widest font-bold text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -256,8 +276,27 @@ export default function AdminReferrersPage() {
                                             <td className="py-5 px-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5 text-neutral-400 text-xs text-right">
                                                     <Calendar size={12} />
-                                                    <span>{new Date(ref.created_at).toLocaleDateString()}</span>
+                                                    <span>
+                                                        {(() => {
+                                                            const d = new Date(ref.created_at);
+                                                            const day = String(d.getDate()).padStart(2, '0');
+                                                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                            const year = d.getFullYear();
+                                                            return `${day}/${month}/${year}`;
+                                                        })()}
+                                                    </span>
                                                 </div>
+                                            </td>
+
+                                            {/* Actions */}
+                                            <td className="py-5 px-4 text-center">
+                                                <button
+                                                    onClick={() => handleDeleteReferral(ref.code)}
+                                                    className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-500/20 mx-auto group/btn"
+                                                    title="Delete Affiliate"
+                                                >
+                                                    <Trash2 size={14} className="group-hover/btn:scale-110 transition-transform" />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
