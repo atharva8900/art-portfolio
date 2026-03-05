@@ -547,33 +547,28 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                             />
                         </div>
 
+                        {/* CTA — scroll down to reach it */}
+                        <div className="pt-6 pb-8">
+                            <button
+                                type="button"
+                                onClick={handleFrameIt}
+                                className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
+                                    ? 'bg-emerald-500 text-white'
+                                    : frameItState === 'capturing'
+                                        ? 'bg-accent/60 text-background cursor-wait'
+                                        : 'bg-accent text-background hover:opacity-90'
+                                    }`}
+                            >
+                                {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
+                            </button>
+                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
+                                {embedded ? 'Your frame preferences will be included with your order' : 'Your frame preferences will be sent with your commission request'}
+                            </p>
+                        </div>
+
                     </div>
 
 
-                    {/* CTA — at the bottom of the scrollable content */}
-                    <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
-                        <button
-                            type="button"
-                            onClick={handleFrameIt}
-                            className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
-                                ? 'bg-emerald-500 text-white'
-                                : frameItState === 'capturing'
-                                    ? 'bg-accent/60 text-background cursor-wait'
-                                    : 'bg-accent text-background hover:opacity-90'
-                                }`}
-                        >
-                            {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}
-                        </button>
-                        {embedded ? (
-                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                                Your frame preferences will be included with your order
-                            </p>
-                        ) : (
-                            <p className="text-[10px] text-foreground/40 text-center mt-2 uppercase tracking-widest">
-                                Your frame preferences will be sent with your commission request
-                            </p>
-                        )}
-                    </div>
                 </div>
             </div>
         </div >
