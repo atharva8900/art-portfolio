@@ -1,5 +1,4 @@
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { CommissionData } from './commissions';
 
 export interface InvoiceCommissionData extends CommissionData {
@@ -249,7 +248,7 @@ export const generateInvoice = (commission: InvoiceCommissionData) => {
     }
 
     // --- Payment Status ---
-    let lineY = currentY + 20;
+    const lineY = currentY + 20;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
@@ -268,7 +267,7 @@ export const generateInvoice = (commission: InvoiceCommissionData) => {
     }
 
     // --- Footer ---
-    let footerY = doc.internal.pageSize.getHeight() - 40;
+    const footerY = doc.internal.pageSize.getHeight() - 40;
     if (['finished', 'on_delivery', 'completed'].includes(commission.status)) {
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
