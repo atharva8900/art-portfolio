@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Loader2, ArrowLeft, ExternalLink, CalendarClock, Ban } from 'lucide-react';
+import { Loader2, ArrowLeft, ExternalLink, CalendarClock, Ban, Clock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -35,6 +35,7 @@ export default function ClientDashboardPage() {
     const { status, data: session } = useSession();
     const [loading, setLoading] = useState(true);
     const [commissions, setCommissions] = useState<ClientCommission[]>([]);
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -57,6 +58,12 @@ export default function ClientDashboardPage() {
             setLoading(false);
         }
     };
+
+    const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'finished', 'on_delivery'];
+    const HISTORY_STATUSES = ['completed', 'cancelled', 'rejected'];
+
+    const activeCommissions = commissions.filter(c => ACTIVE_STATUSES.includes(c.status));
+    const historyCommissions = commissions.filter(c => HISTORY_STATUSES.includes(c.status));
 
     const getStatusDisplay = (commission: ClientCommission) => {
         switch (commission.status) {
@@ -193,189 +200,302 @@ export default function ClientDashboardPage() {
                     )}
                 </div>
 
-                {commissions.length === 0 ? (
-                    <div className="text-center py-20 border border-foreground/10 rounded-2xl bg-foreground/5">
-                        <CalendarClock className="mx-auto text-neutral-500 mb-4" size={48} />
-                        <h2 className="text-xl font-medium mb-2">No active commissions</h2>
-                        <p className="text-neutral-400 mb-6">You haven&apos;t requested any custom artwork yet.</p>
-                        <Link
-                            href="/#commission-form"
-                            className="inline-flex items-center px-6 py-3 bg-foreground text-background font-bold rounded-lg hover:opacity-90 transition-all uppercase tracking-wide text-sm"
-                        >
-                            Request a Commission
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="space-y-6">
-                        {commissions.map((commission, idx) => {
-                            const statusDisplay = getStatusDisplay(commission);
-                            const total = (commission.base_price || 0) + (commission.extras_total || 0);
-                            const deposit = Math.ceil(total / 2);
-                            const alreadyPaid = Math.round(total * 0.25);
-                            const remainingDeposit = deposit - alreadyPaid;
+                {/* Tab Navigation */}
+                <div className="flex gap-1 bg-foreground/5 border border-foreground/10 rounded-xl p-1 w-fit">
+                    <button
+                        onClick={() => setActiveTab('active')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'active'
+                            ? 'bg-foreground text-background shadow'
+                            : 'text-neutral-400 hover:text-foreground'
+                            }`}
+                    >
+                        <Clock size={15} />
+                        Active
+                        {activeCommissions.length > 0 && (
+                            <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${activeTab === 'active' ? 'bg-background/20 text-background' : 'bg-foreground/10 text-neutral-300'
+                                }`}>
+                                {activeCommissions.length}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'history'
+                            ? 'bg-foreground text-background shadow'
+                            : 'text-neutral-400 hover:text-foreground'
+                            }`}
+                    >
+                        <CheckCircle size={15} />
+                        History
+                        {historyCommissions.length > 0 && (
+                            <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${activeTab === 'history' ? 'bg-background/20 text-background' : 'bg-foreground/10 text-neutral-300'
+                                }`}>
+                                {historyCommissions.length}
+                            </span>
+                        )}
+                    </button>
+                </div>
 
-                            return (
-                                <motion.div
-                                    key={commission.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: idx * 0.1 }}
-                                    className="border border-foreground/10 rounded-2xl p-6 bg-foreground/5 flex flex-col md:flex-row gap-8"
-                                >
-                                    {/* Left Details */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <span className={`px-3 py-1 text-xs font-semibold rounded-full border border-current ${statusDisplay.color}`}>
-                                                {statusDisplay.text}
-                                            </span>
-                                            <span className="text-sm text-neutral-500">
-                                                ID: {commission.id.slice(0, 8).toUpperCase()}
-                                            </span>
-                                        </div>
+                {activeTab === 'active' ? (
+                    activeCommissions.length === 0 ? (
+                        <div className="text-center py-20 border border-foreground/10 rounded-2xl bg-foreground/5">
+                            <CalendarClock className="mx-auto text-neutral-500 mb-4" size={48} />
+                            <h2 className="text-xl font-medium mb-2">No active commissions</h2>
+                            <p className="text-neutral-400 mb-6">You haven&apos;t requested any custom artwork yet.</p>
+                            <Link
+                                href="/#commission-form"
+                                className="inline-flex items-center px-6 py-3 bg-foreground text-background font-bold rounded-lg hover:opacity-90 transition-all uppercase tracking-wide text-sm"
+                            >
+                                Request a Commission
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {activeCommissions.map((commission, idx) => {
+                                const statusDisplay = getStatusDisplay(commission);
+                                const total = (commission.base_price || 0) + (commission.extras_total || 0);
+                                const deposit = Math.ceil(total / 2);
+                                const alreadyPaid = Math.round(total * 0.25);
+                                const remainingDeposit = deposit - alreadyPaid;
 
-                                        <h3 className="text-xl font-medium text-foreground mb-4">
-                                            {commission.size} Artwork
-                                        </h3>
-
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex justify-between border-b border-foreground/5 pb-2">
-                                                <span className="text-neutral-400">Requested On</span>
-                                                <span className="text-foreground">{new Date(commission.submitted_at).toLocaleDateString('en-GB')}</span>
-                                            </div>
-                                            <div className="flex justify-between border-b border-foreground/5 pb-2">
-                                                <span className="text-neutral-400">Add-ons</span>
-                                                <span className="text-foreground text-right">
-                                                    {commission.extras && commission.extras.length > 0 ? commission.extras.join(', ') : 'None'}
+                                return (
+                                    <motion.div
+                                        key={commission.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.1 }}
+                                        className="border border-foreground/10 rounded-2xl p-6 bg-foreground/5 flex flex-col md:flex-row gap-8"
+                                    >
+                                        {/* Left Details */}
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <span className={`px-3 py-1 text-xs font-semibold rounded-full border border-current ${statusDisplay.color}`}>
+                                                    {statusDisplay.text}
+                                                </span>
+                                                <span className="text-sm text-neutral-500">
+                                                    ID: {commission.id.slice(0, 8).toUpperCase()}
                                                 </span>
                                             </div>
-                                            <div className="flex justify-between pt-2 font-medium">
-                                                <span className="text-neutral-400">Total Price</span>
-                                                <span className="text-foreground font-mono">₹{total}</span>
+
+                                            <h3 className="text-xl font-medium text-foreground mb-4">
+                                                {commission.size} Artwork
+                                            </h3>
+
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between border-b border-foreground/5 pb-2">
+                                                    <span className="text-neutral-400">Requested On</span>
+                                                    <span className="text-foreground">{new Date(commission.submitted_at).toLocaleDateString('en-GB')}</span>
+                                                </div>
+                                                <div className="flex justify-between border-b border-foreground/5 pb-2">
+                                                    <span className="text-neutral-400">Add-ons</span>
+                                                    <span className="text-foreground text-right">
+                                                        {commission.extras && commission.extras.length > 0 ? commission.extras.join(', ') : 'None'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between pt-2 font-medium">
+                                                    <span className="text-neutral-400">Total Price</span>
+                                                    <span className="text-foreground font-mono">₹{total}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* Right Actions */}
-                                    <div className="md:w-72 flex flex-col justify-center border-t md:border-t-0 md:border-l border-foreground/10 pt-6 md:pt-0 md:pl-8">
-                                        {commission.status === 'accepted' && commission.payment_status === 'pending' && commission.razorpay_payment_link_url ? (
-                                            <div className="text-center">
-                                                <p className="text-sm font-medium text-blue-400 mb-2">Deposit Required to Begin</p>
-                                                <p className="text-2xl font-serif text-foreground mb-4">₹{deposit}</p>
-                                                <a
-                                                    href={commission.razorpay_payment_link_url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-accent hover:bg-accent/90 text-background font-bold rounded-lg transition-colors"
-                                                >
-                                                    Pay 50% Deposit <ExternalLink size={18} />
-                                                </a>
-                                                <p className="text-xs text-neutral-500 mt-3 border-t border-neutral-800 pt-3">
-                                                    Securely processed via Razorpay. Your slot is reserved but work will not begin until the deposit is received.
-                                                </p>
-                                            </div>
-                                        ) : commission.status === 'accepted' && commission.payment_status === 'reservation_paid' && commission.razorpay_payment_link_url ? (
-                                            <div className="text-center">
-                                                <p className="text-sm font-medium text-amber-500 mb-2">Waitlist Slot Accepted!</p>
-                                                <p className="text-2xl font-serif text-foreground mb-4">₹{remainingDeposit}</p>
-                                                <a
-                                                    href={commission.razorpay_payment_link_url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-amber-500/20"
-                                                >
-                                                    Pay Remaining 25% <ExternalLink size={18} />
-                                                </a>
-                                                <p className="text-xs text-neutral-500 mt-3 border-t border-neutral-800 pt-3">
-                                                    Your waitlist slot is ready! Please pay the remaining 25% deposit to officially begin the work.
-                                                </p>
-                                            </div>
-                                        ) : commission.status === 'finished' ? (
-                                            <div className="text-center">
-                                                <p className="text-sm font-medium text-pink-400 mb-2">Final Balance Due</p>
-                                                <div className="space-y-1 mb-4">
-                                                    <div className="flex justify-between text-xs text-neutral-400">
-                                                        <span>Remaining 50%</span>
-                                                        <span>₹{total - deposit}</span>
-                                                    </div>
-                                                    <div className="flex justify-between text-xs text-neutral-400">
-                                                        <span>Shipping (DTDC)</span>
-                                                        <span>₹{commission.shipping_cost || 0}</span>
-                                                    </div>
-                                                    <div className="flex justify-between text-lg font-serif text-foreground border-t border-foreground/10 pt-1 mt-1">
-                                                        <span>Total Due</span>
-                                                        <span>₹{(total - deposit) + (commission.shipping_cost || 0)}</span>
-                                                    </div>
-                                                </div>
-                                                {commission.final_payment_link_url ? (
+                                        {/* Right Actions */}
+                                        <div className="md:w-72 flex flex-col justify-center border-t md:border-t-0 md:border-l border-foreground/10 pt-6 md:pt-0 md:pl-8">
+                                            {commission.status === 'accepted' && commission.payment_status === 'pending' && commission.razorpay_payment_link_url ? (
+                                                <div className="text-center">
+                                                    <p className="text-sm font-medium text-blue-400 mb-2">Deposit Required to Begin</p>
+                                                    <p className="text-2xl font-serif text-foreground mb-4">₹{deposit}</p>
                                                     <a
-                                                        href={commission.final_payment_link_url}
+                                                        href={commission.razorpay_payment_link_url}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-pink-500/20"
+                                                        className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-accent hover:bg-accent/90 text-background font-bold rounded-lg transition-colors"
                                                     >
-                                                        Pay Final Balance <ExternalLink size={18} />
+                                                        Pay 50% Deposit <ExternalLink size={18} />
                                                     </a>
-                                                ) : (
-                                                    <p className="text-xs text-neutral-500 italic">
-                                                        I am calculating the final shipping costs and preparing your invoice. You&apos;ll receive a link to pay the balance shortly.
+                                                    <p className="text-xs text-neutral-500 mt-3 border-t border-neutral-800 pt-3">
+                                                        Securely processed via Razorpay. Your slot is reserved but work will not begin until the deposit is received.
                                                     </p>
-                                                )}
-                                                <p className="text-xs text-neutral-500 mt-3 border-t border-neutral-800 pt-3">
-                                                    Artwork will be shipped immediately upon receipt of final payment.
-                                                </p>
-                                            </div>
-                                        ) : isRefundable(commission) ? (
-                                            <div className="flex flex-col h-full justify-center">
-                                                <p className="text-sm text-emerald-400 mb-2 font-medium">Payment Received</p>
-                                                <p className="text-xs text-neutral-400 mb-4">I have received your deposit and work has officially begun!</p>
-                                                <RequestRefundFallback commissionId={commission.id} />
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center h-full text-center">
-                                                {commission.status === 'pending' || commission.status === 'waitlist' ? (
-                                                    <p className="text-neutral-400 text-sm">
-                                                        I am reviewing your request. You will be notified via email when your slot is accepted and a deposit is requested.
+                                                </div>
+                                            ) : commission.status === 'accepted' && commission.payment_status === 'reservation_paid' && commission.razorpay_payment_link_url ? (
+                                                <div className="text-center">
+                                                    <p className="text-sm font-medium text-amber-500 mb-2">Waitlist Slot Accepted!</p>
+                                                    <p className="text-2xl font-serif text-foreground mb-4">₹{remainingDeposit}</p>
+                                                    <a
+                                                        href={commission.razorpay_payment_link_url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-amber-500/20"
+                                                    >
+                                                        Pay Remaining 25% <ExternalLink size={18} />
+                                                    </a>
+                                                    <p className="text-xs text-neutral-500 mt-3 border-t border-neutral-800 pt-3">
+                                                        Your waitlist slot is ready! Please pay the remaining 25% deposit to officially begin the work.
                                                     </p>
-                                                ) : commission.status === 'accepted' && (commission.payment_status === 'pending' || commission.payment_status === 'reservation_paid') && !commission.razorpay_payment_link_url ? (
-                                                    <div className="space-y-2">
-                                                        <p className="text-blue-400 font-medium pb-2 border-b border-foreground/5">
-                                                            Custom Artwork Accepted!
-                                                        </p>
-                                                        <p className="text-neutral-400 text-sm">
-                                                            Your {commission.payment_status === 'reservation_paid' ? 'remaining ' : '50% '}deposit payment link is being prepared. Check back shortly.
-                                                        </p>
+                                                </div>
+                                            ) : commission.status === 'finished' ? (
+                                                <div className="text-center">
+                                                    <p className="text-sm font-medium text-pink-400 mb-2">Final Balance Due</p>
+                                                    <div className="space-y-1 mb-4">
+                                                        <div className="flex justify-between text-xs text-neutral-400">
+                                                            <span>Remaining 50%</span>
+                                                            <span>₹{total - deposit}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-xs text-neutral-400">
+                                                            <span>Shipping (DTDC)</span>
+                                                            <span>₹{commission.shipping_cost || 0}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-lg font-serif text-foreground border-t border-foreground/10 pt-1 mt-1">
+                                                            <span>Total Due</span>
+                                                            <span>₹{(total - deposit) + (commission.shipping_cost || 0)}</span>
+                                                        </div>
                                                     </div>
-                                                ) : commission.status === 'completed' || commission.status === 'on_delivery' ? (
-                                                    <div className="space-y-2">
-                                                        <p className="text-emerald-500 font-medium pb-2 border-b border-foreground/5">
-                                                            {commission.status === 'on_delivery' ? 'Artwork Shipped!' : 'Artwork Completed!'}
+                                                    {commission.final_payment_link_url ? (
+                                                        <a
+                                                            href={commission.final_payment_link_url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-pink-500/20"
+                                                        >
+                                                            Pay Final Balance <ExternalLink size={18} />
+                                                        </a>
+                                                    ) : (
+                                                        <p className="text-xs text-neutral-500 italic">
+                                                            I am calculating the final shipping costs and preparing your invoice. You&apos;ll receive a link to pay the balance shortly.
                                                         </p>
+                                                    )}
+                                                    <p className="text-xs text-neutral-500 mt-3 border-t border-neutral-800 pt-3">
+                                                        Artwork will be shipped immediately upon receipt of final payment.
+                                                    </p>
+                                                </div>
+                                            ) : isRefundable(commission) ? (
+                                                <div className="flex flex-col h-full justify-center">
+                                                    <p className="text-sm text-emerald-400 mb-2 font-medium">Payment Received</p>
+                                                    <p className="text-xs text-neutral-400 mb-4">I have received your deposit and work has officially begun!</p>
+                                                    <RequestRefundFallback commissionId={commission.id} />
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center h-full text-center">
+                                                    {commission.status === 'pending' || commission.status === 'waitlist' ? (
                                                         <p className="text-neutral-400 text-sm">
-                                                            {commission.status === 'on_delivery'
-                                                                ? "Your artwork is on its way! I'll share the tracking details with you shortly via DM/Email. Please let me know once it reaches you!"
-                                                                : 'This commission is now archived. Hope you love your new artwork!'}
+                                                            I am reviewing your request. You will be notified via email when your slot is accepted and a deposit is requested.
                                                         </p>
-                                                    </div>
-                                                ) : commission.status === 'cancelled' ? (
-                                                    <p className="text-neutral-500 font-medium">
-                                                        This commission is cancelled.
-                                                    </p>
-                                                ) : commission.status === 'rejected' ? (
-                                                    <p className="text-red-500 font-medium pb-2 border-b border-foreground/5">
-                                                        Unfortunately, I could not take on this commission right now. I hope we can work together in the future!
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-neutral-400 text-sm">
-                                                        The 48-hour return window has expired. Work is in progress!
-                                                    </p>
+                                                    ) : commission.status === 'accepted' && (commission.payment_status === 'pending' || commission.payment_status === 'reservation_paid') && !commission.razorpay_payment_link_url ? (
+                                                        <div className="space-y-2">
+                                                            <p className="text-blue-400 font-medium pb-2 border-b border-foreground/5">
+                                                                Custom Artwork Accepted!
+                                                            </p>
+                                                            <p className="text-neutral-400 text-sm">
+                                                                Your {commission.payment_status === 'reservation_paid' ? 'remaining ' : '50% '}deposit payment link is being prepared. Check back shortly.
+                                                            </p>
+                                                        </div>
+                                                    ) : commission.status === 'completed' || commission.status === 'on_delivery' ? (
+                                                        <div className="space-y-2">
+                                                            <p className="text-emerald-500 font-medium pb-2 border-b border-foreground/5">
+                                                                {commission.status === 'on_delivery' ? 'Artwork Shipped!' : 'Artwork Completed!'}
+                                                            </p>
+                                                            <p className="text-neutral-400 text-sm">
+                                                                {commission.status === 'on_delivery'
+                                                                    ? "Your artwork is on its way! I'll share the tracking details with you shortly via DM/Email. Please let me know once it reaches you!"
+                                                                    : 'This commission is now archived. Hope you love your new artwork!'}
+                                                            </p>
+                                                        </div>
+                                                    ) : commission.status === 'cancelled' ? (
+                                                        <p className="text-neutral-500 font-medium">
+                                                            This commission is cancelled.
+                                                        </p>
+                                                    ) : commission.status === 'rejected' ? (
+                                                        <p className="text-red-500 font-medium pb-2 border-b border-foreground/5">
+                                                            Unfortunately, I could not take on this commission right now. I hope we can work together in the future!
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-neutral-400 text-sm">
+                                                            The 48-hour return window has expired. Work is in progress!
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    )
+                ) : (
+                    historyCommissions.length === 0 ? (
+                        <div className="text-center py-20 border border-foreground/10 rounded-2xl bg-foreground/5">
+                            <CheckCircle className="mx-auto text-neutral-500 mb-4" size={48} />
+                            <h2 className="text-xl font-medium mb-2">No commission history</h2>
+                            <p className="text-neutral-400">Completed, cancelled, and declined commissions will appear here.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {historyCommissions.map((commission, idx) => {
+                                const statusDisplay = getStatusDisplay(commission);
+                                const total = (commission.base_price || 0) + (commission.extras_total || 0);
+                                return (
+                                    <motion.div
+                                        key={commission.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.1 }}
+                                        className="border border-foreground/10 rounded-2xl p-6 bg-foreground/5 opacity-75 hover:opacity-100 transition-opacity flex flex-col md:flex-row gap-8"
+                                    >
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <span className={`px-3 py-1 text-xs font-semibold rounded-full border border-current ${statusDisplay.color}`}>
+                                                    {statusDisplay.text}
+                                                </span>
+                                                <span className="text-sm text-neutral-500">ID: {commission.id.slice(0, 8).toUpperCase()}</span>
+                                            </div>
+                                            <h3 className="text-xl font-medium text-foreground mb-4">{commission.size} Artwork</h3>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between border-b border-foreground/5 pb-2">
+                                                    <span className="text-neutral-400">Requested On</span>
+                                                    <span className="text-foreground">{new Date(commission.submitted_at).toLocaleDateString('en-GB')}</span>
+                                                </div>
+                                                <div className="flex justify-between border-b border-foreground/5 pb-2">
+                                                    <span className="text-neutral-400">Add-ons</span>
+                                                    <span className="text-foreground text-right">
+                                                        {commission.extras && commission.extras.length > 0 ? commission.extras.join(', ') : 'None'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between pt-2 font-medium">
+                                                    <span className="text-neutral-400">Total Price</span>
+                                                    <span className="text-foreground font-mono">₹{total}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="md:w-72 flex flex-col justify-center border-t md:border-t-0 md:border-l border-foreground/10 pt-6 md:pt-0 md:pl-8">
+                                            <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
+                                                {commission.status === 'completed' && (
+                                                    <>
+                                                        <CheckCircle className="text-purple-500" size={32} />
+                                                        <p className="text-purple-400 font-medium">Artwork Delivered</p>
+                                                        <p className="text-neutral-500 text-sm">Hope you love your new artwork!</p>
+                                                    </>
+                                                )}
+                                                {commission.status === 'cancelled' && (
+                                                    <>
+                                                        <Ban className="text-neutral-500" size={32} />
+                                                        <p className="text-neutral-400 font-medium">Commission Cancelled</p>
+                                                        <p className="text-neutral-500 text-sm">Your refund has been initiated. This typically takes 5–7 business days.</p>
+                                                    </>
+                                                )}
+                                                {commission.status === 'rejected' && (
+                                                    <>
+                                                        <Ban className="text-red-500/60" size={32} />
+                                                        <p className="text-red-400/80 font-medium">Commission Declined</p>
+                                                        <p className="text-neutral-500 text-sm">Unfortunately I could not take on this commission. I hope we can work together in the future!</p>
+                                                    </>
                                                 )}
                                             </div>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    )
                 )}
             </div>
 
