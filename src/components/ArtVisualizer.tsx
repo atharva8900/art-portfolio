@@ -378,9 +378,16 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                         )}
                     </div>
 
-                    {/* Interaction Hint - Back to stable Footer area below frame */}
+                    {/* Compact Mobile Hint */}
                     {image && (
-                        <div className="flex flex-col items-center py-4 w-full h-[60px] shrink-0">
+                        <div className="lg:hidden flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] text-foreground/40 font-bold -mt-2 mb-2">
+                            <Expand size={10} /> Pinch to Zoom
+                        </div>
+                    )}
+
+                    {/* Interaction Hint - Desktop Only / Bulky Footer */}
+                    {image && (
+                        <div className="hidden lg:flex flex-col items-center py-4 w-full h-[60px] shrink-0">
                             <div className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 font-bold flex flex-wrap items-center gap-4 justify-center px-4">
                                 <span className="flex items-center gap-1.5"><Expand size={12} /> Pinch / Scroll to Zoom</span>
                                 <span className="hidden sm:block w-1 h-1 rounded-full bg-foreground/20" />
