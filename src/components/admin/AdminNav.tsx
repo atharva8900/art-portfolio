@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Settings2, List, DollarSign } from 'lucide-react';
+import { LayoutGrid, Settings2, List, DollarSign, Users } from 'lucide-react';
 
 const NAV_ITEMS = [
     { href: '/admin', label: 'Overview', icon: LayoutGrid, exact: true },
     { href: '/admin/availability', label: 'Control', icon: Settings2, exact: false },
     { href: '/admin/commissions', label: 'Commissions', icon: List, exact: false },
     { href: '/admin/payouts', label: 'Payouts', icon: DollarSign, exact: false },
+    { href: '/admin/referrers', label: 'Affiliates', icon: Users, exact: false },
 ];
 
 export default function AdminNav() {

@@ -145,6 +145,26 @@ export async function deleteCommission(id: string): Promise<boolean> {
     return true;
 }
 
+// Remove referral from a commission
+export async function removeReferralFromCommission(id: string): Promise<boolean> {
+    const { error } = await supabaseAdmin
+        .from('commissions')
+        .update({
+            referral_code: null,
+            referrer_info: null,
+            commission_amount: null,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error removing referral from commission in Supabase:', error);
+        return false;
+    }
+
+    return true;
+}
+
 // Update commission payout status
 export async function updateCommissionPayoutStatus(
     id: string,

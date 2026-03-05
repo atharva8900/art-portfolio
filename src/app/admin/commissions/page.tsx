@@ -71,6 +71,7 @@ export default function AdminCommissionsPage() {
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [generatingLinkId, setGeneratingLinkId] = useState<string | null>(null);
+    const [removingReferralId, setRemovingReferralId] = useState<string | null>(null);
     const [commissionToDelete, setCommissionToDelete] = useState<string | null>(null);
     const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const [shippingCosts, setShippingCosts] = useState<Record<string, string>>({});
@@ -236,6 +237,40 @@ export default function AdminCommissionsPage() {
             showNotification(err.message || 'Failed to delete commission', 'error');
         } finally {
             setDeletingId(null);
+        }
+    };
+
+    const handleRemoveReferral = async (commissionId: string) => {
+        if (!confirm('Are you sure you want to disconnect this referral? The referrer will no longer be eligible for commission on this order.')) {
+            return;
+        }
+
+        setRemovingReferralId(commissionId);
+
+        try {
+            const res = await fetch(`/api/admin/commissions/${commissionId}/remove-referral`, {
+                method: 'POST'
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to remove referral');
+            }
+
+            const data = await res.json();
+
+            // Update the local state to reflect the change immediately
+            setCommissions(prev => prev.map(c =>
+                c.id === commissionId ? data.commission : c
+            ));
+
+            showNotification('Referrer disconnected successfully', 'success');
+
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            showNotification(err.message || 'Failed to remove referral', 'error');
+        } finally {
+            setRemovingReferralId(null);
         }
     };
 
@@ -482,11 +517,27 @@ export default function AdminCommissionsPage() {
                                                                                 <p className="text-sm text-foreground">{commission.referrer_info.name}</p>
                                                                                 <p className="text-xs text-neutral-500">{commission.referrer_info.email}</p>
                                                                                 {commission.commission_amount ? (
-                                                                                    <div className="flex justify-between gap-4 mt-2 pt-2 border-t border-foreground/10">
+                                                                                    <div className="flex justify-between gap-4 mt-2 pt-2 border-t border-foreground/10 mb-3">
                                                                                         <span className="text-neutral-400 text-sm">Commission</span>
                                                                                         <span className="font-mono text-accent font-bold text-sm">₹{commission.commission_amount}</span>
                                                                                     </div>
                                                                                 ) : null}
+
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleRemoveReferral(commission.id);
+                                                                                    }}
+                                                                                    disabled={removingReferralId === commission.id}
+                                                                                    className="flex items-center gap-1.5 text-xs text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 px-2.5 py-1.5 rounded transition-colors mt-2 disabled:opacity-50"
+                                                                                >
+                                                                                    {removingReferralId === commission.id ? (
+                                                                                        <Loader2 size={12} className="animate-spin" />
+                                                                                    ) : (
+                                                                                        <X size={12} />
+                                                                                    )}
+                                                                                    Disconnect Referrer
+                                                                                </button>
                                                                             </div>
                                                                         )}
                                                                     </div>
@@ -763,7 +814,24 @@ export default function AdminCommissionsPage() {
                                                                 ) : null}
                                                                 <div className="flex justify-between border-t border-foreground/10 pt-1 font-bold"><span className="text-foreground">Total</span><span className="font-mono text-foreground">₹{(commission.base_price || 0) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span></div>
                                                                 {commission.referrer_info && commission.commission_amount ? (
-                                                                    <div className="flex justify-between border-t border-foreground/10 pt-1 mt-1"><span className="text-accent">Commission</span><span className="font-mono text-accent">₹{commission.commission_amount}</span></div>
+                                                                    <>
+                                                                        <div className="flex justify-between border-t border-foreground/10 pt-1 mt-1 mb-2"><span className="text-accent">Commission</span><span className="font-mono text-accent">₹{commission.commission_amount}</span></div>
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleRemoveReferral(commission.id);
+                                                                            }}
+                                                                            disabled={removingReferralId === commission.id}
+                                                                            className="w-full flex justify-center items-center gap-1.5 text-xs text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 px-2.5 py-1.5 rounded transition-colors disabled:opacity-50"
+                                                                        >
+                                                                            {removingReferralId === commission.id ? (
+                                                                                <Loader2 size={12} className="animate-spin" />
+                                                                            ) : (
+                                                                                <X size={12} />
+                                                                            )}
+                                                                            Disconnect Referrer
+                                                                        </button>
+                                                                    </>
                                                                 ) : null}
                                                             </div>
                                                         )}
