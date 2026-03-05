@@ -232,7 +232,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
             <div id="visualizer-container" className="flex flex-col lg:grid lg:grid-cols-12 gap-0 lg:gap-8 h-full items-stretch overflow-hidden bg-background">
                 {/* Preview Area - locked top half on mobile, natural on desktop */}
-                <div className={`lg:col-span-8 w-full shrink-0 ${isFullscreen ? 'h-[65vh]' : 'h-[42vh]'} lg:h-full flex flex-col items-center justify-center gap-4 relative bg-surface/50 lg:overflow-y-auto lg:py-8 lg:px-4`}>
+                <div className={`lg:col-span-8 w-full shrink-0 ${isFullscreen ? 'h-[48vh]' : 'h-[42vh]'} lg:h-full flex flex-col items-center justify-center gap-4 relative bg-surface/50 lg:overflow-y-auto lg:py-8 lg:px-4`}>
                     {/* Fullscreen Toggle Button */}
                     <button
                         onClick={toggleFullscreen}
@@ -399,7 +399,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                 </div>
 
                 {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
-                <div className={`lg:col-span-4 flex-1 ${isFullscreen ? 'min-h-[35vh]' : 'min-h-[54vh]'} lg:h-full lg:min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl lg:self-stretch shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm flex flex-col`}>
+                <div className="lg:col-span-4 flex-1 lg:h-full lg:min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl lg:self-stretch shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm flex flex-col">
                     {/* Pill handle — mobile only */}
                     <div className="flex justify-center pt-3 pb-1 lg:hidden">
                         <div className="w-10 h-1 rounded-full bg-foreground/20" />
@@ -545,8 +545,8 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                     </div>
 
 
-                    {/* CTA — sticky at the bottom of the sidebar */}
-                    <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
+                    {/* CTA — always visible at the bottom */}
+                    <div className="sticky bottom-0 p-4 lg:p-6 pt-3 border-t border-foreground/5 bg-surface shrink-0">
                         <button
                             type="button"
                             onClick={handleFrameIt}
