@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { getAllReferrals } from '@/lib/referrals';
 import { getServerSession } from 'next-auth/next';
@@ -16,7 +16,7 @@ async function checkAdminAuth() {
     return ALLOWED_EMAILS.includes(session.user.email.toLowerCase());
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         const isAdmin = await checkAdminAuth();
 
