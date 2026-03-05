@@ -545,8 +545,8 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                     </div>
 
 
-                    {/* CTA — always visible at the bottom */}
-                    <div className="sticky bottom-0 p-4 lg:p-6 pt-3 border-t border-foreground/5 bg-surface shrink-0">
+                    {/* CTA — at the bottom of the scrollable content */}
+                    <div className="p-4 lg:p-6 pt-3 border-t border-foreground/5 shrink-0">
                         <button
                             type="button"
                             onClick={handleFrameIt}
