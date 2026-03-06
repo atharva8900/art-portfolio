@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Copy, Users, Check, Lock, ExternalLink, Calendar, Trash2 } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import AdminNav from '@/components/admin/AdminNav';
 
 interface ReferrerData {
@@ -19,7 +19,7 @@ interface ReferrerData {
     used_by_emails: string[];
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com', 'atharvasherlekar@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
 export default function AdminReferrersPage() {
     const router = useRouter();
@@ -29,6 +29,8 @@ export default function AdminReferrersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+    const [affiliateToDelete, setAffiliateToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ message, type });
@@ -73,22 +75,25 @@ export default function AdminReferrersPage() {
         }
     };
 
-    const handleDeleteReferral = async (code: string) => {
-        const confirmDelete = window.confirm(`Are you sure you want to permanently delete affiliate "${code}"? This action cannot be undone.`);
-        if (!confirmDelete) return;
+    const executeDelete = async () => {
+        if (!affiliateToDelete) return;
+        setIsDeleting(true);
 
         try {
-            const res = await fetch(`/api/admin/referrers/${code}`, {
+            const res = await fetch(`/api/admin/referrers/${affiliateToDelete}`, {
                 method: 'DELETE',
             });
 
             if (!res.ok) throw new Error('Failed to delete affiliate');
 
-            setReferrers((prev) => prev.filter((r) => r.code !== code));
+            setReferrers((prev) => prev.filter((r) => r.code !== affiliateToDelete));
             showNotification('Affiliate successfully deleted', 'success');
         } catch (error) {
             console.error('Failed to delete affiliate:', error);
             showNotification('Failed to delete affiliate. Please try again.', 'error');
+        } finally {
+            setIsDeleting(false);
+            setAffiliateToDelete(null);
         }
     };
 
@@ -291,7 +296,7 @@ export default function AdminReferrersPage() {
                                             {/* Actions */}
                                             <td className="py-5 px-4 text-center">
                                                 <button
-                                                    onClick={() => handleDeleteReferral(ref.code)}
+                                                    onClick={() => setAffiliateToDelete(ref.code)}
                                                     className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-500/20 mx-auto group/btn"
                                                     title="Delete Affiliate"
                                                 >
@@ -306,6 +311,56 @@ export default function AdminReferrersPage() {
                     </motion.div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {affiliateToDelete && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6"
+                        >
+                            <div className="space-y-4">
+                                <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center">
+                                    <Trash2 size={24} />
+                                </div>
+                                <h3 className="text-xl font-serif text-white">
+                                    Delete Affiliate
+                                </h3>
+                                <p className="text-neutral-400 text-sm leading-relaxed">
+                                    Are you sure you want to permanently delete affiliate <span className="text-accent font-mono font-bold bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20">{affiliateToDelete}</span>? This action cannot be undone and will permanently remove their records.
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                                <button
+                                    onClick={() => setAffiliateToDelete(null)}
+                                    disabled={isDeleting}
+                                    className="flex-1 px-4 py-3 rounded-full border border-white/10 text-white font-bold text-sm hover:bg-white/5 transition-colors disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={executeDelete}
+                                    disabled={isDeleting}
+                                    className="flex-1 px-4 py-3 rounded-full bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        "Delete"
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Notification Toast */}
             {notification && (
