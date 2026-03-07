@@ -5,9 +5,10 @@ import { signIn } from 'next-auth/react';
 
 interface GoogleSignInButtonProps {
     onSuccess?: () => void;
+    callbackUrl?: string;
 }
 
-export default function GoogleSignInButton({ onSuccess }: GoogleSignInButtonProps) {
+export default function GoogleSignInButton({ onSuccess, callbackUrl = '/' }: GoogleSignInButtonProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -23,13 +24,13 @@ export default function GoogleSignInButton({ onSuccess }: GoogleSignInButtonProp
             // to avoid Google OAuth domain limit issues.
             if (currentOrigin.includes('vercel.app') && !currentOrigin.includes('-vert.')) {
                 console.log('On preview URL, redirecting to production for sign-in...');
-                window.location.href = `${productionUrl}/admin/login`;
+                window.location.href = `${productionUrl}/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
                 return;
             }
 
             console.log('Initiating Google sign-in...');
             const result = await signIn('google', {
-                callbackUrl: '/admin',
+                callbackUrl,
                 redirect: true
             });
 

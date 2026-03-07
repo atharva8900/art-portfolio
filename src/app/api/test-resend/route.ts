@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/email';
 
 export async function GET() {
     try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const data = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
+        const { data, error } = await sendEmail({
             to: 'atharvajs8900@gmail.com', // Developer's email
-            subject: 'Test Email Triggered via NextJS API',
-            html: '<p>This confirms Resend works inside Next.js API route.</p>',
+            subject: 'Test Email Triggered via NextJS API (Gmail SMTP)',
+            html: '<p>This confirms Gmail SMTP works for client automation!</p>',
         });
-        return NextResponse.json({ success: true, data });
+        return NextResponse.json({ success: true, data, error });
     } catch (error) {
         return NextResponse.json({ success: false, error: String(error) });
     }

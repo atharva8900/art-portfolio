@@ -1,15 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
     Loader2, Trash2, Lock, RefreshCcw, Check, X, AlertTriangle, ChevronDown,
-    Phone, Instagram, MapPin, User, Package, Calendar, Copy, ExternalLink
+    Phone, Instagram, MapPin, User, Package, Calendar, Copy, ExternalLink, ImagePlus,
+    Clock, CheckCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession, signOut } from 'next-auth/react';
 import StatusDropdown from '@/components/admin/StatusDropdown';
 import AdminNav from '@/components/admin/AdminNav';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+
 
 interface CommissionData {
     id: string;
@@ -44,9 +48,10 @@ interface CommissionData {
     shipping_cost?: number;
     final_payment_link_id?: string;
     final_payment_link_url?: string;
+    wip_images?: string[];
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com', 'atharvasherlekar@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
 const STATUS_OPTIONS = [
     { value: 'pending', label: 'Pending Review', colorClass: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
@@ -60,12 +65,20 @@ const STATUS_OPTIONS = [
     { value: 'cancelled', label: 'Cancelled / Refunded', colorClass: 'bg-neutral-500/20 text-neutral-400 border-neutral-500/30' },
 ];
 
+const PAYMENT_STATUS_OPTIONS = [
+    { value: 'pending', label: 'Pending', colorClass: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' },
+    { value: 'reservation_paid', label: 'Reservation Paid (25%)', colorClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+    { value: 'deposit_paid', label: 'Deposit Paid (50%)', colorClass: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+    { value: 'fully_paid', label: 'Fully Paid (100%)', colorClass: 'bg-green-500/20 text-green-400 border-green-500/30' },
+];
+
 
 export default function AdminCommissionsPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
 
     const [commissions, setCommissions] = useState<CommissionData[]>([]);
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -75,6 +88,13 @@ export default function AdminCommissionsPage() {
     const [commissionToDelete, setCommissionToDelete] = useState<string | null>(null);
     const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const [shippingCosts, setShippingCosts] = useState<Record<string, string>>({});
+    const [wipUploading, setWipUploading] = useState<Record<string, boolean>>({});
+    const [wipDeleting, setWipDeleting] = useState<Record<string, boolean>>({});
+    const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: string } | null>(null);
+    const [paymentStatusToChange, setPaymentStatusToChange] = useState<{ id: string; status: string; clientName: string } | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [linkToGenerate, setLinkToGenerate] = useState<{ id: string; type: 'deposit' | 'final'; clientName: string } | null>(null);
+
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ message, type });
@@ -160,6 +180,45 @@ export default function AdminCommissionsPage() {
         }
     };
 
+    const confirmUpdatePaymentStatus = async () => {
+        if (!paymentStatusToChange) return;
+
+        const commissionId = paymentStatusToChange.id;
+        const value = paymentStatusToChange.status;
+
+        setPaymentStatusToChange(null);
+        setUpdatingId(commissionId);
+
+        try {
+            const body = { id: commissionId, payment_status: value };
+
+            const res = await fetch('/api/admin/commissions', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to update payment status');
+            } else {
+                const data = await res.json();
+                setCommissions(prev => prev.map(c =>
+                    c.id === commissionId ? data.commission : c
+                ));
+                showNotification('Payment status updated successfully', 'success');
+            }
+
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            showNotification(err.message || 'Failed to update payment status', 'error');
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
     const generatePaymentLink = async (commissionId: string) => {
         setGeneratingLinkId(commissionId);
         try {
@@ -202,6 +261,19 @@ export default function AdminCommissionsPage() {
             showNotification(err.message || 'Failed to generate link', 'error');
         } finally {
             setGeneratingLinkId(null);
+        }
+    };
+
+    const confirmGenerateLink = async () => {
+        if (!linkToGenerate) return;
+
+        const { id, type } = linkToGenerate;
+        setLinkToGenerate(null); // Close modal
+
+        if (type === 'deposit') {
+            await generatePaymentLink(id);
+        } else if (type === 'final') {
+            await generateFinalPaymentLink(id);
         }
     };
 
@@ -274,10 +346,67 @@ export default function AdminCommissionsPage() {
         }
     };
 
+    const WIP_SLOTS = [
+        { key: 'start', label: 'Start', desc: 'Outline phase' },
+        { key: 'mid', label: 'Mid', desc: 'Shading & details' },
+        { key: 'finished', label: 'Finished', desc: 'Final artwork' },
+    ] as const;
+    type WipSlotKey = 'start' | 'mid' | 'finished';
+
+    const getWipImages = (commission: CommissionData): Record<WipSlotKey, string | null> => {
+        const images = commission.wip_images ?? [];
+        return {
+            start: images[0] ?? null,
+            mid: images[1] ?? null,
+            finished: images[2] ?? null,
+        };
+    };
+
+    const handleWipUpload = async (commissionId: string, slot: WipSlotKey, file: File) => {
+        const key = `${commissionId}-${slot}`;
+        setWipUploading(prev => ({ ...prev, [key]: true }));
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('slot', slot);
+        try {
+            const res = await fetch(`/api/admin/commissions/${commissionId}/wip`, { method: 'POST', body: formData });
+            if (!res.ok) throw new Error('Upload failed');
+            showNotification(`WIP '${slot}' image uploaded!`, 'success');
+            fetchCommissions();
+        } catch {
+            showNotification('Upload failed', 'error');
+        } finally {
+            setWipUploading(prev => ({ ...prev, [key]: false }));
+        }
+    };
+
+    const handleWipDelete = async (commissionId: string, slot: WipSlotKey) => {
+        const key = `${commissionId}-${slot}`;
+        setWipDeleting(prev => ({ ...prev, [key]: true }));
+        try {
+            const res = await fetch(`/api/admin/commissions/${commissionId}/wip?slot=${slot}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Delete failed');
+            showNotification(`WIP '${slot}' image removed`, 'success');
+            fetchCommissions();
+        } catch {
+            showNotification('Delete failed', 'error');
+        } finally {
+            setWipDeleting(prev => ({ ...prev, [key]: false }));
+        }
+    };
+
     const handleLogout = async () => {
         await signOut({ redirect: false });
         router.push('/');
     };
+
+    const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'finished', 'on_delivery'];
+    const HISTORY_STATUSES = ['completed', 'cancelled', 'rejected'];
+
+    const activeCommissions = commissions.filter(c => ACTIVE_STATUSES.includes(c.status));
+    const historyCommissions = commissions.filter(c => HISTORY_STATUSES.includes(c.status));
+
+    const displayedCommissions = activeTab === 'active' ? activeCommissions : historyCommissions;
 
 
 
@@ -322,7 +451,7 @@ export default function AdminCommissionsPage() {
             <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12 bg-surface/30 backdrop-blur-md p-8 rounded-2xl border border-foreground/5 shadow-2xl">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12 bg-background/30 backdrop-blur-md p-8 rounded-2xl border border-foreground/5 shadow-2xl">
                     <div>
                         <h1 className="text-3xl font-serif text-foreground tracking-[0.2em] uppercase">Commission Management</h1>
                         <p className="text-neutral-500 text-sm mt-2 font-medium">Coordinate your artistic workflow and track request lifecycle</p>
@@ -347,14 +476,50 @@ export default function AdminCommissionsPage() {
                     </div>
                 )}
 
+                {/* Tab Navigation */}
+                <div className="flex gap-1 bg-foreground/5 border border-foreground/10 rounded-xl p-1 w-fit mb-8">
+                    <button
+                        onClick={() => setActiveTab('active')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'active'
+                            ? 'bg-foreground text-background shadow'
+                            : 'text-neutral-400 hover:text-foreground'
+                            }`}
+                    >
+                        <Clock size={15} />
+                        Active
+                        {activeCommissions.length > 0 && (
+                            <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${activeTab === 'active' ? 'bg-background/20 text-background' : 'bg-foreground/10 text-foreground/50'
+                                }`}>
+                                {activeCommissions.length}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'history'
+                            ? 'bg-foreground text-background shadow'
+                            : 'text-neutral-400 hover:text-foreground'
+                            }`}
+                    >
+                        <CheckCircle size={15} />
+                        History
+                        {historyCommissions.length > 0 && (
+                            <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${activeTab === 'history' ? 'bg-background/20 text-background' : 'bg-foreground/10 text-foreground/50'
+                                }`}>
+                                {historyCommissions.length}
+                            </span>
+                        )}
+                    </button>
+                </div>
+
                 {/* Loading State */}
                 {loading && commissions.length === 0 ? (
                     <div className="flex items-center justify-center py-20">
                         <Loader2 className="animate-spin text-accent" size={32} />
                     </div>
-                ) : commissions.length === 0 ? (
+                ) : displayedCommissions.length === 0 ? (
                     <div className="text-center py-20 text-neutral-500">
-                        No commissions found
+                        {activeTab === 'active' ? 'No active commissions' : 'No commission history'}
                     </div>
                 ) : (
                     <>
@@ -372,7 +537,7 @@ export default function AdminCommissionsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {commissions.map((commission, index) => (
+                                    {displayedCommissions.map((commission, index) => (
                                         <>
                                             <tr
                                                 key={commission.id}
@@ -402,7 +567,7 @@ export default function AdminCommissionsPage() {
                                                             value={commission.status}
                                                             options={STATUS_OPTIONS}
                                                             onChange={(val: string) => {
-                                                                updateField(commission.id, val);
+                                                                setPendingStatusChange({ id: commission.id, status: val });
                                                             }}
                                                             disabled={updatingId === commission.id}
                                                         />
@@ -511,6 +676,18 @@ export default function AdminCommissionsPage() {
                                                                             </div>
                                                                         ) : <span className="text-neutral-600 text-sm">—</span>}
 
+                                                                        <div className="pt-4 border-t border-foreground/10">
+                                                                            <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-2">Payment Status (Manual Override)</p>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <StatusDropdown
+                                                                                    value={commission.payment_status || 'pending'}
+                                                                                    options={PAYMENT_STATUS_OPTIONS}
+                                                                                    onChange={(val: string) => setPaymentStatusToChange({ id: commission.id, status: val, clientName: commission.client_name })}
+                                                                                    disabled={updatingId === commission.id}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+
                                                                         {commission.referrer_info && (
                                                                             <div className="mt-3 pt-3 border-t border-foreground/10">
                                                                                 <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-2">Referrer</p>
@@ -543,120 +720,114 @@ export default function AdminCommissionsPage() {
                                                                     </div>
                                                                 </div>
 
-                                                                {/* Commission Specific Actions */}
-                                                                {(commission.status === 'waitlist' || (commission.status === 'accepted' && (commission.payment_status === 'pending' || commission.payment_status === 'reservation_paid')) || (commission.status === 'finished' && commission.payment_status !== 'fully_paid') || commission.status === 'on_delivery') && (
-                                                                    <div className="mt-6 pt-6 border-t border-foreground/10 flex items-center justify-between bg-accent/5 -mx-6 px-6 pb-6">
-                                                                        {commission.status === 'waitlist' ? (
-                                                                            <>
-                                                                                <div className="flex flex-col gap-1 text-amber-400">
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <AlertTriangle size={18} />
-                                                                                        <p className="text-sm font-medium">Waitlist Slot</p>
-                                                                                    </div>
-                                                                                    {commission.payment_status === 'reservation_paid' && (
-                                                                                        <p className="text-xs text-emerald-400 font-medium ml-7">✓ 25% Reservation Fee Paid</p>
-                                                                                    )}
-                                                                                </div>
-                                                                                <motion.button
-                                                                                    whileHover={{ scale: 1.02 }}
-                                                                                    whileTap={{ scale: 0.98 }}
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        updateField(commission.id, 'accepted');
-                                                                                    }}
-                                                                                    disabled={updatingId === commission.id}
-                                                                                    className="flex items-center gap-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-6 py-2.5 rounded-lg hover:bg-emerald-500/30 transition-all font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-                                                                                >
-                                                                                    {updatingId === commission.id ? (
-                                                                                        <Loader2 size={16} className="animate-spin" />
-                                                                                    ) : (
-                                                                                        <Check size={16} />
-                                                                                    )}
-                                                                                    Accept Waitlist Slot
-                                                                                </motion.button>
-                                                                            </>
-                                                                        ) : commission.status === 'accepted' ? (
-                                                                            <>
-                                                                                {commission.razorpay_payment_link_url ? (
-                                                                                    <div className="flex flex-col gap-2 w-full max-w-md">
-                                                                                        <div className="flex items-center gap-2 text-emerald-400 mb-1">
-                                                                                            <Check size={16} />
-                                                                                            <p className="text-sm font-medium">Deposit Payment Link Ready</p>
-                                                                                        </div>
-                                                                                        <div className="flex items-center gap-2 bg-foreground/5 border border-foreground/10 rounded-lg p-2.5">
-                                                                                            <p className="text-xs font-mono text-neutral-400 truncate flex-1">{commission.razorpay_payment_link_url}</p>
-                                                                                            <button
-                                                                                                onClick={(e) => {
-                                                                                                    e.stopPropagation();
-                                                                                                    navigator.clipboard.writeText(commission.razorpay_payment_link_url || '');
-                                                                                                    showNotification('Link copied to clipboard!', 'success');
-                                                                                                }}
-                                                                                                className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400 hover:text-foreground"
-                                                                                                title="Copy Link"
+                                                                {/* WIP Gallery & Actions Section */}
+                                                                <div className="border-t border-foreground/10 flex flex-col xl:flex-row gap-8 -mx-6 px-6 pt-6 pb-2 mt-2">
+                                                                    {/* WIP Gallery Section */}
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-4">WIP Gallery</p>
+                                                                        <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
+                                                                            {WIP_SLOTS.map(slot => {
+                                                                                const images = getWipImages(commission);
+                                                                                const imgUrl = images[slot.key];
+                                                                                const uploading = wipUploading[`${commission.id}-${slot.key}`];
+                                                                                const deleting = wipDeleting[`${commission.id}-${slot.key}`];
+                                                                                return (
+                                                                                    <div key={slot.key} className="flex flex-col gap-2 shrink-0">
+                                                                                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">{slot.label}</p>
+                                                                                        <p className="text-[10px] text-neutral-600 truncate max-w-[120px]">{slot.desc}</p>
+                                                                                        {imgUrl ? (
+                                                                                            <div
+                                                                                                className="relative group rounded-lg overflow-hidden border border-foreground/10 w-28 h-28 bg-foreground/5 cursor-pointer"
+                                                                                                onClick={(e) => { e.stopPropagation(); setPreviewImage(imgUrl); }}
                                                                                             >
-                                                                                                <Copy size={14} />
-                                                                                            </button>
-                                                                                            <a
-                                                                                                href={commission.razorpay_payment_link_url}
-                                                                                                target="_blank"
-                                                                                                rel="noreferrer"
-                                                                                                onClick={e => e.stopPropagation()}
-                                                                                                className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400 hover:text-foreground"
-                                                                                                title="Open Link"
-                                                                                            >
-                                                                                                <ExternalLink size={14} />
-                                                                                            </a>
-                                                                                        </div>
+                                                                                                <Image
+                                                                                                    src={imgUrl}
+                                                                                                    alt={slot.label}
+                                                                                                    fill
+                                                                                                    className="object-cover"
+                                                                                                    sizes="112px"
+                                                                                                />
+                                                                                                <div className="absolute inset-0 flex items-center justify-center bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                                    <button
+                                                                                                        onClick={e => { e.stopPropagation(); handleWipDelete(commission.id, slot.key); }}
+                                                                                                        disabled={deleting}
+                                                                                                        className="absolute top-2 right-2 p-1.5 bg-red-500/80 rounded-full text-foreground hover:bg-red-600 transition-colors"
+                                                                                                    >
+                                                                                                        {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                                                                                    </button>
+                                                                                                    <span className="text-foreground text-xs pointer-events-none">Click to enlarge</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <label className="flex flex-col items-center justify-center gap-2 w-28 h-28 rounded-lg border-2 border-dashed border-foreground/15 hover:border-accent/50 hover:bg-accent/5 transition-all cursor-pointer text-neutral-500 hover:text-accent">
+                                                                                                {uploading ? <Loader2 size={20} className="animate-spin" /> : <ImagePlus size={20} />}
+                                                                                                <span className="text-[10px] font-medium">{uploading ? 'Uploading...' : 'Upload'}</span>
+                                                                                                <input
+                                                                                                    type="file"
+                                                                                                    accept="image/jpeg,image/png,image/webp"
+                                                                                                    className="hidden"
+                                                                                                    onChange={e => {
+                                                                                                        const file = e.target.files?.[0];
+                                                                                                        if (file) { e.stopPropagation(); handleWipUpload(commission.id, slot.key, file); }
+                                                                                                    }}
+                                                                                                    onClick={e => e.stopPropagation()}
+                                                                                                    disabled={uploading}
+                                                                                                />
+                                                                                            </label>
+                                                                                        )}
                                                                                     </div>
-                                                                                ) : (
-                                                                                    <>
-                                                                                        <div className="flex items-center gap-3 text-accent">
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Commission Specific Actions */}
+                                                                    {(commission.status === 'waitlist' || (commission.status === 'accepted' && (commission.payment_status === 'pending' || commission.payment_status === 'reservation_paid')) || (commission.status === 'finished' && commission.payment_status !== 'fully_paid') || commission.status === 'on_delivery') && (
+                                                                        <div className="w-full xl:w-96 shrink-0 bg-accent/5 rounded-xl border border-accent/10 p-5 mb-4 flex flex-col justify-center">
+                                                                            {commission.status === 'waitlist' ? (
+                                                                                <>
+                                                                                    <div className="flex flex-col gap-1 text-amber-400">
+                                                                                        <div className="flex items-center gap-2">
                                                                                             <AlertTriangle size={18} />
-                                                                                            <p className="text-sm font-medium">
-                                                                                                {commission.payment_status === 'reservation_paid'
-                                                                                                    ? 'Client paid 25%. Remaining 25% needed to begin.'
-                                                                                                    : 'Client needs to pay the 50% deposit.'}
-                                                                                            </p>
+                                                                                            <p className="text-sm font-medium">Waitlist Slot</p>
                                                                                         </div>
-                                                                                        <motion.button
-                                                                                            whileHover={{ scale: 1.02 }}
-                                                                                            whileTap={{ scale: 0.98 }}
-                                                                                            onClick={(e) => {
-                                                                                                e.stopPropagation();
-                                                                                                generatePaymentLink(commission.id);
-                                                                                            }}
-                                                                                            disabled={generatingLinkId === commission.id}
-                                                                                            className="flex items-center gap-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 px-6 py-2.5 rounded-lg hover:bg-blue-500/30 transition-all font-bold text-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]"
-                                                                                        >
-                                                                                            {generatingLinkId === commission.id ? (
-                                                                                                <Loader2 size={16} className="animate-spin" />
-                                                                                            ) : (
-                                                                                                <Check size={16} />
-                                                                                            )}
-                                                                                            {commission.payment_status === 'reservation_paid'
-                                                                                                ? 'Generate Remaining 25% Link'
-                                                                                                : 'Generate Deposit Link'}
-                                                                                        </motion.button>
-                                                                                    </>
-                                                                                )}
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                {/* Finished / On Delivery status: Final Payment Link */}
-                                                                                <div className="flex flex-col gap-4 w-full">
-                                                                                    {commission.final_payment_link_url ? (
+                                                                                        {commission.payment_status === 'reservation_paid' && (
+                                                                                            <p className="text-xs text-emerald-400 font-medium ml-7">✓ 25% Reservation Fee Paid</p>
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <motion.button
+                                                                                        whileHover={{ scale: 1.02 }}
+                                                                                        whileTap={{ scale: 0.98 }}
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setPendingStatusChange({ id: commission.id, status: 'accepted' });
+                                                                                        }}
+                                                                                        disabled={updatingId === commission.id}
+                                                                                        className="flex items-center gap-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-6 py-2.5 rounded-lg hover:bg-emerald-500/30 transition-all font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                                                                                    >
+                                                                                        {updatingId === commission.id ? (
+                                                                                            <Loader2 size={16} className="animate-spin" />
+                                                                                        ) : (
+                                                                                            <Check size={16} />
+                                                                                        )}
+                                                                                        Accept Waitlist Slot
+                                                                                    </motion.button>
+                                                                                </>
+                                                                            ) : commission.status === 'accepted' ? (
+                                                                                <>
+                                                                                    {commission.razorpay_payment_link_url ? (
                                                                                         <div className="flex flex-col gap-2 w-full max-w-md">
-                                                                                            <div className="flex items-center gap-2 text-pink-400 mb-1">
+                                                                                            <div className="flex items-center gap-2 text-emerald-400 mb-1">
                                                                                                 <Check size={16} />
-                                                                                                <p className="text-sm font-medium">Final Payment Link Ready</p>
+                                                                                                <p className="text-sm font-medium">Deposit Payment Link Ready</p>
                                                                                             </div>
                                                                                             <div className="flex items-center gap-2 bg-foreground/5 border border-foreground/10 rounded-lg p-2.5">
-                                                                                                <p className="text-xs font-mono text-neutral-400 truncate flex-1">{commission.final_payment_link_url}</p>
+                                                                                                <p className="text-xs font-mono text-neutral-400 truncate flex-1">{commission.razorpay_payment_link_url}</p>
                                                                                                 <button
                                                                                                     onClick={(e) => {
                                                                                                         e.stopPropagation();
-                                                                                                        navigator.clipboard.writeText(commission.final_payment_link_url || '');
-                                                                                                        showNotification('Final link copied!', 'success');
+                                                                                                        navigator.clipboard.writeText(commission.razorpay_payment_link_url || '');
+                                                                                                        showNotification('Link copied to clipboard!', 'success');
                                                                                                     }}
                                                                                                     className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400 hover:text-foreground"
                                                                                                     title="Copy Link"
@@ -664,7 +835,7 @@ export default function AdminCommissionsPage() {
                                                                                                     <Copy size={14} />
                                                                                                 </button>
                                                                                                 <a
-                                                                                                    href={commission.final_payment_link_url}
+                                                                                                    href={commission.razorpay_payment_link_url}
                                                                                                     target="_blank"
                                                                                                     rel="noreferrer"
                                                                                                     onClick={e => e.stopPropagation()}
@@ -676,44 +847,120 @@ export default function AdminCommissionsPage() {
                                                                                             </div>
                                                                                         </div>
                                                                                     ) : (
-                                                                                        <div className="flex items-center justify-between gap-6">
-                                                                                            <div className="flex flex-col gap-1">
-                                                                                                <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Shipping Cost (₹)</label>
-                                                                                                <input
-                                                                                                    type="number"
-                                                                                                    placeholder="Ex: 150"
-                                                                                                    value={shippingCosts[commission.id] || ''}
-                                                                                                    onChange={(e) => setShippingCosts(prev => ({ ...prev, [commission.id]: e.target.value }))}
-                                                                                                    className="bg-foreground/5 border border-foreground/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent/50 w-32"
-                                                                                                    onClick={e => e.stopPropagation()}
-                                                                                                />
+                                                                                        <div className="flex flex-col md:flex-row xl:flex-col items-start xl:items-stretch md:items-center justify-between gap-4 w-full">
+                                                                                            <div className="flex items-start gap-3 text-accent xl:mb-2">
+                                                                                                <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+                                                                                                <p className="text-sm font-medium leading-tight">
+                                                                                                    {commission.payment_status === 'reservation_paid'
+                                                                                                        ? 'Client paid 25%. Remaining 25% needed to begin.'
+                                                                                                        : 'Client needs to pay the 50% deposit.'}
+                                                                                                </p>
                                                                                             </div>
-                                                                                            <div className="flex-1 flex justify-end">
-                                                                                                <motion.button
-                                                                                                    whileHover={{ scale: 1.02 }}
-                                                                                                    whileTap={{ scale: 0.98 }}
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        generateFinalPaymentLink(commission.id);
-                                                                                                    }}
-                                                                                                    disabled={generatingLinkId === commission.id}
-                                                                                                    className="flex items-center gap-2 bg-pink-500/20 text-pink-400 border border-pink-500/30 px-6 py-2.5 rounded-lg hover:bg-pink-500/30 transition-all font-bold text-sm shadow-[0_0_15px_rgba(236,72,153,0.1)]"
-                                                                                                >
-                                                                                                    {generatingLinkId === commission.id ? (
-                                                                                                        <Loader2 size={16} className="animate-spin" />
-                                                                                                    ) : (
-                                                                                                        <Package size={16} />
-                                                                                                    )}
-                                                                                                    Generate Final Payment Link
-                                                                                                </motion.button>
-                                                                                            </div>
+                                                                                            <motion.button
+                                                                                                whileHover={{ scale: 1.02 }}
+                                                                                                whileTap={{ scale: 0.98 }}
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    setLinkToGenerate({
+                                                                                                        id: commission.id,
+                                                                                                        type: 'deposit',
+                                                                                                        clientName: commission.client_name
+                                                                                                    });
+                                                                                                }}
+                                                                                                disabled={generatingLinkId === commission.id}
+                                                                                                className="flex items-center gap-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 px-6 py-2.5 rounded-lg hover:bg-blue-500/30 transition-all font-bold text-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                                                                                            >
+                                                                                                {generatingLinkId === commission.id ? (
+                                                                                                    <Loader2 size={16} className="animate-spin" />
+                                                                                                ) : (
+                                                                                                    <Check size={16} />
+                                                                                                )}
+                                                                                                {commission.payment_status === 'reservation_paid'
+                                                                                                    ? 'Generate Remaining 25% Link'
+                                                                                                    : 'Generate Deposit Link'}
+                                                                                            </motion.button>
                                                                                         </div>
                                                                                     )}
-                                                                                </div>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
-                                                                )}
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    {/* Finished / On Delivery status: Final Payment Link */}
+                                                                                    <div className="flex flex-col gap-4 w-full">
+                                                                                        {commission.final_payment_link_url ? (
+                                                                                            <div className="flex flex-col gap-2 w-full max-w-md">
+                                                                                                <div className="flex items-center gap-2 text-pink-400 mb-1">
+                                                                                                    <Check size={16} />
+                                                                                                    <p className="text-sm font-medium">Final Payment Link Ready</p>
+                                                                                                </div>
+                                                                                                <div className="flex items-center gap-2 bg-foreground/5 border border-foreground/10 rounded-lg p-2.5">
+                                                                                                    <p className="text-xs font-mono text-neutral-400 truncate flex-1">{commission.final_payment_link_url}</p>
+                                                                                                    <button
+                                                                                                        onClick={(e) => {
+                                                                                                            e.stopPropagation();
+                                                                                                            navigator.clipboard.writeText(commission.final_payment_link_url || '');
+                                                                                                            showNotification('Final link copied!', 'success');
+                                                                                                        }}
+                                                                                                        className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400 hover:text-foreground"
+                                                                                                        title="Copy Link"
+                                                                                                    >
+                                                                                                        <Copy size={14} />
+                                                                                                    </button>
+                                                                                                    <a
+                                                                                                        href={commission.final_payment_link_url}
+                                                                                                        target="_blank"
+                                                                                                        rel="noreferrer"
+                                                                                                        onClick={e => e.stopPropagation()}
+                                                                                                        className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400 hover:text-foreground"
+                                                                                                        title="Open Link"
+                                                                                                    >
+                                                                                                        <ExternalLink size={14} />
+                                                                                                    </a>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <div className="flex flex-col md:flex-row xl:flex-col items-start xl:items-stretch md:items-center justify-between gap-4">
+                                                                                                <div className="flex flex-col gap-1 w-full">
+                                                                                                    <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Shipping Cost (₹)</label>
+                                                                                                    <input
+                                                                                                        type="number"
+                                                                                                        placeholder="Ex: 150"
+                                                                                                        value={shippingCosts[commission.id] || ''}
+                                                                                                        onChange={(e) => setShippingCosts(prev => ({ ...prev, [commission.id]: e.target.value }))}
+                                                                                                        className="bg-foreground/5 border border-foreground/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent/50 w-full md:w-32 xl:w-full"
+                                                                                                        onClick={e => e.stopPropagation()}
+                                                                                                    />
+                                                                                                </div>
+                                                                                                <div className="w-full flex justify-start">
+                                                                                                    <motion.button
+                                                                                                        whileHover={{ scale: 1.02 }}
+                                                                                                        whileTap={{ scale: 0.98 }}
+                                                                                                        onClick={(e) => {
+                                                                                                            e.stopPropagation();
+                                                                                                            setLinkToGenerate({
+                                                                                                                id: commission.id,
+                                                                                                                type: 'final',
+                                                                                                                clientName: commission.client_name
+                                                                                                            });
+                                                                                                        }}
+                                                                                                        disabled={generatingLinkId === commission.id}
+                                                                                                        className="flex items-center gap-2 bg-pink-500/20 text-pink-400 border border-pink-500/30 px-6 py-2.5 rounded-lg hover:bg-pink-500/30 transition-all font-bold text-sm shadow-[0_0_15px_rgba(236,72,153,0.1)]"
+                                                                                                    >
+                                                                                                        {generatingLinkId === commission.id ? (
+                                                                                                            <Loader2 size={16} className="animate-spin" />
+                                                                                                        ) : (
+                                                                                                            <Package size={16} />
+                                                                                                        )}
+                                                                                                        Generate Final Payment Link
+                                                                                                    </motion.button>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </motion.div>
                                                         </td>
                                                     </tr>
@@ -727,34 +974,35 @@ export default function AdminCommissionsPage() {
 
                         {/* Mobile Card View */}
                         <div className="md:hidden space-y-4">
-                            {commissions.map((commission, index) => (
-                                <div key={commission.id} className="bg-surface hover:bg-surface\/80 border border-foreground/10 rounded-lg overflow-hidden">
+                            {displayedCommissions.map((commission, index) => (
+                                <div key={commission.id} className="bg-background hover:bg-background/80 border border-foreground/10 rounded-lg overflow-hidden">
                                     {/* Card Header - Clickable */}
                                     <div
-                                        className="p-6 space-y-4 relative cursor-pointer"
+                                        className="p-5 md:p-6 space-y-4 cursor-pointer"
                                         onClick={() => toggleExpand(commission.id)}
                                     >
-                                        <div className="absolute top-4 right-4 flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                            <button
-                                                onClick={() => initiateDelete(commission.id)}
-                                                disabled={deletingId === commission.id}
-                                                className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
-                                            >
-                                                {deletingId === commission.id ? (
-                                                    <Loader2 className="animate-spin" size={18} />
-                                                ) : (
-                                                    <Trash2 size={18} />
-                                                )}
-                                            </button>
-                                        </div>
-
                                         <div>
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <span className="bg-foreground/10 text-foreground font-mono text-xs px-2 py-0.5 rounded">#{index + 1}</span>
-                                                <div className="text-foreground font-medium text-lg">{commission.client_name}</div>
-                                                <ChevronDown size={14} className={`text-neutral-500 ml-auto transition-transform duration-200 ${expandedId === commission.id ? 'rotate-180' : ''}`} />
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="bg-foreground/10 text-foreground font-mono text-xs px-2 py-0.5 rounded shrink-0">#{index + 1}</span>
+                                                <div className="text-foreground font-medium text-base md:text-lg min-w-0 truncate pr-2">{commission.client_name}</div>
+                                                <div className="flex items-center ml-auto shrink-0">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); initiateDelete(commission.id); }}
+                                                        disabled={deletingId === commission.id}
+                                                        className="p-1.5 md:p-2 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50 mr-1"
+                                                    >
+                                                        {deletingId === commission.id ? (
+                                                            <Loader2 className="animate-spin" size={16} />
+                                                        ) : (
+                                                            <Trash2 size={16} />
+                                                        )}
+                                                    </button>
+                                                    <div className="p-1">
+                                                        <ChevronDown size={16} className={`text-neutral-500 transition-transform duration-200 ${expandedId === commission.id ? 'rotate-180' : ''}`} />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="text-neutral-400 text-sm">{commission.client_email}</div>
+                                            <div className="text-neutral-400 text-sm truncate pr-16">{commission.client_email}</div>
                                         </div>
 
                                         <div className="flex items-center justify-between py-2 border-t border-foreground/5">
@@ -773,7 +1021,7 @@ export default function AdminCommissionsPage() {
                                                     value={commission.status}
                                                     options={STATUS_OPTIONS}
                                                     onChange={(val: string) => {
-                                                        updateField(commission.id, val);
+                                                        setPendingStatusChange({ id: commission.id, status: val });
                                                     }}
                                                     disabled={updatingId === commission.id}
                                                 />
@@ -853,7 +1101,7 @@ export default function AdminCommissionsPage() {
                                                                         whileTap={{ scale: 0.99 }}
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            updateField(commission.id, 'accepted');
+                                                                            setPendingStatusChange({ id: commission.id, status: 'accepted' });
                                                                         }}
                                                                         disabled={updatingId === commission.id}
                                                                         className="flex items-center justify-center gap-2 w-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-6 py-3 rounded-lg hover:bg-emerald-500/30 transition-all font-bold text-sm"
@@ -911,7 +1159,11 @@ export default function AdminCommissionsPage() {
                                                                                 whileTap={{ scale: 0.99 }}
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
-                                                                                    generatePaymentLink(commission.id);
+                                                                                    setLinkToGenerate({
+                                                                                        id: commission.id,
+                                                                                        type: 'deposit',
+                                                                                        clientName: commission.client_name
+                                                                                    });
                                                                                 }}
                                                                                 disabled={generatingLinkId === commission.id}
                                                                                 className="flex items-center justify-center gap-2 w-full bg-blue-500/20 text-blue-400 border border-blue-500/30 px-6 py-3 rounded-lg hover:bg-blue-500/30 transition-all font-bold text-sm"
@@ -975,7 +1227,11 @@ export default function AdminCommissionsPage() {
                                                                                 whileTap={{ scale: 0.99 }}
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
-                                                                                    generateFinalPaymentLink(commission.id);
+                                                                                    setLinkToGenerate({
+                                                                                        id: commission.id,
+                                                                                        type: 'final',
+                                                                                        clientName: commission.client_name
+                                                                                    });
                                                                                 }}
                                                                                 disabled={generatingLinkId === commission.id}
                                                                                 className="flex items-center justify-center gap-2 w-full bg-pink-500/20 text-pink-400 border border-pink-500/30 px-6 py-4 rounded-xl hover:bg-pink-500/30 transition-all font-bold text-sm shadow-[0_0_15px_rgba(236,72,153,0.1)]"
@@ -1019,7 +1275,7 @@ export default function AdminCommissionsPage() {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-surface border border-foreground/10 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden"
+                            className="bg-background border border-foreground/10 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden"
                         >
                             {/* Decorative background gradient */}
                             <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -1054,6 +1310,79 @@ export default function AdminCommissionsPage() {
                 )}
             </AnimatePresence>
 
+            {/* Custom Payment Status Confirmation Modal */}
+            <AnimatePresence>
+                {paymentStatusToChange && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+                        onClick={() => setPaymentStatusToChange(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-background border border-foreground/10 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden"
+                        >
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                            <div className="relative">
+                                <div className="w-12 h-12 bg-purple-500/10 text-purple-400 rounded-full flex items-center justify-center mb-4 border border-purple-500/20">
+                                    <AlertTriangle size={24} />
+                                </div>
+
+                                <h3 className="text-xl font-serif text-foreground mb-2">Update Payment Status</h3>
+                                <p className="text-neutral-400 text-sm leading-relaxed mb-4">
+                                    Are you sure you want to manually update the payment status for <strong className="text-foreground">{paymentStatusToChange.clientName}</strong>?
+                                </p>
+                                <p className="text-neutral-400 text-sm leading-relaxed border-l-2 border-purple-500/50 pl-3">
+                                    New Status: <strong className="text-purple-400">{PAYMENT_STATUS_OPTIONS.find(o => o.value === paymentStatusToChange.status)?.label || paymentStatusToChange.status}</strong>
+                                </p>
+                                <p className="text-neutral-500 text-xs mt-4">
+                                    This will immediately affect the balance due on their generated invoice.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col-reverse md:flex-row gap-3 justify-end relative">
+                                <button
+                                    onClick={() => setPaymentStatusToChange(null)}
+                                    className="px-5 py-2.5 rounded-lg font-medium text-sm text-neutral-300 hover:text-foreground hover:bg-foreground/5 transition-colors border border-transparent md:w-auto w-full"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmUpdatePaymentStatus}
+                                    className="px-5 py-2.5 rounded-lg font-medium text-sm bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 transition-all flex items-center justify-center gap-2 md:w-auto w-full"
+                                >
+                                    Confirm Update
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+
+            {/* Status Change Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={!!pendingStatusChange}
+                onClose={() => setPendingStatusChange(null)}
+                onConfirm={() => {
+                    if (pendingStatusChange) {
+                        updateField(pendingStatusChange.id, pendingStatusChange.status);
+                        setPendingStatusChange(null);
+                    }
+                }}
+                title="Update Status?"
+                message={`Are you sure you want to change the status to "${STATUS_OPTIONS.find(o => o.value === pendingStatusChange?.status)?.label}"? This may trigger automated emails and notifications.`}
+                confirmText="Yes, Update Status"
+                cancelText="Cancel"
+                variant="primary"
+            />
+
             {/* Custom Toast Notification */}
             <AnimatePresence>
                 {notification && (
@@ -1076,6 +1405,81 @@ export default function AdminCommissionsPage() {
                                 <X size={16} />
                             </button>
                         </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Generate Link Confirmation Modal */}
+            <AnimatePresence>
+                {linkToGenerate && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-background/50 p-4"
+                        onClick={() => setLinkToGenerate(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-background border border-foreground/10 rounded-xl p-6 w-full max-w-md shadow-2xl"
+                        >
+                            <h3 className="text-xl font-bold mb-2">Generate Payment Link?</h3>
+                            <p className="text-sm text-neutral-400 mb-6">
+                                You are about to generate a {linkToGenerate.type === 'deposit' ? 'deposit' : 'final'} payment link for <strong className="text-foreground">{linkToGenerate.clientName}</strong>. This will interact with Razorpay.
+                            </p>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setLinkToGenerate(null)}
+                                    className="flex-1 px-4 py-2 border border-foreground/10 rounded-lg text-sm font-medium hover:bg-foreground/5 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmGenerateLink}
+                                    className="flex-1 px-4 py-2 bg-blue-500 text-foreground rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20"
+                                >
+                                    Confirm Generate
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Fullscreen Image Preview Modal */}
+            <AnimatePresence>
+                {previewImage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[70] flex items-center justify-center bg-background/90 p-4 md:p-8"
+                        onClick={() => setPreviewImage(null)}
+                    >
+                        <button
+                            onClick={() => setPreviewImage(null)}
+                            className="absolute top-4 right-4 md:top-8 md:right-8 p-3 bg-foreground/10 hover:bg-foreground/20 rounded-full transition-colors text-foreground"
+                        >
+                            <X size={24} />
+                        </button>
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative w-full max-w-5xl h-full max-h-[85vh] rounded-lg overflow-hidden"
+                        >
+                            <Image
+                                src={previewImage}
+                                alt="Commission WIP Preview"
+                                fill
+                                className="object-contain"
+                                sizes="100vw"
+                            />
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>

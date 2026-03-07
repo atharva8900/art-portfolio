@@ -41,10 +41,10 @@ interface GroupedReferrals {
     };
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com', 'atharvasherlekar@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
 const PAYOUT_OPTIONS = [
-    { value: 'unpaid', label: 'Unpaid', colorClass: 'bg-neutral-700/60 text-neutral-300 border-neutral-600' },
+    { value: 'unpaid', label: 'Unpaid', colorClass: 'bg-neutral-700/60 text-neutral-300 border-foreground/5utral-600' },
     { value: 'requested', label: 'Requested', colorClass: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
     { value: 'paid', label: 'Paid', colorClass: 'bg-green-500/20  text-green-400  border-green-500/30' },
 ];
@@ -153,7 +153,7 @@ export default function AdminPayoutsPage() {
                     <div className="flex flex-col gap-1">
                         <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-bold">Bank Transfer</span>
                         <div className="flex flex-col">
-                            <span className="text-white font-mono text-xs">{details.account}</span>
+                            <span className="text-foreground font-mono text-xs">{details.account}</span>
                             <span className="text-neutral-400 text-[10px]">{details.ifsc} • {details.name || 'Unknown'}</span>
                         </div>
                     </div>
@@ -215,7 +215,7 @@ export default function AdminPayoutsPage() {
                         <p className="text-neutral-500 text-sm mt-2 font-medium">Manage and track commission payouts for your referrers</p>
                     </div>
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={fetchCommissions} disabled={loading}
-                        className="bg-accent/10 text-accent px-8 py-3 border border-accent/20 hover:bg-accent/20 hover:border-accent/40 transition-all flex items-center gap-3 rounded-lg font-bold tracking-widest uppercase text-xs">
+                        className="bg-accent/10 text-accent px-8 py-3 border border-accent/20 hover:bg-accent/20 hover:border-foreground/10nt/40 transition-all flex items-center gap-3 rounded-lg font-bold tracking-widest uppercase text-xs">
                         <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} /> Refresh
                     </motion.button>
                 </div>
@@ -347,7 +347,7 @@ export default function AdminPayoutsPage() {
                                                                                                 const copyVal = getPayoutCopyValue(c.payout_details);
                                                                                                 copyToClipboard(copyVal);
                                                                                             }}
-                                                                                            className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10 rounded-md text-neutral-400 hover:text-white"
+                                                                                            className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground/10 rounded-md text-neutral-400 hover:text-foreground"
                                                                                             title="Copy Details"
                                                                                         >
                                                                                             <Copy size={12} />

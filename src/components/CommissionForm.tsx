@@ -6,8 +6,9 @@ import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Tru
 import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing-shared';
 import { useSession } from 'next-auth/react';
 import { createClient } from '@/lib/supabase/client';
-import GoogleSignInButton from './GoogleSignInButton';
+import AuthOptions from './AuthOptions';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import ArtVisualizer, { FrameConfig } from './ArtVisualizer';
 import Script from 'next/script';
 
@@ -641,6 +642,12 @@ export default function CommissionForm() {
                             : "Thank you for your interest. I will review your request and get back to you via email shortly to discuss the process and payment."
                         }
                     </p>
+                    <Link
+                        href="/client/dashboard"
+                        className="mt-8 inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background rounded-lg hover:bg-neutral-200 transition-colors uppercase tracking-widest font-bold text-sm"
+                    >
+                        Check Commission Dashboard
+                    </Link>
                 </motion.div>
             </section>
         );
@@ -719,12 +726,9 @@ export default function CommissionForm() {
                 ) : !user ? (
                     <div className="bg-surface border border-foreground/10 p-8 rounded-lg text-center">
                         <h3 className="text-xl text-foreground mb-4">Sign in to request a commission</h3>
-                        <p className="text-foreground/80 dark:text-neutral-400 mb-8 max-w-sm mx-auto">
-                            To ensure high-quality communication and tracking, please sign in with your Google account.
-                        </p>
-                        <div className="flex justify-center flex-col items-center gap-4">
-                            <GoogleSignInButton />
-                        </div>
+                        <AuthOptions
+                            description="To ensure high-quality communication and tracking, please sign in with Google or use your email for a secure login link."
+                        />
                     </div>
                 ) : hasActive ? (
                     <div className="bg-surface border border-accent/20 p-8 rounded-lg text-center mt-8">
@@ -780,6 +784,12 @@ export default function CommissionForm() {
                                 </p>
                             </>
                         )}
+                        <Link
+                            href="/client/dashboard"
+                            className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background rounded-lg hover:bg-neutral-200 transition-colors uppercase tracking-widest font-bold text-sm"
+                        >
+                            Check Commission Dashboard
+                        </Link>
                     </div>
                 ) : (
                     <form onSubmit={status === 'waitlist' ? handleWaitlistSubmit : handleSubmit} className="space-y-8">
@@ -1187,7 +1197,7 @@ export default function CommissionForm() {
                                 accept="image/*"
                                 multiple
                                 onChange={handleFileChange}
-                                className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-background hover:file:bg-accent/80"
+                                className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-foreground file:text-background hover:file:bg-foreground/90"
                             />
                             {attachments.length > 0 && (
                                 <ul className="space-y-2 mt-2">
@@ -1240,7 +1250,7 @@ export default function CommissionForm() {
                         <button
                             type="submit"
                             disabled={loading || attachments.length === 0 || (status === 'waitlist' && !razorpayLoaded)}
-                            className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-neutral-200 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                         >
                             {loading ? (
                                 <Loader2 className="animate-spin" />

@@ -133,7 +133,7 @@ export default function AdminReferrersPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#050505] text-foreground px-4 md:px-8 lg:px-12 selection:bg-accent/30 flex flex-col">
+        <div className="min-h-screen bg-background text-foreground px-4 md:px-8 lg:px-12 selection:bg-accent/30 flex flex-col">
             <AdminNav />
             <div className="max-w-7xl mx-auto w-full space-y-10 pt-10 pb-20 mt-16 md:mt-24 flex-1 flex flex-col">
 
@@ -162,9 +162,9 @@ export default function AdminReferrersPage() {
                         transition={{ delay: 0.2 }}
                         className="flex gap-4 w-full md:w-auto mt-4 md:mt-0"
                     >
-                        <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl px-6 py-3 flex items-center justify-between gap-6 shadow-xl flex-1 md:flex-none">
+                        <div className="bg-surface border border-foreground/5 rounded-2xl px-6 py-3 flex items-center justify-between gap-6 shadow-xl flex-1 md:flex-none">
                             <span className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Total Links Generated</span>
-                            <span className="font-cinzel text-xl text-white">{referrers.length}</span>
+                            <span className="font-cinzel text-xl text-foreground">{referrers.length}</span>
                         </div>
                     </motion.div>
                 </div>
@@ -181,7 +181,7 @@ export default function AdminReferrersPage() {
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-center py-40 text-neutral-500 bg-[#0a0a0a] border border-white/5 rounded-3xl flex-1 flex flex-col items-center justify-center space-y-4"
+                        className="text-center py-40 text-neutral-500 bg-surface border border-foreground/5 rounded-3xl flex-1 flex flex-col items-center justify-center space-y-4"
                     >
                         <Users size={48} className="opacity-20" />
                         <p className="text-sm tracking-widest uppercase">No referrers generated links yet</p>
@@ -191,12 +191,12 @@ export default function AdminReferrersPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-6 lg:p-8 flex-1 flex flex-col"
+                        className="bg-surface border border-foreground/5 rounded-3xl p-6 lg:p-8 flex-1 flex flex-col"
                     >
                         <div className="overflow-x-auto custom-scrollbar -mx-6 px-6 lg:mx-0 lg:px-0 pb-4">
                             <table className="w-full text-left border-collapse min-w-[800px]">
                                 <thead>
-                                    <tr className="border-b border-white/10">
+                                    <tr className="border-b border-foreground/10">
                                         <th className="py-4 px-4 text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Affiliate</th>
                                         <th className="py-4 px-4 text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Generated Link</th>
                                         <th className="py-4 px-4 text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Performance</th>
@@ -207,15 +207,15 @@ export default function AdminReferrersPage() {
                                 </thead>
                                 <tbody>
                                     {referrers.map((ref, idx) => (
-                                        <tr key={ref.code} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                                        <tr key={ref.code} className="border-b border-foreground/5 hover:bg-foreground/2 transition-colors group">
                                             {/* Name & Email */}
                                             <td className="py-5 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-neutral-400 group-hover:text-accent group-hover:border-accent/30 transition-colors shrink-0">
+                                                    <div className="w-8 h-8 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center text-[10px] font-bold text-neutral-400 group-hover:text-accent group-hover:border-accent/30 transition-colors shrink-0">
                                                         {idx + 1}
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-bold text-white group-hover:text-accent transition-colors">{ref.referrer_name}</div>
+                                                        <div className="text-sm font-bold text-foreground group-hover:text-accent transition-colors">{ref.referrer_name}</div>
                                                         <div className="text-[11px] text-neutral-500">{ref.referrer_email}</div>
                                                     </div>
                                                 </div>
@@ -232,14 +232,11 @@ export default function AdminReferrersPage() {
                                                             navigator.clipboard.writeText(`${window.location.origin}?ref=${ref.code}`);
                                                             showNotification('Link copied to clipboard');
                                                         }}
-                                                        className="text-neutral-500 hover:text-white transition-colors"
+                                                        className="text-neutral-500 hover:text-foreground transition-colors"
                                                         title="Copy full link"
                                                     >
                                                         <Copy size={14} />
                                                     </button>
-                                                </div>
-                                                <div className="text-[10px] text-neutral-600 mt-2 font-mono" title="IP Hash">
-                                                    IP: {ref.ip_hash.substring(0, 8)}...
                                                 </div>
                                             </td>
 
@@ -252,7 +249,7 @@ export default function AdminReferrersPage() {
                                                     </div>
                                                     <div className="flex items-center justify-between max-w-[120px]">
                                                         <span className="text-[11px] text-neutral-500 uppercase tracking-wider">Used by:</span>
-                                                        <span className="font-bold text-white font-mono">{ref.used_by_emails?.length || 0}</span>
+                                                        <span className="font-bold text-foreground font-mono">{ref.used_by_emails?.length || 0}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -297,7 +294,7 @@ export default function AdminReferrersPage() {
                                             <td className="py-5 px-4 text-center">
                                                 <button
                                                     onClick={() => setAffiliateToDelete(ref.code)}
-                                                    className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-500/20 mx-auto group/btn"
+                                                    className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-foreground transition-colors border border-red-500/20 mx-auto group/btn"
                                                     title="Delete Affiliate"
                                                 >
                                                     <Trash2 size={14} className="group-hover/btn:scale-110 transition-transform" />
@@ -315,18 +312,18 @@ export default function AdminReferrersPage() {
             {/* Delete Confirmation Modal */}
             <AnimatePresence>
                 {affiliateToDelete && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6"
+                            className="bg-surface border border-foreground/10 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6"
                         >
                             <div className="space-y-4">
                                 <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center">
                                     <Trash2 size={24} />
                                 </div>
-                                <h3 className="text-xl font-serif text-white">
+                                <h3 className="text-xl font-serif text-foreground">
                                     Delete Affiliate
                                 </h3>
                                 <p className="text-neutral-400 text-sm leading-relaxed">
@@ -334,18 +331,18 @@ export default function AdminReferrersPage() {
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                            <div className="flex items-center gap-3 pt-4 border-t border-foreground/5">
                                 <button
                                     onClick={() => setAffiliateToDelete(null)}
                                     disabled={isDeleting}
-                                    className="flex-1 px-4 py-3 rounded-full border border-white/10 text-white font-bold text-sm hover:bg-white/5 transition-colors disabled:opacity-50"
+                                    className="flex-1 px-4 py-3 rounded-full border border-foreground/10 text-foreground font-bold text-sm hover:bg-foreground/5 transition-colors disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={executeDelete}
                                     disabled={isDeleting}
-                                    className="flex-1 px-4 py-3 rounded-full bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+                                    className="flex-1 px-4 py-3 rounded-full bg-red-500 text-foreground font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
                                 >
                                     {isDeleting ? (
                                         <>
@@ -368,7 +365,7 @@ export default function AdminReferrersPage() {
                     initial={{ opacity: 0, y: 50, x: '-50%' }}
                     animate={{ opacity: 1, y: 0, x: '-50%' }}
                     exit={{ opacity: 0, y: 50, x: '-50%' }}
-                    className={`fixed bottom-8 left-1/2 z-50 flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold shadow-2xl ${notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'
+                    className={`fixed bottom-8 left-1/2 z-50 flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold shadow-2xl ${notification.type === 'error' ? 'bg-red-500 text-foreground' : 'bg-emerald-500 text-foreground'
                         }`}
                 >
                     <Check size={16} />
@@ -377,7 +374,7 @@ export default function AdminReferrersPage() {
             )}
 
             {/* Background Texture Blur */}
-            <div className="fixed inset-0 pointer-events-none -z-10 bg-[#050505]">
+            <div className="fixed inset-0 pointer-events-none -z-10 bg-background">
                 <div className="absolute top-[10%] left-[-10%] w-[40%] h-[40%] bg-accent/5 rounded-full blur-[120px]" />
                 <div className="absolute bottom-[-10%] right-[10%] w-[30%] h-[30%] bg-blue-500/5 rounded-full blur-[120px]" />
             </div>

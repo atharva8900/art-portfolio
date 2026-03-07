@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/email';
 import crypto from 'crypto';
 import {
     validateNotSelfReferral,
@@ -16,7 +16,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendDiscordNotification } from '@/lib/discord';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 // Helper to extract IP from request
 function getClientIP(request: NextRequest): string {
@@ -310,8 +310,8 @@ export async function POST(request: NextRequest) {
                 }]
             });
 
-            const { error: resendError } = await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>', // User will need to verify domain
+            // Artist notification via Gmail SMTP
+            await sendEmail({
                 to: process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com',
                 subject: isWaitlist ? 'New Waitlist Joiner – Atharva Sherlekar Art' : 'New Commission Request – Atharva Sherlekar Art',
                 attachments: emailAttachments,
@@ -393,9 +393,7 @@ export async function POST(request: NextRequest) {
                 `,
             });
 
-            if (resendError) {
-                console.warn('Artist Notification Email Failed (Non-fatal):', resendError);
-            }
+
 
             // Send Confirmation to Client
             const clientSubject = isWaitlist
@@ -457,16 +455,12 @@ export async function POST(request: NextRequest) {
 
             const toEmail = email;
 
-            const { error: clientEmailError } = await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
-                to: toEmail, // Client's email
+            // Client confirmation via Gmail SMTP
+            await sendEmail({
+                to: email,
                 subject: clientSubject,
                 html: clientHtml,
             });
-
-            if (clientEmailError) {
-                console.warn('Client Confirmation Email Failed (Non-fatal):', clientEmailError);
-            }
 
             // Send Initial Notification to Referrer
             if (validReferralCode && commissionEligible && (referralInfo || referrer_email)) {
@@ -480,8 +474,7 @@ export async function POST(request: NextRequest) {
                     const estimatedCommissionableAmt = estimatedTotalPrice + (detailed_background ? 500 : 0);
                     const estimatedCommission = estimatedCommissionableAmt > 0 ? (estimatedCommissionableAmt * 0.20) : 0;
 
-                    await resend.emails.send({
-                        from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
+                    await sendEmail({
                         to: toEmail as string,
                         subject: 'Someone used your referral link! 👀 – Atharva Sherlekar Art',
                         html: `
@@ -508,8 +501,7 @@ export async function POST(request: NextRequest) {
             // Send Expiration Notification if link just expired
             if (validReferralCode && referralInfo && justExpired) {
                 try {
-                    await resend.emails.send({
-                        from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
+                    await sendEmail({
                         to: referralInfo.referrer_email,
                         subject: 'Referral Link Expired – Atharva Sherlekar Art',
                         html: `

@@ -64,3 +64,15 @@ body:has(iframe:hover) .custom-cursor-element {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(var(--foreground), 0.8);
 }
+
+/* Hide scrollbar for elements with no-scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}

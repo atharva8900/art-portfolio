@@ -8,7 +8,6 @@ const ALLOWED_EMAILS = [
     'atharva.sherlekar@gmail.com',
     'atharva8900@gmail.com',
     'atharvasherlekarart@gmail.com',
-    'atharvasherlekar@gmail.com',
     process.env.NEXT_PUBLIC_ARTIST_EMAIL
 ]
     .filter(Boolean)

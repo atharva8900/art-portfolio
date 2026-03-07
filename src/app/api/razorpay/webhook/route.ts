@@ -74,6 +74,16 @@ export async function POST(request: NextRequest) {
                         return NextResponse.json({ error: 'Internal database error' }, { status: 500 });
                     }
 
+                    // Send auto-email to client confirming we received their payment
+                    try {
+                        const { sendCommissionStatusEmail } = await import('@/lib/emails');
+                        if (isFinalPayment) {
+                            await sendCommissionStatusEmail(commission, 'payment_fully_paid');
+                        }
+                    } catch (emailErr) {
+                        console.error('Error sending confirmation email from webhook:', emailErr);
+                    }
+
                     // Optional: Send auto-email to client confirming we received their payment
                     try {
                         const { sendDiscordNotification } = await import('@/lib/discord');

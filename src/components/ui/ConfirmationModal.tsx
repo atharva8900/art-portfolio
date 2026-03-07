@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Info, CheckCircle2, HelpCircle } from 'lucide-react';
 
 interface ConfirmationModalProps {
     isOpen: boolean;
@@ -12,7 +12,7 @@ interface ConfirmationModalProps {
     message: string;
     confirmText?: string;
     cancelText?: string;
-    variant?: 'danger' | 'warning' | 'info';
+    variant?: 'danger' | 'warning' | 'info' | 'primary' | 'success';
 }
 
 export default function ConfirmationModal({
@@ -25,28 +25,54 @@ export default function ConfirmationModal({
     cancelText = 'Cancel',
     variant = 'danger'
 }: ConfirmationModalProps) {
-    const variantColors = {
+    const variantColors: Record<string, {
+        bg: string;
+        border: string;
+        text: string;
+        button: string;
+        icon: React.ElementType;
+        buttonText?: string;
+    }> = {
+        primary: {
+            bg: 'bg-accent/10',
+            border: 'border-accent/20',
+            text: 'text-accent',
+            button: 'bg-accent hover:bg-accent/80 shadow-accent/20',
+            icon: HelpCircle,
+            buttonText: 'text-zinc-950'
+        },
         danger: {
             bg: 'bg-red-500/10',
             border: 'border-red-500/20',
             text: 'text-red-500',
-            button: 'bg-red-500 hover:bg-red-600 shadow-red-500/20'
+            button: 'bg-red-500 hover:bg-red-600 shadow-red-500/20',
+            icon: AlertTriangle
         },
         warning: {
             bg: 'bg-amber-500/10',
             border: 'border-amber-500/20',
             text: 'text-amber-500',
-            button: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
+            button: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20',
+            icon: AlertCircle
         },
         info: {
             bg: 'bg-blue-500/10',
             border: 'border-blue-500/20',
             text: 'text-blue-500',
-            button: 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/20'
+            button: 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/20',
+            icon: Info
+        },
+        success: {
+            bg: 'bg-emerald-500/10',
+            border: 'border-emerald-500/20',
+            text: 'text-emerald-500',
+            button: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20',
+            icon: CheckCircle2
         }
     };
 
-    const colors = variantColors[variant];
+    const colors = variantColors[variant] || variantColors.danger;
+    const Icon = colors.icon;
 
     return (
         <AnimatePresence>
@@ -66,12 +92,12 @@ export default function ConfirmationModal({
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden"
+                        className="relative w-full max-w-md bg-surface border border-foreground/10 rounded-3xl shadow-2xl overflow-hidden"
                     >
                         <div className="p-8">
                             <div className="flex items-center gap-4 mb-6">
                                 <div className={`w-12 h-12 rounded-2xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0`}>
-                                    <AlertTriangle size={24} />
+                                    <Icon size={24} />
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-medium text-foreground">{title}</h3>
@@ -82,7 +108,7 @@ export default function ConfirmationModal({
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={onClose}
-                                    className="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-foreground font-bold rounded-2xl transition-all border border-zinc-700"
+                                    className="flex-1 py-3 px-4 bg-foreground/5 hover:bg-foreground/10 text-foreground font-bold rounded-2xl transition-all border border-foreground/10"
                                 >
                                     {cancelText}
                                 </button>
@@ -91,7 +117,7 @@ export default function ConfirmationModal({
                                         onConfirm();
                                         onClose();
                                     }}
-                                    className={`flex-1 py-3 px-4 ${colors.button} text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95`}
+                                    className={`flex-1 py-3 px-4 ${colors.button} ${colors.buttonText || 'text-white'} font-bold rounded-2xl transition-all shadow-lg active:scale-95`}
                                 >
                                     {confirmText}
                                 </button>

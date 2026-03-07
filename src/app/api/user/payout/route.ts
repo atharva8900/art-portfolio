@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/email';
 import { getAllCommissions, CommissionData } from '@/lib/commissions';
 import { getAllReferrals, ReferralData } from '@/lib/referrals';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 export async function POST(request: NextRequest) {
     try {
@@ -83,9 +83,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No eligible commissions found for payout' }, { status: 400 });
         }
 
-        // Send Email to Admin
-        const { error: emailError } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
+        // Send Email to Admin via Gmail SMTP
+        const { error: emailError } = await sendEmail({
             to: 'atharvasherlekarart@gmail.com',
             subject: `Payout Request from ${userEmail}`,
             html: `

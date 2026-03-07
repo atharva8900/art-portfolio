@@ -1,8 +1,8 @@
-import { Resend } from 'resend';
+import { sendEmail } from './email';
 import { CommissionData } from './commissions';
 import { sendDiscordNotification } from './discord';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 function stripHtml(html: string): string {
     return html
@@ -16,7 +16,8 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
     let subject = '';
     let htmlContent = '';
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://atharvasherlekar.com';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+        (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:3000');
 
     switch (status) {
         case 'pending':
@@ -27,7 +28,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>Your commission request has been moved to the <strong>Review Queue</strong>.</p>
                 <p>Atharva will review your details within 48 hours and contact you if any further information is needed or to confirm acceptance.</p>
                 <br/>
-                <p>Check your order status anytime on the <a href="${baseUrl}/commission">Commission Page</a>.</p>
+                <p>Check your order status anytime on the <a href="${baseUrl}/client/dashboard">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -41,7 +42,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>To begin the artwork, please pay the <strong>remaining advance</strong> (to hit 50% total). Add-ons and delivery will be charged in the final invoice.</p>
                 <p>Atharva will reach out to you shortly via DM or Email with the payment link to officially start your commission.</p>
                 <br/>
-                <p>Check your order status anytime on the <a href="${baseUrl}/commission">Commission Page</a>.</p>
+                <p>Check your order status anytime on the <a href="${baseUrl}/client/dashboard">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -52,9 +53,9 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <h1>Payment Received</h1>
                 <p>Hi ${commission.client_name},</p>
                 <p>Your payment has been received and Atharva has officially <strong>started drawing</strong> your commission!</p>
-                <p>We're excited to bring your vision to life. We will keep you updated if we have any questions during the process.</p>
+                <p>I'm excited to bring your vision to life. I will keep you updated if I have any questions during the process.</p>
                 <br/>
-                <p>Check progress anytime on the <a href="${baseUrl}/commission">Commission Page</a>.</p>
+                <p>Check progress anytime on the <a href="${baseUrl}/client/dashboard">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -73,7 +74,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                     <li>Actual Delivery/Shipping costs via DTDC</li>
                 </ul>
                 <p>You can view the invoice and pay the final balance securely via your <a href="${baseUrl}/client/dashboard">Client Dashboard</a>.</p>
-                <p>Once the final payment is cleared, we will ship your artwork immediately!</p>
+                <p>Once the final payment is cleared, I will ship your artwork immediately!</p>
                 <br/>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
@@ -85,9 +86,8 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <h1>It\'s on the way!</h1>
                 <p>Hi ${commission.client_name},</p>
                 <p>Your artwork has been carefully packed and <strong>handed over to DTDC for delivery</strong>.</p>
-                <p>I will share the tracking number with you shortly via DM or Email so you can follow its journey.</p>
                 <p><strong>Please do let me know once the artwork reaches you!</strong></p>
-                <p>Thank you for your patience and for letting Atharva create this for you!</p>
+                <p>Thank you for your patience and for letting me create this for you!</p>
                 <br/>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
@@ -99,7 +99,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <h1>Commission Completed</h1>
                 <p>Hi ${commission.client_name},</p>
                 <p>Your commission has been marked as <strong>completed</strong>!</p>
-                <p>Thank you so much for choosing Atharva's art. We hope you love the final result.</p>
+                <p>Thank you so much for choosing my art. I hope you love the final result.</p>
                 <br/>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
@@ -132,8 +132,21 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p>Hi ${commission.client_name},</p>
                 <p>Your commission has been <strong>cancelled</strong> and a full refund has been initiated to your original payment method.</p>
                 <p>Refunds typically take <strong>5-7 business days</strong> to reflect in your account, depending on your bank.</p>
-                <p>Thank you for your interest, and we hope to work with you again in the future!</p>
+                <p>Thank you for your interest, and I hope to work with you again in the future!</p>
                 <br/>
+                <p>Best regards,</p>
+                <p><strong>Atharva Sherlekar</strong></p>
+            `;
+            break;
+        case 'payment_fully_paid':
+            subject = 'Full Payment Received! – Atharva Sherlekar Art';
+            htmlContent = `
+                <h1>Payment Received!</h1>
+                <p>Hi ${commission.client_name},</p>
+                <p>I've successfully received the <strong>final payment</strong> for your commission.</p>
+                <p>Thank you so much! I'm now preparing your artwork for shipment. I'll notify you once it's on the way!</p>
+                <br/>
+                <p>Check status anytime on the <a href="${baseUrl}/client/dashboard">Commission Page</a>.</p>
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -165,10 +178,9 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
         }]
     });
 
-    // Attempt automated send via Resend (might fail if domain unverified)
+    // Attempt automated send via Gmail SMTP
     try {
-        const { data, error } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
+        const { data, error } = await sendEmail({
             to: commission.client_email,
             bcc: status === 'cancelled' ? process.env.NEXT_PUBLIC_ARTIST_EMAIL : undefined,
             subject,

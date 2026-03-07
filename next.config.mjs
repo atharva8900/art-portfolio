@@ -21,6 +21,15 @@ const nextConfig = {
             },
         ];
     },
+    async redirects() {
+        return [
+            {
+                source: '/commission',
+                destination: '/client/dashboard',
+                permanent: true,
+            },
+        ];
+    },
     // Force CSS/Tailwind to recompile correctly on Windows
     webpack: (config, { dev }) => {
         if (dev) {

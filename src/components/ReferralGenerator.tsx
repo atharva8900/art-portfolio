@@ -2,10 +2,11 @@
 
 import { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight } from 'lucide-react';
+import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight, QrCode, X, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import GoogleSignInButton from './GoogleSignInButton';
+import { QRCodeSVG } from 'qrcode.react';
+import AuthOptions from './AuthOptions';
 
 export default function ReferralGenerator() {
     const { data: session, status: authStatus } = useSession();
@@ -15,6 +16,7 @@ export default function ReferralGenerator() {
     const [copied, setCopied] = useState(false);
     const [infoMessage, setInfoMessage] = useState('');
     const [isRulesOpen, setIsRulesOpen] = useState(false);
+    const [showQR, setShowQR] = useState(false);
 
     const user = session?.user;
     const authLoading = authStatus === 'loading';
@@ -109,8 +111,9 @@ export default function ReferralGenerator() {
                         {!user ? (
                             <div className="space-y-6">
                                 <div className="bg-surface border border-foreground/10 p-8 rounded-lg">
-                                    <p className="text-neutral-300 mb-6">Sign in with Google to create your referral link</p>
-                                    <GoogleSignInButton />
+                                    <AuthOptions
+                                        description="Sign in with Google to create your referral link, or use your email for a secure login link."
+                                    />
                                 </div>
                             </div>
                         ) : !referralLink ? (
@@ -178,10 +181,17 @@ export default function ReferralGenerator() {
                                     <code className="text-neutral-300 text-sm flex-1 truncate text-left">{referralLink}</code>
                                     <button
                                         onClick={copyToClipboard}
-                                        className="text-neutral-400 hover:text-foreground transition-colors"
+                                        className="text-neutral-400 hover:text-foreground transition-colors p-1"
                                         title="Copy Link"
                                     >
                                         {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowQR(true)}
+                                        className="text-neutral-400 hover:text-foreground transition-colors p-1"
+                                        title="Show QR Code"
+                                    >
+                                        <QrCode size={18} />
                                     </button>
                                 </div>
 
@@ -202,6 +212,52 @@ export default function ReferralGenerator() {
                                         Note: You can generate a new link only after this one expires (3 commissions).
                                     </p>
                                 )}
+
+                                {/* QR Code Modal */}
+                                <AnimatePresence>
+                                    {showQR && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="fixed inset-0 z-[6000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+                                            onClick={() => setShowQR(false)}
+                                        >
+                                            <motion.div
+                                                initial={{ scale: 0.9, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                exit={{ scale: 0.9, opacity: 0 }}
+                                                className="bg-background border border-foreground/10 p-8 rounded-3xl max-w-sm w-full text-center space-y-6 shadow-2xl relative"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    onClick={() => setShowQR(false)}
+                                                    className="absolute top-4 right-4 p-2 text-neutral-500 hover:text-foreground hover:bg-foreground/10 rounded-full transition-colors"
+                                                >
+                                                    <X size={20} />
+                                                </button>
+
+                                                <div className="space-y-2">
+                                                    <h3 className="font-serif text-xl text-foreground mt-2">Your Referral QR</h3>
+                                                    <p className="text-xs text-neutral-400">Scan to visit the portfolio with your referral applied</p>
+                                                </div>
+
+                                                <div className="bg-white p-4 rounded-2xl mx-auto inline-block border-4 border-accent/20">
+                                                    <QRCodeSVG
+                                                        value={referralLink}
+                                                        size={220}
+                                                        level="H"
+                                                        includeMargin={false}
+                                                    />
+                                                </div>
+
+                                                <div className="pt-2">
+                                                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Scan to open link</p>
+                                                </div>
+                                            </motion.div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </motion.div>
                         )}
                     </>

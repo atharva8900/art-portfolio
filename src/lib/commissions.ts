@@ -44,6 +44,8 @@ export interface CommissionData {
     // Safety Flags
     is_self_referral_flag?: boolean;
     flag_reason?: string | null;
+    // WIP Gallery
+    wip_images?: string[];
 }
 
 // Get all commissions
@@ -184,6 +186,37 @@ export async function updateCommissionPayoutStatus(
     }
 
     return true;
+}
+
+// Update commission payment status manually
+export async function updateCommissionPaymentStatus(
+    id: string,
+    status: 'pending' | 'reservation_paid' | 'deposit_paid' | 'fully_paid'
+): Promise<CommissionData | null> {
+    const updateData: any = {
+        payment_status: status,
+        updated_at: new Date().toISOString()
+    };
+
+    // If marking as paid (any stage), set the completion timestamp
+    // This activates the 48-hour refund window correctly in the dashboard
+    if (status !== 'pending') {
+        updateData.payment_completed_at = new Date().toISOString();
+    }
+
+    const { data, error } = await supabaseAdmin
+        .from('commissions')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating payment status in Supabase:', error);
+        return null;
+    }
+
+    return data as CommissionData;
 }
 
 // Get count of accepted commissions for the current month

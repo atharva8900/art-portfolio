@@ -5,7 +5,7 @@ import { setAvailability } from '@/lib/availability';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { sendCommissionStatusEmail } from '@/lib/emails';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/email';
 
 const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
@@ -51,7 +51,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { id, status, admin_note, payout_status } = body;
+        const { id, status, admin_note, payout_status, payment_status } = body;
 
         // Validate inputs
         if (!id) {
@@ -65,6 +65,23 @@ export async function PATCH(request: NextRequest) {
         }
 
         let updatedCommission = existingCommission;
+
+        // Update Manual Payment Status
+        if (payment_status) {
+            if (!['pending', 'reservation_paid', 'deposit_paid', 'fully_paid'].includes(payment_status)) {
+                return NextResponse.json({ error: 'Invalid payment status value' }, { status: 400 });
+            }
+            const { updateCommissionPaymentStatus } = await import('@/lib/commissions');
+            const result = await updateCommissionPaymentStatus(id, payment_status);
+            if (result) {
+                updatedCommission = result;
+                // If manually updated to fully_paid, send confirmation email
+                if (payment_status === 'fully_paid') {
+                    const { sendCommissionStatusEmail } = await import('@/lib/emails');
+                    await sendCommissionStatusEmail(updatedCommission, 'payment_fully_paid');
+                }
+            }
+        }
 
         // Update Main Status
         if (status) {
@@ -99,59 +116,9 @@ export async function PATCH(request: NextRequest) {
                         }
                     }
 
-                    // --- AUTOMATED LINK GENERATION FOR WAITLIST ACCEPTANCE ---
-                    if (existingCommission.status !== 'accepted' && status === 'accepted' && updatedCommission.payment_status === 'reservation_paid') {
-                        try {
-                            const Razorpay = (await import('razorpay')).default;
-                            const razorpay = new Razorpay({
-                                key_id: process.env.RAZORPAY_KEY_ID!,
-                                key_secret: process.env.RAZORPAY_KEY_SECRET!,
-                            });
+                    // --- AUTOMATED LINK GENERATION REMOVED ---
+                    // Links must now be generated manually from the dashboard after confirmation.
 
-                            const totalAmount = (updatedCommission.base_price || 0) + (updatedCommission.extras_total || 0);
-                            const alreadyPaid = Math.round(totalAmount * 0.25);
-                            const depositAmount = Math.ceil(totalAmount / 2) - alreadyPaid;
-
-                            if (depositAmount > 0) {
-                                const amountInPaise = depositAmount * 100;
-                                const options = {
-                                    amount: amountInPaise,
-                                    currency: 'INR',
-                                    accept_partial: false,
-                                    description: `Remaining 25% Deposit for Commission ${id} (Waitlist)`,
-                                    customer: {
-                                        name: updatedCommission.client_name,
-                                        email: updatedCommission.client_email,
-                                        contact: updatedCommission.phone || undefined
-                                    },
-                                    notify: { sms: false, email: false },
-                                    reminder_enable: false,
-                                    reference_id: id,
-                                    notes: { commission_id: id, payment_type: 'reservation_completion' }
-                                };
-
-                                const paymentLink = await razorpay.paymentLink.create(options);
-                                const { supabaseAdmin } = await import('@/lib/supabase/admin');
-
-                                await supabaseAdmin
-                                    .from('commissions')
-                                    .update({
-                                        razorpay_payment_link_id: paymentLink.id,
-                                        razorpay_payment_link_url: paymentLink.short_url,
-                                        payment_status: 'pending',
-                                        updated_at: new Date().toISOString()
-                                    })
-                                    .eq('id', id);
-
-                                const { getCommissionById } = await import('@/lib/commissions');
-                                const refreshed = await getCommissionById(id);
-                                if (refreshed) updatedCommission = refreshed;
-                                console.log(`Auto-generated Razorpay link for ${id}: ${paymentLink.short_url}`);
-                            }
-                        } catch (linkError) {
-                            console.error('Error auto-generating payment link:', linkError);
-                        }
-                    }
 
                     // --- Automated Emails for Status Changes ---
                     const emailTriggerStatuses = ['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'completed', 'rejected', 'cancelled'];
@@ -190,10 +157,8 @@ export async function PATCH(request: NextRequest) {
                                 console.error('Error sending Discord referrer notification:', discordErr);
                             }
 
-                            const resend = new Resend(process.env.RESEND_API_KEY);
                             try {
-                                await resend.emails.send({
-                                    from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
+                                await sendEmail({
                                     to: referrerEmail,
                                     subject: 'You Earned a Commission! 🎉 – Atharva Sherlekar Art',
                                     html: `

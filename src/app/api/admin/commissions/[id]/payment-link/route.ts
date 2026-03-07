@@ -6,7 +6,7 @@ import { getCommissionById } from '@/lib/commissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { sendDiscordNotification } from '@/lib/discord';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com', 'atharvasherlekar@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
@@ -81,7 +81,9 @@ export async function POST(
             notes: {
                 commission_id: id,
                 payment_type: hasPaidReservation ? 'reservation_completion' : 'deposit'
-            }
+            },
+            callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/client/dashboard`,
+            callback_method: 'get'
         };
 
         const paymentLink = await razorpay.paymentLink.create(options);
@@ -140,16 +142,7 @@ Atharva Sherlekar`;
             // Non-blocking error
         }
 
-        // Send Email Notifications
-        const isRegenerating = !!commission.razorpay_payment_link_id;
-        if (!isRegenerating) {
-            try {
-                const { sendCommissionStatusEmail } = await import('@/lib/emails');
-                await sendCommissionStatusEmail(commission, 'accepted');
-            } catch (e) {
-                console.error('Failed to send status update email:', e);
-            }
-        }
+        // Redundant email notification removed (handled by status update API)
 
         return NextResponse.json({
             success: true,

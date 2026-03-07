@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { motion } from 'framer-motion';
+import AuthOptions from '@/components/AuthOptions';
 
 export default function AdminLoginPage() {
     const { status } = useSession();
@@ -12,7 +12,7 @@ export default function AdminLoginPage() {
 
     useEffect(() => {
         if (status === 'authenticated') {
-            router.push('/admin');
+            router.push('/');
         }
     }, [status, router]);
 
@@ -23,6 +23,7 @@ export default function AdminLoginPage() {
             </div>
         );
     }
+
     return (
         <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
             <div className="max-w-md w-full space-y-8">
@@ -42,7 +43,7 @@ export default function AdminLoginPage() {
                         transition={{ delay: 0.1 }}
                         className="text-3xl font-cinzel text-white"
                     >
-                        Admin Portal
+                        Authorized Portal
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0 }}
@@ -50,7 +51,7 @@ export default function AdminLoginPage() {
                         transition={{ delay: 0.2 }}
                         className="mt-2 text-sm text-neutral-500 uppercase tracking-widest"
                     >
-                        Authorized Access Only
+                        Sign in to access your account
                     </motion.p>
                 </div>
 
@@ -60,13 +61,9 @@ export default function AdminLoginPage() {
                     transition={{ delay: 0.3 }}
                     className="bg-surface border border-white/5 p-8 rounded-3xl shadow-2xl space-y-6"
                 >
-                    <p className="text-sm text-center text-neutral-400">
-                        Please sign in with your authorized Google account to access the administrative dashboard.
-                    </p>
+                    <AuthOptions callbackUrl="/" />
 
-                    <GoogleSignInButton />
-
-                    <div className="flex items-center justify-center gap-2 pt-4">
+                    <div className="flex items-center justify-center gap-2 pt-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                         <span className="text-[10px] text-neutral-600 uppercase tracking-tighter">Secure encrypted session</span>
                     </div>

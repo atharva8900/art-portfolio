@@ -34,8 +34,7 @@ export const generateInvoice = (commission: InvoiceCommissionData) => {
     const clientLines = [
         commission.client_name,
         commission.client_email,
-        commission.phone,
-        commission.address
+        commission.phone
     ].filter(Boolean);
 
     let currentY = 56;
@@ -104,10 +103,7 @@ export const generateInvoice = (commission: InvoiceCommissionData) => {
     doc.line(20, currentY, rightAlignX, currentY);
     currentY += 10;
 
-    let derivedPaymentStatus = commission.payment_status;
-    if (['finished', 'on_delivery', 'completed'].includes(commission.status) && (!derivedPaymentStatus || derivedPaymentStatus === 'pending')) {
-        derivedPaymentStatus = 'fully_paid';
-    }
+    const derivedPaymentStatus = commission.payment_status;
 
     if (derivedPaymentStatus === 'fully_paid') {
         const shipping = Number(commission.shipping_cost || 0);

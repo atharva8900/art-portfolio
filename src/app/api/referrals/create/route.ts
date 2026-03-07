@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/email';
 import { saveReferral, hashIP, getActiveReferralForUser } from '@/lib/referrals';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 export const dynamic = 'force-dynamic';
 
@@ -102,9 +102,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to save referral' }, { status: 500 });
         }
 
-        // Send Email to Artist
-        const { error: emailError } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'Atharva Sherlekar Art <onboarding@resend.dev>',
+        // Send Email to Artist via Gmail SMTP
+        const { error: emailError } = await sendEmail({
             to: 'atharvasherlekarart@gmail.com',
             subject: 'New Referral Link Generated',
             html: `

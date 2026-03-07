@@ -125,7 +125,7 @@ export default function AdminDashboardPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#050505] text-foreground px-4 md:px-8 lg:px-12 selection:bg-accent/30">
+        <div className="min-h-screen bg-background text-foreground px-4 md:px-8 lg:px-12 selection:bg-accent/30">
             <AdminNav />
             <div className="max-w-7xl mx-auto space-y-10 pt-6">
 
@@ -139,12 +139,12 @@ export default function AdminDashboardPage() {
                         >
                             Executive Dashboard
                         </motion.span>
-                        <h1 className="text-4xl md:text-5xl font-cinzel text-white leading-tight">
+                        <h1 className="text-4xl md:text-5xl font-cinzel text-foreground leading-tight">
                             Admin Dashboard <span className="text-accent underline underline-offset-8 decoration-accent/30 decoration-1">Analytics</span>
                         </h1>
                     </div>
 
-                    <div className="flex bg-black/40 border border-white/5 rounded-xl p-1 gap-1 self-start md:self-end shadow-inner">
+                    <div className="flex bg-surface/50 border border-foreground/5 rounded-xl p-1 gap-1 self-start md:self-end shadow-inner">
                         {RANGE_LABELS.map(({ key, label }) => (
                             <button
                                 key={key}
@@ -249,7 +249,7 @@ export default function AdminDashboardPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.6 }}
-                                    className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 shadow-2xl"
+                                    className="bg-surface border border-foreground/5 rounded-3xl p-8 shadow-2xl"
                                 >
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
@@ -275,7 +275,7 @@ export default function AdminDashboardPage() {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.8 }}
-                                    className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 shadow-2xl"
+                                    className="bg-surface border border-foreground/5 rounded-3xl p-8 shadow-2xl"
                                 >
                                     <h3 className="font-cinzel text-lg mb-8 uppercase tracking-widest text-neutral-400 text-xs font-bold">Commission Pipeline</h3>
                                     <div className="space-y-8">
@@ -304,7 +304,7 @@ export default function AdminDashboardPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.9 }}
-                                    className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 flex flex-col max-h-[400px]"
+                                    className="bg-surface border border-foreground/5 rounded-3xl p-8 flex flex-col max-h-[400px]"
                                 >
                                     <div className="flex items-center justify-between mb-8 shrink-0">
                                         <h3 className="font-cinzel text-lg">Recent Activity</h3>
@@ -316,14 +316,14 @@ export default function AdminDashboardPage() {
                                                 <p className="text-[10px] uppercase tracking-widest font-bold">No Records</p>
                                             </div>
                                         ) : (
-                                            <div className="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[1px] before:bg-white/5">
+                                            <div className="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[1px] before:bg-foreground/5">
                                                 {data.recentActivity.map((item) => (
                                                     <div key={item.id} className="flex items-start gap-4 relative z-10 group">
-                                                        <div className="w-6 h-6 rounded-full bg-black border border-white/10 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                                                        <div className="w-6 h-6 rounded-full bg-black border border-foreground/10 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
                                                             {STATUS_ICON[item.status] || '📌'}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-[11px] text-white font-bold truncate group-hover:text-accent transition-colors">{item.clientName}</p>
+                                                            <p className="text-[11px] text-foreground font-bold truncate group-hover:text-accent transition-colors">{item.clientName}</p>
                                                             <p className="text-[9px] text-neutral-500 mt-0.5 uppercase tracking-tighter">{item.action}</p>
                                                         </div>
                                                         <span className="text-[9px] text-neutral-600 font-bold uppercase whitespace-nowrap mt-1">{timeAgo(item.date)}</span>
@@ -341,7 +341,7 @@ export default function AdminDashboardPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 1.0 }}
-                            className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 shadow-2xl"
+                            className="bg-surface border border-foreground/5 rounded-3xl p-8 shadow-2xl"
                         >
                             <div className="flex items-center gap-3 mb-10">
                                 <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
@@ -353,20 +353,20 @@ export default function AdminDashboardPage() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                                 {/* Col 1: Performance Summary */}
                                 <div className="space-y-6">
-                                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-8 hover:border-white/10 transition-colors">
+                                    <div className="bg-white/[0.02] border border-foreground/5 rounded-2xl p-8 hover:border-foreground/10 transition-colors">
                                         <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-3">Via Referrals</p>
                                         <h4 className="text-4xl font-cinzel text-accent mb-2">{fmt(data.referrals.referralRevenue)}</h4>
                                         <p className="text-[11px] text-neutral-400 font-bold uppercase">{data.referrals.countReferralOrders} orders</p>
                                     </div>
-                                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-8 hover:border-white/10 transition-colors">
+                                    <div className="bg-white/[0.02] border border-foreground/5 rounded-2xl p-8 hover:border-foreground/10 transition-colors">
                                         <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-3">Direct Revenue</p>
-                                        <h4 className="text-4xl font-cinzel text-white mb-2">{fmt(data.referrals.directRevenue)}</h4>
+                                        <h4 className="text-4xl font-cinzel text-foreground mb-2">{fmt(data.referrals.directRevenue)}</h4>
                                         <p className="text-[11px] text-neutral-400 font-bold uppercase">{data.referrals.countDirectOrders} orders</p>
                                     </div>
                                 </div>
 
                                 {/* Col 2: Top Referrers (Scrollable List) */}
-                                <div className="bg-black/20 border border-white/5 rounded-2xl p-8">
+                                <div className="bg-surface/30 border border-foreground/5 rounded-2xl p-8">
                                     <p className="text-[11px] text-neutral-500 uppercase tracking-[0.2em] font-bold mb-8 flex justify-between">
                                         <span>Top Referrers</span>
                                         <span className="text-[9px] text-neutral-600">Leaderboard</span>
@@ -378,11 +378,11 @@ export default function AdminDashboardPage() {
                                             data.topReferrers.map((r, i) => (
                                                 <div key={i} className="flex items-center justify-between group">
                                                     <div className="flex items-center gap-5">
-                                                        <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold group-hover:text-accent group-hover:border-accent/40 transition-all">
+                                                        <div className="w-10 h-10 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center text-xs font-bold group-hover:text-accent group-hover:border-accent/40 transition-all">
                                                             {i + 1}
                                                         </div>
                                                         <div>
-                                                            <p className="text-[13px] text-white font-bold group-hover:text-accent transition-colors">{r.name}</p>
+                                                            <p className="text-[13px] text-foreground font-bold group-hover:text-accent transition-colors">{r.name}</p>
                                                             <p className="text-[9px] text-neutral-500 uppercase mt-1">{r.orders} orders</p>
                                                         </div>
                                                     </div>
@@ -395,7 +395,7 @@ export default function AdminDashboardPage() {
 
                                 {/* Col 3: Financial Health */}
                                 <div className="space-y-6">
-                                    <div className="bg-black/40 border border-white/5 rounded-2xl p-8 relative">
+                                    <div className="bg-surface/50 border border-foreground/5 rounded-2xl p-8 relative">
                                         <div className="absolute top-4 right-4 text-orange-400/10">
                                             <IndianRupee size={28} />
                                         </div>
@@ -411,7 +411,7 @@ export default function AdminDashboardPage() {
                                             <div className="space-y-3">
                                                 <p className="text-[11px] font-bold text-orange-400 uppercase tracking-widest">Pending Payouts</p>
                                                 <p className="text-[13px] text-neutral-100">
-                                                    You owe <span className="font-bold text-white font-mono">{fmt(data.referrals.pendingPayoutsToReferrers)}</span> unpaid.
+                                                    You owe <span className="font-bold text-foreground font-mono">{fmt(data.referrals.pendingPayoutsToReferrers)}</span> unpaid.
                                                 </p>
                                                 <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest opacity-60">
                                                     {fmt(data.referrals.totalCommissionsPaidToReferrers)} paid to date
@@ -453,13 +453,13 @@ function KPICard({ title, value, icon, subtitle, delay, variant = 'dark' }: KPIC
     const variants = {
         gold: 'bg-accent/5 border-accent/10 hover:border-accent/30',
         blue: 'bg-blue-500/5 border-blue-500/10 hover:border-blue-500/30',
-        dark: 'bg-[#0a0a0a] border-white/5 hover:border-white/20'
+        dark: 'bg-surface border-foreground/5 hover:border-foreground/20'
     };
 
     const iconColors = {
         gold: 'text-accent bg-accent/10',
         blue: 'text-blue-400 bg-blue-400/10',
-        dark: 'text-neutral-500 bg-white/5'
+        dark: 'text-neutral-500 bg-foreground/5'
     };
 
     return (
@@ -469,20 +469,20 @@ function KPICard({ title, value, icon, subtitle, delay, variant = 'dark' }: KPIC
             transition={{ delay, duration: 0.5, ease: 'easeOut' }}
             className={`relative p-6 rounded-3xl border transition-all duration-500 group overflow-hidden ${variants[variant]}`}
         >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[40px] -mr-16 -mt-16 group-hover:bg-white/10 transition-colors" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-foreground/5 rounded-full blur-[40px] -mr-16 -mt-16 group-hover:border-foreground/5 transition-colors" />
 
             <div className="flex items-center justify-between mb-8 relative z-10">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${iconColors[variant]}`}>
                     {icon}
                 </div>
-                <div className="h-6 w-12 bg-white/5 rounded-full flex items-center justify-center text-[10px] text-neutral-500 font-bold tracking-tighter group-hover:text-neutral-300 transition-colors">
+                <div className="h-6 w-12 bg-foreground/5 rounded-full flex items-center justify-center text-[10px] text-neutral-500 font-bold tracking-tighter group-hover:text-neutral-300 transition-colors">
                     LIVE
                 </div>
             </div>
 
             <div className="relative z-10 space-y-1">
                 <p className="text-[10px] text-neutral-500 uppercase tracking-[0.2em] font-bold">{title}</p>
-                <h4 className="text-3xl font-cinzel text-white leading-tight">{value}</h4>
+                <h4 className="text-3xl font-cinzel text-foreground leading-tight">{value}</h4>
                 {subtitle && <p className="text-xs text-neutral-500 pt-2 font-medium">{subtitle}</p>}
             </div>
         </motion.div>
@@ -495,9 +495,9 @@ function PipelineStage({ label, count, color, total }: { label: string; count: n
         <div className="group/stage">
             <div className="flex justify-between text-[11px] mb-2 font-bold tracking-wider uppercase">
                 <span className="text-neutral-500 group-hover/stage:text-neutral-300 transition-colors">{label}</span>
-                <span className="text-white tabular-nums">{count}</span>
+                <span className="text-foreground tabular-nums">{count}</span>
             </div>
-            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden p-[2px]">
+            <div className="h-1.5 w-full bg-foreground/5 rounded-full overflow-hidden p-[2px]">
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percentage}%` }}
