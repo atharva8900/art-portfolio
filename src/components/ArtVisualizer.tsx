@@ -16,6 +16,7 @@ import {
 import * as htmlToImage from 'html-to-image';
 import { ColorPicker } from './ui/ColorPicker';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
+import Image from 'next/image';
 
 type FrameStyle = 'minimal-black' | 'classic-wood' | 'premium-gold' | 'sleek-white';
 type PortraitSize = 'A5' | 'A4' | 'A3';
@@ -326,10 +327,13 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                                             height: typeof contentH === 'number' ? `${contentH}px` : contentH
                                                         }}
                                                     >
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img
+                                                        <Image
                                                             src={image}
                                                             alt="Portrait preview"
+                                                            width={2000}
+                                                            height={2000}
+                                                            priority
+                                                            unoptimized
                                                             className="select-none block"
                                                             style={{
                                                                 filter: 'grayscale(100%) contrast(1.15) brightness(1.05)',

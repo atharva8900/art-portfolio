@@ -10,6 +10,7 @@ import { supabaseAdmin } from "./supabase/admin";
 export function SupabaseVerificationAdapter(): Adapter {
     return {
         async createVerificationToken(verificationToken: any) {
+            console.log('Creating verification token for:', verificationToken.identifier);
             const { data, error } = await supabaseAdmin
                 .from('verification_tokens')
                 .insert({
@@ -20,7 +21,11 @@ export function SupabaseVerificationAdapter(): Adapter {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Failed to create verification token:', error);
+                throw error;
+            }
+            console.log('Verification token created successfully');
             return data;
         },
 

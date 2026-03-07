@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import Image from 'next/image';
 
 // Mock CommissionData structure based on our schema
 interface ClientCommission {
@@ -344,10 +345,11 @@ export default function ClientDashboardPage() {
                                                                         <div className={`aspect-square rounded-lg overflow-hidden border transition-all ${imgUrl ? 'border-foreground/20 cursor-zoom-in hover:border-accent/40' : 'border-foreground/10 border-dashed'} bg-foreground/5`}>
                                                                             {imgUrl ? (
                                                                                 <div className="relative group w-full h-full">
-                                                                                    <img
+                                                                                    <Image
                                                                                         src={imgUrl}
                                                                                         alt={`WIP ${label}`}
-                                                                                        className="w-full h-full object-cover"
+                                                                                        fill
+                                                                                        className="object-cover"
                                                                                         onClick={() => setLightboxUrl(imgUrl)}
                                                                                     />
                                                                                     <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 bg-black/50 transition-opacity">
@@ -628,12 +630,15 @@ export default function ClientDashboardPage() {
                         >
                             <X size={24} />
                         </button>
-                        <img
-                            src={lightboxUrl}
-                            alt="WIP"
-                            className="max-h-[90vh] max-w-full rounded-xl object-contain shadow-2xl"
-                            onClick={e => e.stopPropagation()}
-                        />
+                        <div className="relative w-full h-full max-h-[90vh] max-w-5xl">
+                            <Image
+                                src={lightboxUrl}
+                                alt="WIP"
+                                fill
+                                className="object-contain rounded-xl shadow-2xl"
+                                onClick={e => e.stopPropagation()}
+                            />
+                        </div>
                     </div>
                 )
             }

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Quote, Heart, Sparkles } from 'lucide-react';
 
@@ -26,10 +27,11 @@ const Testimonials = () => {
                         className="w-full lg:w-2/5 relative flex justify-center"
                     >
                         <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl border border-foreground/5 bg-surface max-w-sm">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <Image
                                 src="/images/testimonial_1.jpg"
                                 alt="Happy client holding their custom graphite sketch"
+                                width={800}
+                                height={1000}
                                 className="w-full h-auto object-cover scale-105 hover:scale-100 transition-transform duration-700"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
