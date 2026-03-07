@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import EmailProvider from "next-auth/providers/email"
 import { SupabaseVerificationAdapter } from "./auth-adapter"
+import { sendEmail } from "./email"
 
 export const authOptions: NextAuthOptions = {
     adapter: SupabaseVerificationAdapter(),
@@ -11,15 +12,27 @@ export const authOptions: NextAuthOptions = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         }),
         EmailProvider({
-            server: {
-                host: process.env.EMAIL_SERVER_HOST,
-                port: Number(process.env.EMAIL_SERVER_PORT),
-                auth: {
-                    user: process.env.EMAIL_SERVER_USER,
-                    pass: process.env.EMAIL_SERVER_PASSWORD,
-                },
+            async sendVerificationRequest({ identifier: to, url }) {
+                const { error } = await sendEmail({
+                    to,
+                    subject: 'Sign in to Atharva Sherlekar Art',
+                    html: `
+                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #1a1a1a; background-color: #000; color: #fff; border-radius: 12px;">
+                            <h1 style="color: #fff; text-align: center;">Authorized Portal</h1>
+                            <p style="color: #a3a3a3; font-size: 16px; line-height: 1.5;">Click the button below to sign in to your accounts. This link will expire in 24 hours.</p>
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${url}" style="background-color: #fff; color: #000; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Sign In Now</a>
+                            </div>
+                            <p style="color: #525252; font-size: 12px; text-align: center;">If you didn't request this email, you can safely ignore it.</p>
+                        </div>
+                    `,
+                });
+
+                if (error) {
+                    console.error('Magic Link Email Error:', error);
+                    throw new Error('SEND_VERIFICATION_EMAIL_ERROR');
+                }
             },
-            from: process.env.EMAIL_FROM,
         }),
     ],
     session: {
