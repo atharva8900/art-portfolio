@@ -193,7 +193,7 @@ export async function updateCommissionPaymentStatus(
     id: string,
     status: 'pending' | 'reservation_paid' | 'deposit_paid' | 'fully_paid'
 ): Promise<CommissionData | null> {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
         payment_status: status,
         updated_at: new Date().toISOString()
     };

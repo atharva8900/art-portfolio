@@ -1,10 +1,15 @@
 import nodemailer from 'nodemailer';
 
+interface EmailAttachment {
+    filename: string;
+    content: string | Buffer;
+}
+
 interface SendEmailOptions {
     to: string;
     subject: string;
     html: string;
-    attachments?: any[];
+    attachments?: EmailAttachment[];
     bcc?: string;
 }
 

@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight, QrCode, X, Download } from 'lucide-react';
+import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight, QrCode, X } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { QRCodeSVG } from 'qrcode.react';

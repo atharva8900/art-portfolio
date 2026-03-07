@@ -39,7 +39,7 @@ export default function AuthOptions({
             } else {
                 setIsSent(true);
             }
-        } catch (err) {
+        } catch {
             setError('Failed to send magic link. Please try again.');
         } finally {
             setIsLoading(false);

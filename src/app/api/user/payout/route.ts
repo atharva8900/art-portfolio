@@ -111,8 +111,9 @@ export async function POST(request: NextRequest) {
 
         if (emailError) {
             console.error('Payout Email Error:', emailError);
+            const errBody = emailError as { message?: string };
             return NextResponse.json({
-                error: `Failed to send payout request email: ${emailError.message || 'Unknown error'}`,
+                error: `Failed to send payout request email: ${errBody.message || 'Unknown error'}`,
                 details: emailError
             }, { status: 500 });
         }

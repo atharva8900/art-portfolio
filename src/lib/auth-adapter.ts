@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import { Adapter } from "next-auth/adapters";
 import { supabaseAdmin } from "./supabase/admin";
 
@@ -8,8 +9,7 @@ import { supabaseAdmin } from "./supabase/admin";
  */
 export function SupabaseVerificationAdapter(): Adapter {
     return {
-        // @ts-ignore
-        async createVerificationToken(verificationToken) {
+        async createVerificationToken(verificationToken: any) {
             const { data, error } = await supabaseAdmin
                 .from('verification_tokens')
                 .insert({
@@ -24,8 +24,7 @@ export function SupabaseVerificationAdapter(): Adapter {
             return data;
         },
 
-        // @ts-ignore
-        async useVerificationToken({ identifier, token }) {
+        async useVerificationToken({ identifier, token }: any) {
             const { data, error } = await supabaseAdmin
                 .from('verification_tokens')
                 .delete()
@@ -41,17 +40,17 @@ export function SupabaseVerificationAdapter(): Adapter {
         },
 
         // We don't need these since we use JWT strategy and manual user checks
-        async createUser(user) { return user as any },
-        async getUser(id) { return null },
-        async getUserByEmail(email) { return null },
-        async getUserByAccount({ providerAccountId, provider }) { return null },
-        async updateUser(user) { return user as any },
-        async deleteUser(userId) { },
-        async linkAccount(account) { },
-        async unlinkAccount({ providerAccountId, provider }) { },
-        async createSession(session) { return session },
-        async getSessionAndUser(sessionToken) { return null },
-        async updateSession(session) { return session },
-        async deleteSession(sessionToken) { },
-    };
+        async createUser(user: any) { return user },
+        async getUser(id: string) { return null },
+        async getUserByEmail(email: string) { return null },
+        async getUserByAccount(params: any) { return null },
+        async updateUser(user: any) { return user },
+        async deleteUser(id: string) { },
+        async linkAccount(account: any) { },
+        async unlinkAccount(params: any) { },
+        async createSession(session: any) { return session },
+        async getSessionAndUser(token: string) { return null },
+        async updateSession(session: any) { return session },
+        async deleteSession(token: string) { },
+    } as any;
 }

@@ -391,9 +391,9 @@ export default function ClientDashboardPage() {
                                                         <CheckCircle className="mx-auto text-emerald-500 mb-2" size={32} />
                                                         <p className="text-sm font-medium text-emerald-400">Full Payment Received</p>
                                                         {commission.status === 'on_delivery' || commission.status === 'completed' ? (
-                                                            <p className="text-xs text-neutral-400 mt-2">I've received your final payment! Your artwork has been shipped.</p>
+                                                            <p className="text-xs text-neutral-400 mt-2">I&apos;ve received your final payment! Your artwork has been shipped.</p>
                                                         ) : (
-                                                            <p className="text-xs text-neutral-400 mt-2">I've received your final payment! Preparing your artwork for shipment now.</p>
+                                                            <p className="text-xs text-neutral-400 mt-2">I&apos;ve received your final payment! Preparing your artwork for shipment now.</p>
                                                         )}
                                                     </div>
                                                 ) : commission.status === 'accepted' && commission.payment_status === 'pending' && commission.razorpay_payment_link_url ? (

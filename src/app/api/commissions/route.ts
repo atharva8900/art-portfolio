@@ -453,7 +453,6 @@ export async function POST(request: NextRequest) {
                 </div>
             `;
 
-            const toEmail = email;
 
             // Client confirmation via Gmail SMTP
             await sendEmail({
