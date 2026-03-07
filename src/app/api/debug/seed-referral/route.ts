@@ -25,7 +25,9 @@ export async function GET() {
         }
 
         // 2. Create a COMPLETED commission linked to this code
+        const demoCommissionId = `COM_${Date.now().toString(36).toUpperCase()}`;
         const demoCommission = {
+            id: demoCommissionId,
             client_name: 'Demo Client',
             client_email: 'demo_client@example.com',
             phone: '+919876543210',
