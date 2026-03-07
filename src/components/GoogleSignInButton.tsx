@@ -22,7 +22,9 @@ export default function GoogleSignInButton({ onSuccess, callbackUrl = '/' }: Goo
 
             // If we are on a preview URL, redirect to the production login page
             // to avoid Google OAuth domain limit issues.
-            if (currentOrigin.includes('vercel.app') && !currentOrigin.includes('-vert.')) {
+            if (currentOrigin.includes('vercel.app') &&
+                !currentOrigin.includes('atharva-sherlekar-art.vercel.app') &&
+                !currentOrigin.includes('-vert.')) {
                 console.log('On preview URL, redirecting to production for sign-in...');
                 window.location.href = `${productionUrl}/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
                 return;
