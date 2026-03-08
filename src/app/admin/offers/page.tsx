@@ -94,7 +94,7 @@ export default function AdminOffersPage() {
             if (!res.ok) throw new Error('Failed to delete offer');
             setOffers((prev) => prev.filter((o) => o.id !== offerToDelete));
             showNotification('Offer successfully deleted', 'success');
-        } catch (error) {
+        } catch {
             showNotification('Failed to delete offer', 'error');
         } finally {
             setIsDeleting(false);

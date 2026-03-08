@@ -3,7 +3,7 @@
 import { useChat, type UIMessage } from '@ai-sdk/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Loader2, Bot, User, Instagram } from 'lucide-react';
-import { useState, useRef, useEffect, FormEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 export default function ChatWidget() {
@@ -27,7 +27,7 @@ export default function ChatWidget() {
                 } else {
                     setMessageCount(count);
                 }
-            } catch (e) {
+            } catch {
                 localStorage.setItem('art_assistant_limit', JSON.stringify({ count: 0, timestamp: Date.now() }));
             }
         } else {
@@ -153,7 +153,7 @@ export default function ChatWidget() {
                                 </div>
                                 <div className="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed bg-white/5 border border-white/5 text-foreground/90 prose prose-invert prose-p:leading-relaxed prose-pre:p-0 min-w-0">
                                     <ReactMarkdown>
-                                        Hi! I'm Atharva's AI assistant. 🎨 I can help you with pricing, sizing, and any questions about commissioning a portrait. How can I help you today?
+                                        {"Hi! I'm Atharva's AI assistant. 🎨 I can help you with pricing, sizing, and any questions about commissioning a portrait. How can I help you today?"}
                                     </ReactMarkdown>
                                 </div>
                             </div>

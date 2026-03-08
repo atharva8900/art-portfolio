@@ -91,7 +91,7 @@ export default function AdminReferrersPage() {
 
             setReferrers((prev) => prev.filter((r) => r.code !== affiliateToDelete));
             showNotification('Affiliate successfully deleted', 'success');
-        } catch (error) {
+        } catch {
             showNotification('Failed to delete affiliate', 'error');
         } finally {
             setIsDeleting(false);

@@ -65,7 +65,7 @@ export async function getAllCommissions(): Promise<CommissionData[]> {
     }
 
     // Flatten the joined offers data
-    const enrichedData = (data || []).map((item: any) => {
+    const enrichedData = (data as (CommissionData & { offers: { discount_percent: number } | null })[] || []).map((item) => {
         const { offers, ...rest } = item;
         return {
             ...rest,
