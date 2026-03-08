@@ -3,11 +3,14 @@ import { CommissionData } from './commissions';
 
 export interface InvoiceCommissionData extends CommissionData {
     extras_list?: string[];
+    discount_percent?: number;
 }
 
 export const generateInvoice = (commission: InvoiceCommissionData) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const rightAlignX = pageWidth - 20;
+    const currency = 'Rs. ';
 
     // --- Header & Branding ---
     doc.setFontSize(22);
@@ -45,7 +48,6 @@ export const generateInvoice = (commission: InvoiceCommissionData) => {
 
     // --- ARTWORK SUBTOTAL SECTION ---
     currentY += 10;
-    const rightAlignX = pageWidth - 20;
 
     // Heading
     doc.setFontSize(9);
@@ -58,23 +60,54 @@ export const generateInvoice = (commission: InvoiceCommissionData) => {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    const currency = 'Rs. ';
 
     doc.text(`Base (${commission.size}, ${commission.number_of_people} person${Number(commission.number_of_people) > 1 ? 's' : ''})`, 20, currentY);
-    doc.text(`${currency}${commission.base_price || 0}`, rightAlignX, currentY, { align: 'right' });
+
+    const basePrice = Number(commission.base_price || 0);
+    const discountPercent = commission.discount_percent || 0;
+
+    if (discountPercent > 0) {
+        // Calculate original price (rounding to match)
+        const originalPrice = Math.round(basePrice / (1 - discountPercent / 100));
+
+        doc.setTextColor(150, 150, 150);
+        doc.setFontSize(9);
+        const originalPriceText = `${currency}${originalPrice}`;
+        const originalPriceWidth = doc.getTextWidth(originalPriceText);
+        // Position it slightly to the left of the final price
+        doc.text(originalPriceText, rightAlignX - 45, currentY, { align: 'right' });
+        // Line through
+        doc.setDrawColor(150, 150, 150);
+        doc.line(rightAlignX - 45 - originalPriceWidth, currentY - 1, rightAlignX - 45, currentY - 1);
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(11);
+        doc.text(`${currency}${basePrice} (-${discountPercent}%)`, rightAlignX, currentY, { align: 'right' });
+    } else {
+        doc.text(`${currency}${basePrice}`, rightAlignX, currentY, { align: 'right' });
+    }
     currentY += 8;
 
     // Extras
     if (commission.extras_list && commission.extras_list.length > 0) {
         commission.extras_list.forEach(extra => {
-            doc.text(`+ ${extra}`, 20, currentY);
+            const isFree = extra.includes('(FREE)');
+
+            if (isFree) {
+                doc.setTextColor(0, 150, 0); // Green for FREE
+                doc.text(`+ ${extra}`, 20, currentY);
+                doc.text('FREE', rightAlignX, currentY, { align: 'right' });
+                doc.setTextColor(0, 0, 0);
+            } else {
+                doc.text(`+ ${extra}`, 20, currentY);
+                // Extract price if present
+                const priceMatch = extra.match(/\+₹(\d+)/);
+                if (priceMatch) {
+                    doc.text(`${currency}${priceMatch[1]}`, rightAlignX, currentY, { align: 'right' });
+                }
+            }
             currentY += 8;
         });
-        if (commission.extras_total && commission.extras_total > 0) {
-            currentY -= 8;
-            doc.text(`${currency}${commission.extras_total}`, rightAlignX, currentY, { align: 'right' });
-            currentY += 8;
-        }
     } else if (commission.extras_total && commission.extras_total > 0) {
         doc.text(`+ Custom Add-ons`, 20, currentY);
         doc.text(`${currency}${commission.extras_total}`, rightAlignX, currentY, { align: 'right' });

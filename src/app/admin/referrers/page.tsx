@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Copy, Users, Check, Lock, ExternalLink, Calendar, Trash2 } from 'lucide-react';
+import {
+    Loader2, Copy, Users, Check, Lock, ExternalLink,
+    Calendar, Trash2
+} from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -89,8 +92,7 @@ export default function AdminReferrersPage() {
             setReferrers((prev) => prev.filter((r) => r.code !== affiliateToDelete));
             showNotification('Affiliate successfully deleted', 'success');
         } catch (error) {
-            console.error('Failed to delete affiliate:', error);
-            showNotification('Failed to delete affiliate. Please try again.', 'error');
+            showNotification('Failed to delete affiliate', 'error');
         } finally {
             setIsDeleting(false);
             setAffiliateToDelete(null);
@@ -113,7 +115,7 @@ export default function AdminReferrersPage() {
     if (!isAuthorized) {
         return (
             <div className="min-h-screen bg-surface flex items-center justify-center p-4">
-                <div className="bg-surface hover:bg-surface\/80 border border-foreground/10 p-8 rounded-xl max-w-md w-full text-center space-y-6">
+                <div className="bg-surface border border-foreground/10 p-8 rounded-xl max-w-md w-full text-center space-y-6">
                     <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto">
                         <Lock size={32} />
                     </div>
@@ -156,17 +158,17 @@ export default function AdminReferrersPage() {
                             All Affiliates
                         </motion.h1>
                     </div>
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex gap-4 w-full md:w-auto mt-4 md:mt-0"
-                    >
-                        <div className="bg-surface border border-foreground/5 rounded-2xl px-6 py-3 flex items-center justify-between gap-6 shadow-xl flex-1 md:flex-none">
-                            <span className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Total Links Generated</span>
-                            <span className="font-cinzel text-xl text-foreground">{referrers.length}</span>
+
+                    <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto mt-4 md:mt-0">
+                        <div className="bg-surface border border-foreground/5 rounded-2xl px-6 py-3 flex items-center justify-between gap-6 shadow-xl">
+                            <span className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">
+                                Total Links
+                            </span>
+                            <span className="font-cinzel text-xl text-foreground">
+                                {referrers.length}
+                            </span>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
 
                 {error ? (
@@ -208,7 +210,6 @@ export default function AdminReferrersPage() {
                                 <tbody>
                                     {referrers.map((ref, idx) => (
                                         <tr key={ref.code} className="border-b border-foreground/5 hover:bg-foreground/2 transition-colors group">
-                                            {/* Name & Email */}
                                             <td className="py-5 px-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center text-[10px] font-bold text-neutral-400 group-hover:text-accent group-hover:border-accent/30 transition-colors shrink-0">
@@ -220,8 +221,6 @@ export default function AdminReferrersPage() {
                                                     </div>
                                                 </div>
                                             </td>
-
-                                            {/* Link & Code */}
                                             <td className="py-5 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono text-accent text-xs bg-accent/10 px-2 py-1 rounded border border-accent/20">
@@ -239,8 +238,6 @@ export default function AdminReferrersPage() {
                                                     </button>
                                                 </div>
                                             </td>
-
-                                            {/* Performance stats */}
                                             <td className="py-5 px-4">
                                                 <div className="space-y-1">
                                                     <div className="flex items-center justify-between max-w-[120px]">
@@ -253,51 +250,23 @@ export default function AdminReferrersPage() {
                                                     </div>
                                                 </div>
                                             </td>
-
-                                            {/* Additional Info */}
                                             <td className="py-5 px-4 text-sm">
                                                 {ref.referrer_instagram ? (
-                                                    <a
-                                                        href={`https://instagram.com/${ref.referrer_instagram.replace('@', '')}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors"
-                                                    >
+                                                    <a href={`https://instagram.com/${ref.referrer_instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors">
                                                         <span>{ref.referrer_instagram}</span>
                                                         <ExternalLink size={12} />
                                                     </a>
-                                                ) : (
-                                                    <span className="text-neutral-600 italic">No Instagram</span>
-                                                )}
-                                                {ref.referrer_phone && (
-                                                    <div className="text-neutral-400 text-xs mt-1">{ref.referrer_phone}</div>
-                                                )}
+                                                ) : <span className="text-neutral-600 italic">No Instagram</span>}
                                             </td>
-
-                                            {/* Dates */}
                                             <td className="py-5 px-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5 text-neutral-400 text-xs text-right">
                                                     <Calendar size={12} />
-                                                    <span>
-                                                        {(() => {
-                                                            const d = new Date(ref.created_at);
-                                                            const day = String(d.getDate()).padStart(2, '0');
-                                                            const month = String(d.getMonth() + 1).padStart(2, '0');
-                                                            const year = d.getFullYear();
-                                                            return `${day}/${month}/${year}`;
-                                                        })()}
-                                                    </span>
+                                                    <span>{new Date(ref.created_at).toLocaleDateString()}</span>
                                                 </div>
                                             </td>
-
-                                            {/* Actions */}
                                             <td className="py-5 px-4 text-center">
-                                                <button
-                                                    onClick={() => setAffiliateToDelete(ref.code)}
-                                                    className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-foreground transition-colors border border-red-500/20 mx-auto group/btn"
-                                                    title="Delete Affiliate"
-                                                >
-                                                    <Trash2 size={14} className="group-hover/btn:scale-110 transition-transform" />
+                                                <button onClick={() => setAffiliateToDelete(ref.code)} className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-foreground transition-colors border border-red-500/20 mx-auto">
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </td>
                                         </tr>
@@ -327,7 +296,7 @@ export default function AdminReferrersPage() {
                                     Delete Affiliate
                                 </h3>
                                 <p className="text-neutral-400 text-sm leading-relaxed">
-                                    Are you sure you want to permanently delete affiliate <span className="text-accent font-mono font-bold bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20">{affiliateToDelete}</span>? This action cannot be undone and will permanently remove their records.
+                                    Are you sure you want to permanently delete this affiliate? This action cannot be undone.
                                 </p>
                             </div>
 
@@ -344,14 +313,7 @@ export default function AdminReferrersPage() {
                                     disabled={isDeleting}
                                     className="flex-1 px-4 py-3 rounded-full bg-red-500 text-foreground font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
                                 >
-                                    {isDeleting ? (
-                                        <>
-                                            <Loader2 size={16} className="animate-spin" />
-                                            Deleting...
-                                        </>
-                                    ) : (
-                                        "Delete"
-                                    )}
+                                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : "Delete"}
                                 </button>
                             </div>
                         </motion.div>

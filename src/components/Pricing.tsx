@@ -20,8 +20,12 @@ interface PricingTierData {
 }
 
 export default function Pricing() {
-    const [pricingData, setPricingData] = useState<PricingTierData | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [pricingData, setPricingData] = useState<PricingTierData>({
+        isEarlyAccess: true,
+        commissionCount: 0,
+        prices: { A5: '₹500', A4: '₹1000', A3: '₹2000' },
+        progress: { current: 0, total: 10, remaining: 10 },
+    });
 
     useEffect(() => {
         const controller = new AbortController();
@@ -32,21 +36,13 @@ export default function Pricing() {
             .then(data => {
                 clearTimeout(timeoutId);
                 setPricingData(data);
-                setLoading(false);
             })
             .catch(err => {
                 clearTimeout(timeoutId);
                 if (err.name !== 'AbortError') {
                     console.error('Failed to fetch pricing tier:', err);
                 }
-                // Fail safe: use Early Access prices
-                setPricingData({
-                    isEarlyAccess: true,
-                    commissionCount: 0,
-                    prices: { A5: '₹500', A4: '₹1000', A3: '₹2000' },
-                    progress: { current: 0, total: 10, remaining: 10 },
-                });
-                setLoading(false);
+                // Silently keep default early access prices on error
             });
 
         return () => {
@@ -54,16 +50,6 @@ export default function Pricing() {
             controller.abort();
         };
     }, []);
-
-    if (loading || !pricingData) {
-        return (
-            <section id="pricing" className="py-24 px-6 md:px-12 bg-surface text-foreground">
-                <div className="max-w-6xl mx-auto flex items-center justify-center">
-                    <div className="text-neutral-500">Loading pricing...</div>
-                </div>
-            </section>
-        );
-    }
 
     // Future prices (for strikethrough during Early Access)
     const futurePrices = {

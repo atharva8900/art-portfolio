@@ -12,7 +12,7 @@ const MotionImage = motion(Image);
 
 export default function Portfolio() {
     const [artworks, setArtworks] = useState<Artwork[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
     const [viewMode, setViewMode] = useState<'reference' | 'final'>('final');
     const [isImageLoading, setIsImageLoading] = useState(true);
@@ -29,7 +29,8 @@ export default function Portfolio() {
                 reference_image_url: '/images/spiderman_andrew_ref.jpg',
                 time_invested: '80+ hours',
                 size: 'A3 (38 × 28 cm)',
-                category_name: 'Fan Art'
+                category_name: 'Fan Art',
+                created_at: new Date().toISOString(),
             },
             {
                 id: '2',
@@ -39,7 +40,8 @@ export default function Portfolio() {
                 reference_image_url: '/images/mr_bean_ref.jpg',
                 time_invested: '45+ hours',
                 size: 'A3 (40 × 28 cm)',
-                category_name: 'Fan Art'
+                category_name: 'Fan Art',
+                created_at: new Date().toISOString(),
             },
             {
                 id: '3',

@@ -49,6 +49,9 @@ interface CommissionData {
     final_payment_link_id?: string;
     final_payment_link_url?: string;
     wip_images?: string[];
+    promo_id?: string | null;
+    promotion_code?: string | null;
+    discount_percent?: number | null;
 }
 
 const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
@@ -669,7 +672,21 @@ export default function AdminCommissionsPage() {
                                                                                 {(commission as CommissionData & { extras_total?: number }).extras_total ? (
                                                                                     <div className="flex justify-between gap-4"><span className="text-neutral-500">Add-ons</span><span className="font-mono text-foreground">₹{(commission as CommissionData & { extras_total?: number }).extras_total}</span></div>
                                                                                 ) : null}
-                                                                                <div className="flex justify-between gap-4 border-t border-foreground/10 pt-1 mt-1"><span className="text-foreground font-medium">Total Artwork</span><span className="font-mono text-foreground font-bold">₹{(commission.base_price || 0) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span></div>
+
+                                                                                {commission.discount_percent ? (
+                                                                                    <>
+                                                                                        <div className="flex justify-between gap-4 border-t border-foreground/10 pt-1 mt-1 font-medium">
+                                                                                            <span className="text-neutral-500">Original Total</span>
+                                                                                            <span className="font-mono text-neutral-500 line-through">₹{Math.round((commission.base_price || 0) / (1 - (commission.discount_percent || 0) / 100) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0))}</span>
+                                                                                        </div>
+                                                                                        <div className="flex justify-between gap-4 text-emerald-400 text-xs">
+                                                                                            <span className="font-medium">Offer Savings ({commission.promotion_code})</span>
+                                                                                            <span className="font-mono">-₹{Math.round(((commission.base_price || 0) / (1 - (commission.discount_percent || 0) / 100)) * ((commission.discount_percent || 0) / 100))}</span>
+                                                                                        </div>
+                                                                                    </>
+                                                                                ) : null}
+
+                                                                                <div className="flex justify-between gap-4 border-t border-foreground/10 pt-1 mt-1"><span className="text-foreground font-medium">Final Artwork Total</span><span className="font-mono text-foreground font-bold text-lg">₹{(commission.base_price || 0) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span></div>
                                                                                 {commission.shipping_cost ? (
                                                                                     <div className="flex justify-between gap-4 text-pink-400 font-medium italic"><span className="">Shipping</span><span className="font-mono">₹{commission.shipping_cost}</span></div>
                                                                                 ) : null}
@@ -1051,38 +1068,48 @@ export default function AdminCommissionsPage() {
                                                         <div className="flex items-start gap-2 text-sm text-foreground"><MapPin size={12} className="text-neutral-500 mt-0.5" /><span>{commission.address || '—'}</span></div>
                                                     </div>
                                                     <div className="space-y-3">
-                                                        <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase">Order</p>
-                                                        <div className="text-sm text-foreground">Size: {commission.size}</div>
-                                                        <div className="text-sm text-foreground">People: {commission.number_of_people}</div>
-                                                        {commission.base_price && (
-                                                            <div className="space-y-1 text-sm pt-1">
-                                                                <div className="flex justify-between"><span className="text-neutral-500">Base</span><span className="font-mono">₹{commission.base_price}</span></div>
-                                                                {(commission as CommissionData & { extras_total?: number }).extras_total ? (
-                                                                    <div className="flex justify-between"><span className="text-neutral-500">Add-ons</span><span className="font-mono">₹{(commission as CommissionData & { extras_total?: number }).extras_total}</span></div>
-                                                                ) : null}
-                                                                <div className="flex justify-between border-t border-foreground/10 pt-1 font-bold"><span className="text-foreground">Total</span><span className="font-mono text-foreground">₹{(commission.base_price || 0) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span></div>
-                                                                {commission.referrer_info && commission.commission_amount ? (
-                                                                    <>
-                                                                        <div className="flex justify-between border-t border-foreground/10 pt-1 mt-1 mb-2"><span className="text-accent">Commission</span><span className="font-mono text-accent">₹{commission.commission_amount}</span></div>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleRemoveReferral(commission.id);
-                                                                            }}
-                                                                            disabled={removingReferralId === commission.id}
-                                                                            className="w-full flex justify-center items-center gap-1.5 text-xs text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 px-2.5 py-1.5 rounded transition-colors disabled:opacity-50"
-                                                                        >
-                                                                            {removingReferralId === commission.id ? (
-                                                                                <Loader2 size={12} className="animate-spin" />
-                                                                            ) : (
-                                                                                <X size={12} />
-                                                                            )}
-                                                                            Disconnect Referrer
-                                                                        </button>
-                                                                    </>
-                                                                ) : null}
-                                                            </div>
-                                                        )}
+                                                        <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase">Pricing</p>
+                                                        <div className="space-y-1 text-sm pt-1">
+                                                            <div className="flex justify-between"><span className="text-neutral-500">Base</span><span className="font-mono">₹{commission.base_price}</span></div>
+                                                            {(commission as CommissionData & { extras_total?: number }).extras_total ? (
+                                                                <div className="flex justify-between"><span className="text-neutral-500">Add-ons</span><span className="font-mono">₹{(commission as CommissionData & { extras_total?: number }).extras_total}</span></div>
+                                                            ) : null}
+
+                                                            {commission.discount_percent ? (
+                                                                <>
+                                                                    <div className="flex justify-between border-t border-foreground/10 pt-1 mt-1">
+                                                                        <span className="text-neutral-500 text-xs">Original Total</span>
+                                                                        <span className="font-mono text-neutral-500 line-through text-xs">₹{Math.round((commission.base_price || 0) / (1 - (commission.discount_percent || 0) / 100) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0))}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between text-emerald-400 text-[10px]">
+                                                                        <span className="font-medium">Savings ({commission.promotion_code})</span>
+                                                                        <span className="font-mono">-₹{Math.round(((commission.base_price || 0) / (1 - (commission.discount_percent || 0) / 100)) * ((commission.discount_percent || 0) / 100))}</span>
+                                                                    </div>
+                                                                </>
+                                                            ) : null}
+
+                                                            <div className="flex justify-between border-t border-foreground/10 pt-1 font-bold"><span className="text-foreground">Final Total</span><span className="font-mono text-foreground">₹{(commission.base_price || 0) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span></div>
+                                                            {commission.referrer_info && commission.commission_amount ? (
+                                                                <>
+                                                                    <div className="flex justify-between border-t border-foreground/10 pt-1 mt-1 mb-2"><span className="text-accent">Commission</span><span className="font-mono text-accent">₹{commission.commission_amount}</span></div>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleRemoveReferral(commission.id);
+                                                                        }}
+                                                                        disabled={removingReferralId === commission.id}
+                                                                        className="w-full flex justify-center items-center gap-1.5 text-xs text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 px-2.5 py-1.5 rounded transition-colors disabled:opacity-50"
+                                                                    >
+                                                                        {removingReferralId === commission.id ? (
+                                                                            <Loader2 size={12} className="animate-spin" />
+                                                                        ) : (
+                                                                            <X size={12} />
+                                                                        )}
+                                                                        Disconnect Referrer
+                                                                    </button>
+                                                                </>
+                                                            ) : null}
+                                                        </div>
                                                     </div>
                                                 </div>
 

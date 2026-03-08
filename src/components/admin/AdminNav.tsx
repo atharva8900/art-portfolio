@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Settings2, List, DollarSign, Users } from 'lucide-react';
+import { LayoutGrid, Settings2, List, DollarSign, Users, Zap } from 'lucide-react';
 
 const NAV_ITEMS = [
     { href: '/admin', label: 'Overview', icon: LayoutGrid, exact: true },
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { href: '/admin/commissions', label: 'Commissions', icon: List, exact: false },
     { href: '/admin/payouts', label: 'Payouts', icon: DollarSign, exact: false },
     { href: '/admin/referrers', label: 'Affiliates', icon: Users, exact: false },
+    { href: '/admin/offers', label: 'Offers', icon: Zap, exact: false },
 ];
 
 export default function AdminNav() {

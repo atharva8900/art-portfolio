@@ -12,7 +12,7 @@ const faqs = [
     },
     {
         question: "How long does a portrait take?",
-        answer: "Typically **1-2 weeks** depending on size (A5/A4/A3) and complexity. I'll provide a specific estimate when your commission is accepted."
+        answer: "Typically **2-4 weeks** depending on size (A5/A4/A3) and complexity. I'll provide a specific estimate when your commission is accepted."
     },
     {
         question: "What payment methods are accepted?",
@@ -24,7 +24,7 @@ const faqs = [
     },
     {
         question: "Can I see progress updates?",
-        answer: "Yes, I send a **rough sketch for approval** before starting the final rendering. You can also track your order status on the Commission page."
+        answer: "Yes, I send a **rough sketch for approval** before starting the final rendering. I upload it in your **commission dashboard** where you can access it and track your order status."
     },
     {
         question: "What kind of photo should I provide?",
@@ -34,7 +34,7 @@ const faqs = [
         question: "Is the deposit refundable?",
         answer: (
             <span>
-                No, the initial deposit is <strong>non-refundable</strong> as it secures materials and my dedicated time. Please <Link href="/legal/refund-policy" className="text-secondary dark:text-accent font-medium underline underline-offset-4 hover:text-foreground transition-colors">read our refund policy</Link> for more details.
+                Your initial payment is <strong>100% refundable if cancelled within 48 hours</strong>. After that period, or once work has begun, it becomes non-refundable as it secures materials and dedicated time. Please <Link href="/legal/refund-policy" className="text-secondary dark:text-accent font-medium underline underline-offset-4 hover:text-foreground transition-colors">read our full refund policy</Link> for more details.
             </span>
         )
     }
@@ -120,7 +120,14 @@ export default function FAQ() {
 
                                 <div className="pt-12 text-center">
                                     <p className="text-xs text-neutral-500 uppercase tracking-widest">
-                                        Still have questions? <Link href="#commission-form" className="text-accent hover:underline">Start a chat</Link> or DM on Instagram.
+                                        Still have questions?{' '}
+                                        <button
+                                            onClick={() => window.dispatchEvent(new CustomEvent('open-chat'))}
+                                            className="text-secondary dark:text-accent font-bold hover:underline focus:outline-none"
+                                        >
+                                            Start a chat
+                                        </button>{' '}
+                                        or DM on Instagram.
                                     </p>
                                 </div>
                             </div>

@@ -82,8 +82,11 @@ export default function ReferralGenerator() {
                 </div>
 
                 {authLoading ? (
-                    <div className="flex justify-center py-12">
-                        <Loader2 className="animate-spin text-neutral-500" size={32} />
+                    <div className="space-y-4 animate-pulse py-8">
+                        <div className="h-12 bg-foreground/5 rounded-lg w-full" />
+                        <div className="h-12 bg-foreground/5 rounded-lg w-full" />
+                        <div className="h-12 bg-foreground/5 rounded-lg w-full" />
+                        <div className="h-12 bg-foreground/10 rounded-lg w-full" />
                     </div>
                 ) : (
                     <>

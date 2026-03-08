@@ -116,6 +116,14 @@ export async function PATCH(request: NextRequest) {
                         }
                     }
 
+                    // --- Offer Usage Restoration ---
+                    // If a commission with a promo is rejected or cancelled, restore the spot
+                    if (['rejected', 'cancelled'].includes(status) && existingCommission.promo_id) {
+                        const { decrementOfferUsage } = await import('@/lib/offers');
+                        await decrementOfferUsage(existingCommission.promo_id);
+                        console.log(`Restored usage for offer ${existingCommission.promo_id} after status change to ${status}`);
+                    }
+
                     // --- AUTOMATED LINK GENERATION REMOVED ---
                     // Links must now be generated manually from the dashboard after confirmation.
 

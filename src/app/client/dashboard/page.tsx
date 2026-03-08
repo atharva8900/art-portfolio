@@ -33,6 +33,7 @@ interface ClientCommission {
     submitted_at: string;
     reference_images?: string[];
     wip_images?: string[];
+    discount_percent?: number;
 }
 
 export default function ClientDashboardPage() {
@@ -56,6 +57,7 @@ export default function ClientDashboardPage() {
             number_of_people: commission.number_of_people || '1',
             size: commission.size,
             extras_list: extras,
+            discount_percent: (commission as any).discount_percent || 0,
             detailed_background: extras.some(e => e.toLowerCase().includes('background')),
             timelapse_recording: extras.some(e => e.toLowerCase().includes('timelapse')),
             framing: extras.some(e => e.toLowerCase().includes('fram')),

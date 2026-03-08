@@ -15,6 +15,7 @@ import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/p
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendDiscordNotification } from '@/lib/discord';
+import { getOfferById, incrementOfferUsage } from '@/lib/offers';
 
 
 
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
             attachment_urls,
             attachment_base64,
             frame_image_base64,
+            promo_id,
         } = body;
 
         // Verify Razorpay Payment if provided
@@ -235,18 +237,54 @@ export async function POST(request: NextRequest) {
         // Pre-calculate prices for notifications and storage
         const basePriceStr = await getPriceForSize(size as 'A5' | 'A4' | 'A3');
         const basePriceForOne = basePriceStr ? parseInt(basePriceStr.replace('₹', '').replace(',', ''), 10) : 0;
-        const totalBasePrice = calculatePortraitPrice(basePriceForOne, Number(number_of_people), size as 'A5' | 'A4' | 'A3');
-        const additionalPeopleCost = totalBasePrice - basePriceForOne;
+        const totalBasePriceOriginal = calculatePortraitPrice(basePriceForOne, Number(number_of_people), size as 'A5' | 'A4' | 'A3');
+        let totalBasePrice = totalBasePriceOriginal;
+        const additionalPeopleCost = totalBasePriceOriginal - basePriceForOne;
 
-        const backgroundCost = detailed_background ? 500 : 0;
-        const timelapseCost = timelapse_recording ? 500 : 0;
-        const framingCost = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3'] : 0;
-        const totalAmount = totalBasePrice + backgroundCost + timelapseCost + framingCost;
+        // Fetch Offer for server-side validation and pricing
+        let appliedOffer = null;
+        if (promo_id) {
+            appliedOffer = await getOfferById(promo_id);
+            if (appliedOffer && (appliedOffer.usage_limit - appliedOffer.usage_count) > 0) {
+                // Apply discount to base price
+                if (appliedOffer.discount_percent) {
+                    totalBasePrice = totalBasePriceOriginal * (1 - appliedOffer.discount_percent / 100);
+                }
+            } else {
+                appliedOffer = null; // Offer invalid or expired
+            }
+        }
+
+        const backgroundCostOriginal = detailed_background ? 500 : 0;
+        const timelapseCostOriginal = timelapse_recording ? 500 : 0;
+        const framingCostOriginal = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3'] : 0;
+        const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + timelapseCostOriginal + framingCostOriginal);
+
+        const backgroundCost = (detailed_background && !appliedOffer?.free_extras?.background) ? 500 : 0;
+        const timelapseCost = (timelapse_recording && !appliedOffer?.free_extras?.timelapse) ? 500 : 0;
+        const framingCost = (framing && !appliedOffer?.free_extras?.framing) ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3'] : 0;
+
+        const totalAmount = Math.round(totalBasePrice + backgroundCost + timelapseCost + framingCost);
+        const totalSavings = totalAmountOriginal - totalAmount;
+
+        // Increment Offer Usage if valid
+        if (appliedOffer) {
+            await incrementOfferUsage(appliedOffer.id);
+        }
 
         // Construct Email Draft for Artist (to copy-paste to client)
         let emailDraft = '';
         const firstName = name.split(' ')[0];
         const pluralPeople = Number(number_of_people) > 1 ? 's' : '';
+
+        const priceBreakdownDraft =
+            `- Base Price (${size}, ${number_of_people} people): ₹${totalBasePriceOriginal}\n` +
+            (detailed_background ? `- Detailed Background: ₹500 ${appliedOffer?.free_extras?.background ? '(FREE)' : ''}\n` : '') +
+            (timelapse_recording ? `- Timelapse Recording: ₹500 ${appliedOffer?.free_extras?.timelapse ? '(FREE)' : ''}\n` : '') +
+            (framing ? `- Professional Framing: ₹${framingCostOriginal} ${appliedOffer?.free_extras?.framing ? '(FREE)' : ''}\n` : '') +
+            (appliedOffer?.discount_percent ? `- Applied Offer (${appliedOffer.code}): -${appliedOffer.discount_percent}%\n` : '') +
+            (totalSavings > 0 ? `**Total Savings: ₹${totalSavings}**\n` : '') +
+            `**Final Total: ₹${totalAmount}**`;
 
         if (isWaitlist) {
             emailDraft = `Hi ${firstName},\n\n` +
@@ -254,13 +292,8 @@ export async function POST(request: NextRequest) {
                 `**Waitlist Status:**\n` +
                 `Currently, all my review slots are full, so your request has been placed on the waitlist. I'll be able to start working on your piece next month!\n\n` +
                 `**Price Breakdown:**\n` +
-                `- Base Price (${size}): ₹${basePriceForOne}\n` +
-                (Number(number_of_people) > 1 ? `- Additional People: ₹${additionalPeopleCost}\n` : '') +
-                (detailed_background ? `- Detailed Background: ₹500\n` : '') +
-                (timelapse_recording ? `- Timelapse Recording: ₹500\n` : '') +
-                (framing ? `- Professional Framing: ₹${framingCost}\n` : '') +
+                priceBreakdownDraft + `\n\n` +
                 `**Waitlist Reservation Confirmed:**\n` +
-                `- Total Artwork: ₹${totalAmount}\n` +
                 `- Reservation Fee Paid (25%): ₹${Math.round(totalAmount * 0.25)}\n\n` +
                 `**Next Steps:**\n` +
                 `1. You are now officially on the waitlist (Slot 3 or 4).\n` +
@@ -270,12 +303,7 @@ export async function POST(request: NextRequest) {
             emailDraft = `Hi ${firstName},\n\n` +
                 `Thank you for reaching out! I've received your request for a ${size} portrait of ${number_of_people} person${pluralPeople}.\n\n` +
                 `**Price Breakdown:**\n` +
-                `- Base Price (${size}): ₹${basePriceForOne}\n` +
-                (Number(number_of_people) > 1 ? `- Additional People: ₹${additionalPeopleCost}\n` : '') +
-                (detailed_background ? `- Detailed Background: ₹500\n` : '') +
-                (timelapse_recording ? `- Timelapse Recording: ₹500\n` : '') +
-                (framing ? `- Professional Framing: ₹${framingCost}\n` : '') +
-                `**Total: ₹${totalAmount}**\n\n` +
+                priceBreakdownDraft + `\n\n` +
                 `**Next Steps:**\n` +
                 `1. I've received your reference photo(s) and I'm reviewing the quality now.\n` +
                 `2. Once confirmed, you can pay a 50% advance (₹${Math.round(totalAmount / 2)}) to officially book your slot.\n\n` +
@@ -559,6 +587,8 @@ export async function POST(request: NextRequest) {
                 base_price: totalBasePrice,
                 extras_total: extrasTotal,
                 commission_amount: referrersShare,
+                promo_id: appliedOffer?.id || null,
+                promotion_code: appliedOffer?.code || null,
                 frame_image: frame_image,
                 razorpay_order_id: razorpay_order_id,
                 razorpay_payment_id: razorpay_payment_id,

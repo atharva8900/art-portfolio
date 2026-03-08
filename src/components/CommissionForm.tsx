@@ -152,7 +152,82 @@ export default function CommissionForm() {
     const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
+    const [originalTotalValue, setOriginalTotalValue] = useState<number>(0);
+    const [totalSavings, setTotalSavings] = useState<number>(0);
+    const [promoCode, setPromoCode] = useState('');
+    const [offer, setOffer] = useState<{ id?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, usage_count?: number, usage_limit?: number } | null>(null);
+    const [offerError, setOfferError] = useState('');
+    const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+    const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
+    const [offerAppliedMessage, setOfferAppliedMessage] = useState('');
+
     const supabase = createClient();
+
+    // Promo Validation
+    const validatePromo = async (code: string) => {
+        if (!code) {
+            setOffer(null);
+            setOfferError('');
+            return;
+        }
+        setIsValidatingPromo(true);
+        setOfferError('');
+        try {
+            const res = await fetch(`/api/offers/validate?code=${code.toUpperCase()}`);
+            const data = await res.json();
+            if (res.ok && data.valid) {
+                setOffer(data.offer);
+                setOfferAppliedMessage(`Offer Applied: ${data.offer.name}`);
+                setPromoCode(code.toUpperCase());
+            } else {
+                setOffer(null);
+                setOfferError(data.error || 'Invalid or expired offer code');
+            }
+        } catch {
+            setOfferError('Failed to validate code');
+        } finally {
+            setIsValidatingPromo(false);
+        }
+    };
+
+    // Auto-validate from URL
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const promo = params.get('promo');
+        if (promo) {
+            setPromoCode(promo);
+            validatePromo(promo);
+        }
+    }, []);
+
+    // Countdown Timer Logic
+    useEffect(() => {
+        if (!offer?.expires_at) {
+            setTimeLeft(null);
+            return;
+        }
+
+        const timer = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = new Date(offer.expires_at!).getTime() - now;
+
+            if (distance < 0) {
+                clearInterval(timer);
+                setTimeLeft(null);
+                setOffer(null);
+                setOfferError('Offer has expired');
+            } else {
+                setTimeLeft({
+                    days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                    minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+                    seconds: Math.floor((distance % (1000 * 60)) / 1000)
+                });
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [offer]);
 
     const user = session?.user;
     const authLoading = authStatus === 'loading';
@@ -220,19 +295,35 @@ export default function CommissionForm() {
         const basePrice = parseInt(basePriceStr.replace(/[^0-9]/g, ''));
 
         // Use centralized pricing logic
-        const baseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3');
+        let baseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3');
 
-        const backgroundCost = detailedBackground ? 500 : 0;
-        const timelapseCost = timelapse ? 500 : 0;
-        const framingCost = framing ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3'] : 0;
+        // Apply Offer Discount on Base Price
+        if (offer && offer.discount_percent) {
+            baseTotal = baseTotal * (1 - offer.discount_percent / 100);
+        }
 
-        // Note: Referrer gets 20% of base + background. Not framing or timelapse.
-        setEstimatedTotal(baseTotal + backgroundCost + timelapseCost + framingCost);
-    }, [selectedSize, peopleCount, currentPrices, detailedBackground, timelapse, framing]);
+        const backgroundCost = (detailedBackground && !offer?.free_extras?.background) ? 500 : 0;
+        const timelapseCost = (timelapse && !offer?.free_extras?.timelapse) ? 500 : 0;
+        const framingCost = (framing && !offer?.free_extras?.framing) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3'] : 0;
+
+        // Note: Delivery is usually handled in shipping, but if free_extras.delivery is true, that's a bonus
+        const total = baseTotal + backgroundCost + timelapseCost + framingCost;
+
+        // Calculate original total (without any discounts)
+        const originalBaseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3');
+        const originalBackgroundCost = detailedBackground ? 500 : 0;
+        const originalTimelapseCost = timelapse ? 500 : 0;
+        const originalFramingCost = framing ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3'] : 0;
+        const originalTotal = originalBaseTotal + originalBackgroundCost + originalTimelapseCost + originalFramingCost;
+
+        setEstimatedTotal(Math.round(total));
+        setOriginalTotalValue(Math.round(originalTotal));
+        setTotalSavings(Math.round(originalTotal - total));
+    }, [selectedSize, peopleCount, currentPrices, detailedBackground, timelapse, framing, offer]);
 
     const minDateStr = (() => {
         const d = new Date();
-        d.setDate(d.getDate() + 7);
+        d.setDate(d.getDate() + 14);
         return d.toISOString().split('T')[0];
     })();
 
@@ -416,6 +507,7 @@ export default function CommissionForm() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...data,
+                    promo_id: offer?.id || null,
                     detailed_background: detailedBackground,
                     timelapse_recording: timelapse,
                     framing: framing,
@@ -531,6 +623,7 @@ export default function CommissionForm() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             ...data,
+                            promo_id: offer?.id || null,
                             detailed_background: detailedBackground,
                             timelapse_recording: timelapse,
                             framing: framing,
@@ -717,6 +810,98 @@ export default function CommissionForm() {
                             </p>
                         </div>
                     )}
+
+                    {/* Offer Urgency & Countdown */}
+                    <AnimatePresence>
+                        {offer && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="mt-8 p-8 bg-neutral-900 border border-accent/20 rounded-[2.5rem] shadow-2xl relative overflow-hidden group"
+                            >
+                                {/* Decorative elements */}
+                                <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent/10 rounded-full blur-[60px] group-hover:bg-accent/20 transition-all" />
+                                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-accent/5 rounded-full blur-[60px]" />
+
+                                <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:scale-110 transition-transform text-accent">
+                                    <Sparkles size={48} />
+                                </div>
+
+                                <div className="relative z-10 flex flex-col items-center gap-6">
+                                    <div className="flex items-center gap-2 px-5 py-2 bg-accent text-background rounded-full text-[11px] font-black uppercase tracking-[0.25em] shadow-lg shadow-accent/20">
+                                        <Flame size={14} className="animate-pulse" />
+                                        Limited Time Offer Applied
+                                    </div>
+
+                                    <div className="text-center space-y-1">
+                                        <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-bold opacity-80">Campaign</p>
+                                        <h3 className="text-3xl font-serif text-white">
+                                            {offer.name}
+                                        </h3>
+                                    </div>
+
+                                    <div className="flex items-center gap-12 py-6 px-10 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 w-full justify-center relative overflow-hidden group/benefit">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover/benefit:opacity-100 transition-opacity" />
+
+                                        <div className="text-center relative z-10">
+                                            <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-black mb-2 px-3 py-0.5 bg-accent/10 rounded-full inline-block">Benefit</p>
+                                            <div className="flex items-baseline justify-center gap-1">
+                                                <span className="text-5xl md:text-6xl font-cinzel text-white leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{offer.discount_percent ?? 0}</span>
+                                                <div className="flex flex-col items-start">
+                                                    <span className="text-2xl font-cinzel text-accent leading-none">%</span>
+                                                    <span className="text-[10px] uppercase font-black tracking-tighter text-accent/60 leading-none mt-1">OFF</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="w-[1px] h-16 bg-white/10 relative z-10" />
+
+                                        <div className="text-center relative z-10">
+                                            <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold mb-2">Availability</p>
+                                            <div className="flex items-baseline justify-center gap-1">
+                                                <span className="text-4xl font-cinzel text-white">{(offer.usage_limit ?? 0) - (offer.usage_count ?? 0)}</span>
+                                                <span className="text-lg font-cinzel text-neutral-500">/</span>
+                                                <span className="text-lg font-cinzel text-neutral-500">{offer.usage_limit ?? 0}</span>
+                                            </div>
+                                            <p className="text-[9px] uppercase font-black tracking-widest text-neutral-600 mt-1">Spots Left</p>
+                                        </div>
+                                    </div>
+
+                                    {timeLeft && (
+                                        <div className="flex flex-col items-center gap-3">
+                                            <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold">Offer Expires In</p>
+                                            <div className="flex gap-4">
+                                                {[
+                                                    { label: 'days', value: timeLeft.days },
+                                                    { label: 'hrs', value: timeLeft.hours },
+                                                    { label: 'mins', value: timeLeft.minutes },
+                                                    { label: 'secs', value: timeLeft.seconds }
+                                                ].map((t, i) => (
+                                                    <div key={i} className="flex flex-col items-center gap-1">
+                                                        <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl font-bold border border-white/10 text-white shadow-inner">
+                                                            {String(t.value).padStart(2, '0')}
+                                                        </div>
+                                                        <span className="text-[9px] uppercase tracking-tighter font-black text-neutral-500">{t.label}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {offer.free_extras && Object.values(offer.free_extras).some(v => v) && (
+                                        <div className="flex flex-wrap justify-center gap-3 pt-2">
+                                            {Object.entries(offer.free_extras).map(([key, val]) => val && (
+                                                <div key={key} className="flex items-center gap-2 bg-accent/10 px-4 py-1.5 rounded-full border border-accent/20">
+                                                    <Check size={12} className="text-accent" />
+                                                    <span className="text-[10px] uppercase font-bold tracking-widest text-accent">Free {key}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {authLoading ? (
@@ -802,6 +987,31 @@ export default function CommissionForm() {
                             <div className="space-y-2">
                                 <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Email Address</label>
                                 <input required name="email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="john@example.com" />
+                            </div>
+
+                            {/* Promo Code Input */}
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Promo Code (Optional)</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        name="promo_code"
+                                        type="text"
+                                        value={promoCode}
+                                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                        placeholder="HAVE A CODE?"
+                                        className={`flex-1 bg-surface border ${offer ? 'border-emerald-500/50' : 'border-foreground/10'} p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors font-mono tracking-widest placeholder:text-neutral-500`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => validatePromo(promoCode)}
+                                        disabled={isValidatingPromo || !promoCode}
+                                        className="px-6 py-4 bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-md text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                    >
+                                        {isValidatingPromo ? <Loader2 size={16} className="animate-spin" /> : 'Apply'}
+                                    </button>
+                                </div>
+                                {offerError && <p className="text-[10px] text-red-400 font-bold uppercase tracking-widest mt-1 px-1">{offerError}</p>}
+                                {offer && <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1 px-1 flex items-center gap-1"><Check size={10} /> {offerAppliedMessage}</p>}
                             </div>
                         </div>
 
@@ -900,7 +1110,7 @@ export default function CommissionForm() {
                                 className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
                             />
                             <p className="text-[10px] text-neutral-500 uppercase tracking-wider">
-                                ⏳ Portraits typically take <strong>1-2 weeks</strong>. Requesting a date earlier than 7 days from today is disabled to set realistic expectations.
+                                ⏳ Portraits typically take <strong>2-4 weeks</strong>. Requesting a date earlier than 14 days from today is disabled to set realistic expectations.
                             </p>
                         </div>
 
@@ -923,7 +1133,9 @@ export default function CommissionForm() {
                                     </div>
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-foreground">Detailed Background (+₹500)</span>
+                                            <span className="text-foreground">
+                                                Detailed Background {offer?.free_extras?.background ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
+                                            </span>
                                             <div className="relative group ml-2">
                                                 <button
                                                     type="button"
@@ -971,7 +1183,9 @@ export default function CommissionForm() {
                                     </div>
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-foreground">Timelapse Recording (+₹500)</span>
+                                            <span className="text-foreground">
+                                                Timelapse Recording {offer?.free_extras?.timelapse ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
+                                            </span>
                                             <div className="relative group ml-2">
                                                 <button
                                                     type="button"
@@ -1024,7 +1238,9 @@ export default function CommissionForm() {
                                     </div>
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-foreground">Framing (+₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3']})</span>
+                                            <span className="text-foreground">
+                                                Framing {offer?.free_extras?.framing ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3']})</span>}
+                                            </span>
                                             <div className="relative group ml-2">
                                                 <button
                                                     type="button"
@@ -1107,38 +1323,80 @@ export default function CommissionForm() {
 
                             {/* Line Items */}
                             <div className="px-6 space-y-2 text-sm">
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center">
                                     <span className="text-neutral-400">
                                         Base ({selectedSize}, {peopleCount} {peopleCount === 1 ? 'person' : 'people'})
                                     </span>
-                                    <span className="font-mono text-foreground">
-                                        ₹{calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3').toLocaleString()}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {offer && (offer.discount_percent ?? 0) > 0 && (
+                                            <>
+                                                <span className="text-[10px] line-through text-neutral-500 font-mono">
+                                                    ₹{calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3').toLocaleString()}
+                                                </span>
+                                                <span className="font-mono text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20 font-bold">
+                                                    -{offer.discount_percent}%
+                                                </span>
+                                            </>
+                                        )}
+                                        <span className={`font-mono ${offer ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                            ₹{(calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3') * (offer ? (1 - (offer.discount_percent ?? 0) / 100) : 1)).toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
                                 {detailedBackground && (
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400">+ Detailed Background</span>
-                                        <span className="font-mono text-foreground">₹500</span>
+                                        <span className={`font-mono ${offer?.free_extras?.background ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                            {offer?.free_extras?.background ? 'FREE' : '₹500'}
+                                        </span>
                                     </div>
                                 )}
                                 {timelapse && (
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400">+ Timelapse Recording</span>
-                                        <span className="font-mono text-foreground">₹500</span>
+                                        <span className={`font-mono ${offer?.free_extras?.timelapse ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                            {offer?.free_extras?.timelapse ? 'FREE' : '₹500'}
+                                        </span>
                                     </div>
                                 )}
                                 {framing && (
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400">+ Framing</span>
-                                        <span className="font-mono text-foreground">₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3']}</span>
+                                        <span className={`font-mono ${offer?.free_extras?.framing ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                            {offer?.free_extras?.framing ? 'FREE' : `₹${FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3']}`}
+                                        </span>
+                                    </div>
+                                )}
+                                {offer?.free_extras?.delivery && (
+                                    <div className="flex justify-between">
+                                        <span className="text-neutral-400">+ Delivery (Shipping)</span>
+                                        <span className="font-mono text-accent font-bold">FREE</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* Subtotal */}
                             <div className="mx-6 mt-3 pt-3 border-t border-foreground/10 flex justify-between items-baseline">
-                                <span className="text-sm text-foreground font-medium">Subtotal</span>
-                                <span className="text-2xl font-serif text-foreground">₹{estimatedTotal.toLocaleString()}</span>
+                                <div className="flex flex-col">
+                                    <span className="text-sm text-foreground font-medium">Subtotal</span>
+                                    {totalSavings > 0 && (
+                                        <motion.span
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider flex items-center gap-1"
+                                        >
+                                            <Sparkles size={10} /> You Save ₹{totalSavings.toLocaleString()}
+                                        </motion.span>
+                                    )}
+                                </div>
+                                <div className="flex flex-col items-end">
+                                    {totalSavings > 0 && (
+                                        <span className="text-xs line-through text-neutral-500 font-mono mb-[-4px]">
+                                            ₹{originalTotalValue.toLocaleString()}
+                                        </span>
+                                    )}
+                                    <span className="text-2xl font-serif text-foreground">₹{estimatedTotal.toLocaleString()}</span>
+                                </div>
                             </div>
 
                             {/* Deposit & Balance */}
@@ -1155,7 +1413,7 @@ export default function CommissionForm() {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-neutral-400">Balance Due (on completion)</span>
-                                            <span className="font-mono text-neutral-400">₹{Math.round(estimatedTotal * 0.5).toLocaleString()} + Shipping</span>
+                                            <span className="font-mono text-neutral-400">₹{Math.round(estimatedTotal * 0.5).toLocaleString()} {offer?.free_extras?.delivery ? '(incl. Shipping)' : '+ Shipping'}</span>
                                         </div>
                                     </>
                                 ) : (
@@ -1166,7 +1424,7 @@ export default function CommissionForm() {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-neutral-400">Balance Due</span>
-                                            <span className="font-mono text-neutral-400">₹{Math.round(estimatedTotal / 2).toLocaleString()} + Shipping</span>
+                                            <span className="font-mono text-neutral-400">₹{Math.round(estimatedTotal / 2).toLocaleString()} {offer?.free_extras?.delivery ? '(incl. Shipping)' : '+ Shipping'}</span>
                                         </div>
                                     </>
                                 )}
@@ -1175,7 +1433,10 @@ export default function CommissionForm() {
                             {/* Shipping Note */}
                             <div className="px-6 pt-3 pb-5">
                                 <p className="text-[11px] text-neutral-500 italic leading-relaxed">
-                                    Shipping costs will be calculated and added to the final balance once the portrait is ready for delivery.
+                                    {offer?.free_extras?.delivery
+                                        ? "Your offer includes free shipping! No additional delivery costs will be charged."
+                                        : "Shipping costs will be calculated and added to the final balance once the portrait is ready for delivery."
+                                    }
                                 </p>
                             </div>
                         </motion.div>
