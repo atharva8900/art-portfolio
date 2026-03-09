@@ -13,14 +13,17 @@
     "@ai-sdk/google": "^3.0.43",
     "@ai-sdk/react": "^3.0.118",
     "@google/generative-ai": "^0.24.1",
+    "@gsap/react": "^2.1.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
+    "@types/three": "^0.183.1",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
     "ai": "^6.0.116",
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",
     "framer-motion": "^12.34.0",
+    "gsap": "^3.14.2",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
@@ -39,7 +42,8 @@
     "recharts": "^3.7.0",
     "resend": "^6.9.2",
     "stripe": "^20.4.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@types/node": "^20",
