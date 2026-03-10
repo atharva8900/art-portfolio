@@ -293,7 +293,7 @@ export default function Portfolio() {
                                                 }}
                                                 src={viewMode === 'final' ? selectedArtwork.image_url : selectedArtwork.reference_image_url}
                                                 alt={selectedArtwork.title}
-                                                className="max-h-[60vh] md:max-h-[70vh] w-auto h-auto object-contain shadow-2xl rounded-lg"
+                                                className="max-h-[58vh] md:max-h-[70vh] w-auto h-auto object-contain shadow-2xl rounded-lg"
                                                 onLoad={handleImageLoad}
                                             />
                                         </AnimatePresence>
@@ -309,9 +309,9 @@ export default function Portfolio() {
                                         </div>
                                     </div>
 
-                                    {/* Toggle Button Container - Fixed height on mobile to prevent jumping */}
+                                    {/* Toggle Button Container - Increased height for better clearance */}
                                     {selectedArtwork.reference_image_url && (
-                                        <div className="flex-none h-12 flex items-center justify-center w-full">
+                                        <div className="flex-none h-16 flex items-center justify-center w-full">
                                             <button
                                                 onClick={toggleViewMode}
                                                 className="px-6 py-2.5 rounded-full border border-foreground/20 bg-background/50 backdrop-blur-md text-foreground/90 hover:bg-surface transition-all font-serif tracking-wider text-sm flex items-center gap-2 shadow-sm"

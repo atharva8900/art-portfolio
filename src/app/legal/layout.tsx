@@ -16,7 +16,7 @@ export default function LegalLayout({
                     <ArrowLeft size={16} />
                     Back to Home
                 </Link>
-                <div className="prose dark:prose-invert prose-neutral max-w-none">
+                <div className="prose dark:prose-invert prose-neutral max-w-none prose-p:text-foreground/90 prose-headings:text-foreground prose-li:text-foreground/90">
                     {children}
                 </div>
             </div>

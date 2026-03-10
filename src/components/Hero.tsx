@@ -162,7 +162,7 @@ export default function Hero() {
 
                             <MagneticButton
                                 onClick={() => scrollToSection("portfolio")}
-                                className="px-8 py-4 border border-foreground/20 text-foreground text-sm font-bold uppercase tracking-widest hover:border-foreground transition-colors rounded-full backdrop-blur-sm"
+                                className="px-8 py-4 bg-background dark:bg-transparent border border-foreground/20 dark:border-foreground/20 text-foreground text-sm font-bold uppercase tracking-widest hover:border-foreground dark:hover:border-foreground transition-colors rounded-full backdrop-blur-sm shadow-sm dark:shadow-none"
                             >
                                 View Artworks
                             </MagneticButton>

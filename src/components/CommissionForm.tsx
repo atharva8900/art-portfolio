@@ -1128,8 +1128,8 @@ export default function CommissionForm() {
                                         checked={detailedBackground}
                                         onChange={(e) => setDetailedBackground(e.target.checked)}
                                     />
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${detailedBackground ? 'border-accent bg-accent text-background' : 'border-neutral-500'}`}>
-                                        {detailedBackground && <CheckCircle size={14} />}
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${detailedBackground ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
+                                        {detailedBackground && <CheckCircle size={14} className="stroke-[3px]" />}
                                     </div>
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
@@ -1178,8 +1178,8 @@ export default function CommissionForm() {
                                         checked={timelapse}
                                         onChange={(e) => setTimelapse(e.target.checked)}
                                     />
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${timelapse ? 'border-accent bg-accent text-background' : 'border-neutral-500'}`}>
-                                        {timelapse && <CheckCircle size={14} />}
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${timelapse ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
+                                        {timelapse && <CheckCircle size={14} className="stroke-[3px]" />}
                                     </div>
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
@@ -1233,8 +1233,8 @@ export default function CommissionForm() {
                                             }
                                         }}
                                     />
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${framing ? 'border-accent bg-accent text-background' : 'border-neutral-500'}`}>
-                                        {framing && <CheckCircle size={14} />}
+                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${framing ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
+                                        {framing && <CheckCircle size={14} className="stroke-[3px]" />}
                                     </div>
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
@@ -1501,9 +1501,9 @@ export default function CommissionForm() {
                                 <div className={`w-5 h-5 rounded border mt-0.5 flex-shrink-0 flex items-center justify-center mr-3 transition-all ${consent ? 'border-foreground bg-foreground text-background' : 'border-neutral-500 group-hover:border-foreground/50'}`}>
                                     {consent && <CheckCircle size={14} className="stroke-[3px]" />}
                                 </div>
-                                <span className="text-sm text-foreground/70 group-hover:text-foreground transition-colors">
+                                <span className="text-sm text-foreground/90 font-medium transition-colors">
                                     I consent to having the completed drawing uploaded to the artist&apos;s Instagram page.
-                                    <span className="block text-xs mt-1 text-neutral-500 dark:text-neutral-400">(Note: Timelapse recordings, if selected, are kept private and sent only to you unless explicit permission is granted.)</span>
+                                    <span className="block text-xs mt-1 text-neutral-500 dark:text-neutral-400 font-normal">(Note: Timelapse recordings, if selected, are kept private and sent only to you unless explicit permission is granted.)</span>
                                 </span>
                             </label>
                         </div>
