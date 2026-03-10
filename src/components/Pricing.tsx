@@ -29,7 +29,7 @@ const containerVariants = {
             delayChildren: 0.1
         }
     }
-};
+} as const;
 
 const cardVariants = {
     hidden: {
@@ -49,19 +49,19 @@ const cardVariants = {
             stiffness: 120
         }
     }
-};
+} as const;
 
 const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 }
-};
+} as const;
 
 const valueVariants = {
     initial: { opacity: 0 },
     animate: { opacity: 1 },
     exit: { opacity: 0 },
     transition: { duration: 0.2 }
-};
+} as const;
 
 export default function Pricing() {
     const [pricingData, setPricingData] = useState<PricingTierData>({
