@@ -13,12 +13,12 @@ export default function PrivacyPolicy() {
                 <div>
                     <h2 className="text-2xl font-serif text-foreground mb-4">1. Information We Collect</h2>
                     <p className="leading-relaxed">
-                        To fulfill your custom portrait commission and manage your account, we collect the following personal information:
+                        To fulfill your custom portrait commission and provide access to your dashboard, the following information is securely handled:
                     </p>
                     <ul className="list-disc pl-6 mt-4 space-y-2">
-                        <li><strong>Contact Information:</strong> Name, Email Address, and Phone Number.</li>
-                        <li><strong>Authentication Data:</strong> When you sign in via Google, we receive your public profile information (name, email, and profile picture). For Magic Link sign-ins, we collect and verify your email address.</li>
-                        <li><strong>Shipping Details:</strong> Postal address for delivering the physical artwork.</li>
+                        <li><strong>Commission Details:</strong> When you fill out our order forms, we collect and use your <strong>Name, Email Address, and Phone Number</strong> to manage your request.</li>
+                        <li><strong>Secure Authentication:</strong> We use safe, industry-standard methods for login. For Google Sign-In, we use <strong>NextAuth</strong> which securely authenticates you. For <strong>Magic Link</strong> sign-ins, we use <strong>Supabase</strong> to verify your email and provide access.</li>
+                        <li><strong>Shipping Details:</strong> Postal address provided by you for delivering the physical artwork.</li>
                         <li><strong>Reference Materials:</strong> Photographs provided by you to be used as drawing references.</li>
                     </ul>
                 </div>
@@ -29,10 +29,10 @@ export default function PrivacyPolicy() {
                         Your information is strictly used for the execution and fulfillment of your commission:
                     </p>
                     <ul className="list-disc pl-6 mt-4 space-y-2">
-                        <li><strong>Account Management:</strong> To provide a secure dashboard where you can track your commissions and manage your profile.</li>
+                        <li><strong>Client Dashboard:</strong> To provide a personal space where you can track your commissions and manage your profile.</li>
                         <li><strong>Communication:</strong> To discuss order details, send work-in-progress updates, and provide tracking information.</li>
                         <li><strong>Fulfillment:</strong> To draw the portrait based on your provided reference photos.</li>
-                        <li><strong>Shipping:</strong> Providing your name, address, and phone number to our trusted courier partners (e.g., DTDC, DHL, India Post) solely for the purpose of delivering the package.</li>
+                        <li><strong>Shipping:</strong> Providing your necessary details to our trusted courier partners (e.g., DTDC, DHL, India Post) solely for delivery.</li>
                     </ul>
                 </div>
 
@@ -40,21 +40,18 @@ export default function PrivacyPolicy() {
                     <h2 className="text-2xl font-serif text-foreground mb-4">3. Strict Confidentiality of Reference Photos</h2>
                     <p className="leading-relaxed">
                         We understand the deeply personal nature of portrait commissions.
-                        <strong> Your reference photos are treated with the highest level of confidentiality.</strong> They are stored securely and are only accessed by the artist for the purpose of creating the artwork.
-                    </p>
-                    <p className="leading-relaxed mt-4">
-                        We will <strong>never</strong> share your reference photos publicly, post them on social media, or use them for marketing purposes without your explicit, written consent. After the artwork is completed and delivered, reference photos are permanently deleted from our primary working devices.
+                        <strong> Your reference photos are treated with the highest level of confidentiality.</strong> They are stored securely and are only accessed by the artist for the purpose of creating the artwork. Reference photos are permanently deleted once the artwork is completed and delivered.
                     </p>
                 </div>
 
                 <div>
                     <h2 className="text-2xl font-serif text-foreground mb-4">4. Third-Party Sharing</h2>
                     <p className="leading-relaxed">
-                        We do not sell, trade, or rent your personal identification information to others. We only share necessary information with trusted third parties exclusively for completing your transaction:
+                        We do not sell, trade, or rent your personal identification information to others. We only use trusted third-party services to complete your transaction and secure your account:
                     </p>
                     <ul className="list-disc pl-6 mt-4 space-y-2">
-                        <li><strong>Payment Gateways (Razorpay):</strong> To process your payments securely. We do not store your credit card or sensitive financial data on our servers.</li>
-                        <li><strong>Authentication Providers (Google/Supabase):</strong> To manage secure login sessions and protect your account data.</li>
+                        <li><strong>Payment Gateways (Razorpay):</strong> To process your payments securely. We do not store your financial data on our servers.</li>
+                        <li><strong>Authentication Providers (NextAuth/Google & Supabase):</strong> To manage secure login sessions and protect your access.</li>
                         <li><strong>Shipping Couriers:</strong> To deliver the physical artwork to your address.</li>
                     </ul>
                 </div>
@@ -62,7 +59,7 @@ export default function PrivacyPolicy() {
                 <div>
                     <h2 className="text-2xl font-serif text-foreground mb-4">5. Cookies and Web Tracking</h2>
                     <p className="leading-relaxed">
-                        This website uses essential cookies provided by our infrastructure partner (Supabase) to maintain your secure session. These cookies allow you to stay logged into your dashboard across different pages. We do not use intrusive third-party tracking or advertising cookies.
+                        This website uses essential security cookies provided by NextAuth and Supabase to maintain your secure session. These cookies allow you to stay logged into your dashboard and are strictly for site functionality. We do not use intrusive third-party tracking or advertising cookies.
                     </p>
                 </div>
 
