@@ -19,6 +19,7 @@ export default function ReferralGenerator() {
     const [isRulesOpen, setIsRulesOpen] = useState(false);
     const [showQR, setShowQR] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [showTurnstile, setShowTurnstile] = useState(true);
 
     const user = session?.user;
     const authLoading = authStatus === 'loading';
@@ -161,16 +162,30 @@ export default function ReferralGenerator() {
 
                                 {error && <p className="text-red-400 text-sm">{error}</p>}
 
-                                <div className="flex justify-center py-2">
-                                    <Turnstile
-                                        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-                                        onSuccess={setTurnstileToken}
-                                    />
-                                </div>
+                                <AnimatePresence>
+                                    {showTurnstile && (
+                                        <motion.div
+                                            initial={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.5, ease: 'easeInOut' }}
+                                            className="flex justify-center py-2 transition-all duration-500 overflow-hidden"
+                                            onMouseEnter={() => window.dispatchEvent(new Event('cursor-hide'))}
+                                            onMouseLeave={() => window.dispatchEvent(new Event('cursor-show'))}
+                                        >
+                                            <Turnstile
+                                                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                                                onSuccess={(token) => {
+                                                    setTurnstileToken(token);
+                                                    setTimeout(() => setShowTurnstile(false), 5000);
+                                                }}
+                                            />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
 
                                 <button
                                     type="submit"
-                                    disabled={loading || !turnstileToken}
+                                    disabled={loading || (!turnstileToken && showTurnstile)}
                                     className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-neutral-200 hover:text-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {loading ? <Loader2 className="animate-spin" /> : 'Generate Link'}

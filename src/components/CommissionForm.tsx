@@ -160,6 +160,7 @@ export default function CommissionForm() {
     const [offerError, setOfferError] = useState('');
     const [isValidatingPromo, setIsValidatingPromo] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [showTurnstile, setShowTurnstile] = useState(true);
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const [offerAppliedMessage, setOfferAppliedMessage] = useState('');
 
@@ -1511,26 +1512,43 @@ export default function CommissionForm() {
                             </label>
                         </div>
 
-                        <div className="flex justify-center py-4">
-                            <Turnstile
-                                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-                                onSuccess={setTurnstileToken}
-                            />
-                        </div>
+                        <div className="space-y-4">
+                            <AnimatePresence>
+                                {showTurnstile && (
+                                    <motion.div
+                                        initial={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="flex justify-center transition-all duration-500 overflow-hidden"
+                                        onMouseEnter={() => window.dispatchEvent(new Event('cursor-hide'))}
+                                        onMouseLeave={() => window.dispatchEvent(new Event('cursor-show'))}
+                                    >
+                                        <Turnstile
+                                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                                            onSuccess={(token) => {
+                                                setTurnstileToken(token);
+                                                setTimeout(() => setShowTurnstile(false), 5000);
+                                            }}
+                                        />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
-                        <button
-                            type="submit"
-                            disabled={loading || attachments.length === 0 || !turnstileToken || (status === 'waitlist' && !razorpayLoaded)}
-                            className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
-                        >
-                            {loading ? (
-                                <Loader2 className="animate-spin" />
-                            ) : status === 'waitlist' ? (
-                                <>Pay ₹{Math.round(estimatedTotal * 0.25)} & Join Waitlist</>
-                            ) : (
-                                'Submit Request'
-                            )}
-                        </button>
+                            <button
+                                type="submit"
+                                disabled={loading ||
+                                    attachments.length === 0 ||
+                                    (!turnstileToken && showTurnstile)}
+                                className="w-full bg-neutral-400 text-background font-black uppercase tracking-[0.2em] py-5 rounded-xl hover:bg-neutral-200 transition-all duration-300 disabled:opacity-30 disabled:hover:bg-neutral-400 shadow-xl"
+                            >
+                                {loading ? (
+                                    <Loader2 className="animate-spin" />
+                                ) : status === 'waitlist' ? (
+                                    <>Pay ₹{Math.round(estimatedTotal * 0.25)} & Join Waitlist</>
+                                ) : (
+                                    'Submit Request'
+                                )}
+                            </button>
+                        </div>
                     </form>
                 )}
             </div>

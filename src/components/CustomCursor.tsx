@@ -103,6 +103,8 @@ export default function CustomCursor() {
 
     const isPointerRef = useRef(false);
     const [isPointer, setIsPointer] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
+    const isVisibleRef = useRef(true);
 
     useEffect(() => {
         if (typeof window !== "undefined" && window.innerWidth < 768) return;
@@ -284,10 +286,17 @@ export default function CustomCursor() {
 
         animate();
 
+        const handleHide = () => { setIsVisible(false); isVisibleRef.current = false; };
+        const handleShow = () => { setIsVisible(true); isVisibleRef.current = true; };
+
         window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("cursor-hide", handleHide);
+        window.addEventListener("cursor-show", handleShow);
 
         return () => {
             window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("cursor-hide", handleHide);
+            window.removeEventListener("cursor-show", handleShow);
             cancelAnimationFrame(rafId.current);
         };
     }, []);
@@ -295,7 +304,7 @@ export default function CustomCursor() {
     return (
         <>
             <svg
-                className="custom-cursor-element hidden md:block fixed top-0 left-0 pointer-events-none z-[9998] transition-opacity duration-200"
+                className={`custom-cursor-element hidden md:block fixed top-0 left-0 pointer-events-none z-[9998] transition-opacity duration-200 ${!isVisible ? 'opacity-0' : ''}`}
                 width="100%"
                 height="100%"
             >
@@ -308,7 +317,7 @@ export default function CustomCursor() {
 
             <div
                 ref={containerRef}
-                className="custom-cursor-element hidden md:block fixed pointer-events-none z-[9999] mix-blend-difference"
+                className={`custom-cursor-element hidden md:block fixed pointer-events-none z-[9999] mix-blend-difference transition-opacity duration-200 ${!isVisible ? 'opacity-0' : ''}`}
                 style={{ left: 0, top: 0 }}
             >
                 {/* Pencil */}
