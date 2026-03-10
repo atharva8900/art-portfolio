@@ -19,34 +19,15 @@ interface PricingTierData {
     };
 }
 
-// Static Variants for stability
+// Fixed Variants (defined outside component with 'as const' to fix Vercel build)
 const containerVariants = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: 0, x: -20 },
     visible: {
         opacity: 1,
+        x: 0,
         transition: {
-            staggerChildren: 0.15,
-            delayChildren: 0.1
-        }
-    }
-} as const;
-
-const cardVariants = {
-    hidden: {
-        opacity: 0,
-        y: 30,
-        rotate: -1,
-        scale: 0.98
-    },
-    visible: {
-        opacity: 1,
-        y: 0,
-        rotate: 0,
-        scale: 1,
-        transition: {
-            type: "spring",
-            damping: 25,
-            stiffness: 120
+            staggerChildren: 0.1,
+            delayChildren: 0.2
         }
     }
 } as const;
@@ -103,7 +84,7 @@ export default function Pricing() {
     const pricingItems = useMemo(() => [
         { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
         { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: '🌟 Most Popular' },
-        { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: futurePrices.A3, subtitle: 'Maximum detail & group portraits', badge: '💎 Grand Portrait' }
+        { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: pricingData.prices.A3 === '₹2000' ? futurePrices.A3 : '₹4000', subtitle: 'Maximum detail & group portraits', badge: '💎 Grand Portrait' }
     ], [pricingData.prices]);
 
     const policyItems = useMemo(() => [
@@ -141,7 +122,7 @@ export default function Pricing() {
                                     <span className="w-2 h-2 rounded-full bg-foreground/70 dark:bg-accent animate-pulse" />
                                     <span className="text-xs font-bold text-foreground/70 dark:text-accent uppercase tracking-wider">
                                         Early Access • {' '}
-                                        <AnimatePresence initial={false}>
+                                        <AnimatePresence mode="wait" initial={false}>
                                             <motion.span
                                                 key={`${pricingData.progress.current}/${pricingData.progress.total}`}
                                                 {...valueVariants}
@@ -157,7 +138,7 @@ export default function Pricing() {
                                 {pricingItems.map((item) => (
                                     <motion.div
                                         key={item.size}
-                                        variants={cardVariants}
+                                        variants={itemVariants}
                                         whileHover={{ scale: 1.02 }}
                                         className={`relative flex flex-col px-5 sm:px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-all duration-300 shadow-sm dark:shadow-none ${item.badge
                                             ? 'border-accent/40 dark:border-accent/30 hover:border-accent/60'
@@ -177,8 +158,8 @@ export default function Pricing() {
                                                         {item.futurePrice}
                                                     </span>
                                                 )}
-                                                <div className="min-w-[4.5rem] text-right flex justify-end">
-                                                    <AnimatePresence initial={false}>
+                                                <div className="min-w-[4rem] text-right">
+                                                    <AnimatePresence mode="wait" initial={false}>
                                                         <motion.span
                                                             key={item.price}
                                                             {...valueVariants}
