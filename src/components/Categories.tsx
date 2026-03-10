@@ -31,7 +31,7 @@ export default function Categories() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false }}
                     className="space-y-4 opacity-0"
                 >
                     <h2 className="font-serif text-3xl md:text-5xl tracking-widest uppercase">Categories</h2>
@@ -44,7 +44,7 @@ export default function Categories() {
                             key={cat.id}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, amount: 0.2 }}
+                            viewport={{ once: false, amount: 0.2 }}
                             transition={{ delay: idx * 0.1 }}
                             className="bg-background p-8 rounded-2xl border border-foreground/5 hover:border-accent/20 hover:bg-background/80 transition-colors duration-300 group opacity-0 shadow-sm"
                         >

@@ -22,7 +22,7 @@ const Testimonials = () => {
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: false }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         className="w-full lg:w-2/5 relative flex justify-center"
                     >
@@ -49,7 +49,7 @@ const Testimonials = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
+                            viewport={{ once: false }}
                             transition={{ duration: 0.6 }}
                             className="space-y-4"
                         >
@@ -70,7 +70,7 @@ const Testimonials = () => {
                             <motion.div
                                 initial={{ opacity: 0, x: 30 }}
                                 whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
+                                viewport={{ once: false }}
                                 transition={{ duration: 0.6, delay: 0.2 }}
                                 className="relative p-8 rounded-2xl bg-surface border border-foreground/5 shadow-sm group hover:border-amber-500/30 transition-colors"
                             >
@@ -91,7 +91,7 @@ const Testimonials = () => {
                             <motion.div
                                 initial={{ opacity: 0, x: 30 }}
                                 whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
+                                viewport={{ once: false }}
                                 transition={{ duration: 0.6, delay: 0.4 }}
                                 className="relative p-8 rounded-2xl bg-surface border border-foreground/5 shadow-sm group hover:border-accent/30 transition-colors"
                             >

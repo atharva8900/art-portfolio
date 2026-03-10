@@ -270,7 +270,7 @@ export default function ReferralGenerator() {
                 <motion.div
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false }}
                     className="mt-12 bg-surface border border-foreground/10 rounded-xl overflow-hidden"
                 >
                     {/* Accordion Header */}

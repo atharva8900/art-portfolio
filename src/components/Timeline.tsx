@@ -10,7 +10,7 @@ export default function Timeline() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false }}
                     className="text-center space-y-4"
                 >
                     <h2 className="font-serif text-3xl md:text-5xl tracking-wide">Timeline & Availability</h2>
@@ -22,7 +22,7 @@ export default function Timeline() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: false }}
                         transition={{ delay: 0.1 }}
                         className="bg-surface border border-foreground/5 p-12 rounded-2xl flex flex-col items-center text-center space-y-6 hover:bg-foreground/5 transition-colors duration-300"
                     >
@@ -39,7 +39,7 @@ export default function Timeline() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: false }}
                         transition={{ delay: 0.2 }}
                         className="bg-surface border border-foreground/5 p-12 rounded-2xl flex flex-col items-center text-center space-y-6 hover:bg-foreground/5 transition-colors duration-300"
                     >

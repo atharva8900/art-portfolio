@@ -683,7 +683,7 @@ export default function CommissionForm() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false }}
                     className="relative z-10 bg-surface/30 backdrop-blur-md p-10 md:p-14 border border-foreground/10 rounded-xl max-w-lg w-full shadow-2xl"
                 >
                     <motion.div

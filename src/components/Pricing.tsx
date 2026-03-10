@@ -91,7 +91,7 @@ export default function Pricing() {
                             variants={containerVariants}
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{ once: true }}
+                            viewport={{ once: false }}
                         >
                             <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-8">Portrait Pricing</h2>
 
@@ -175,7 +175,7 @@ export default function Pricing() {
                             variants={containerVariants}
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{ once: true }}
+                            viewport={{ once: false }}
                             className="h-full flex flex-col"
                         >
                             <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-8">Policies</h2>
