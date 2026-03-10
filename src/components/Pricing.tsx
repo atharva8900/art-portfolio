@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Users, CreditCard, Image as ImageIcon, Package, Globe, ShieldCheck } from 'lucide-react';
 
@@ -26,6 +26,7 @@ export default function Pricing() {
         prices: { A5: '₹500', A4: '₹1000', A3: '₹2000' },
         progress: { current: 0, total: 10, remaining: 10 },
     });
+    const [hasLoaded, setHasLoaded] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -36,6 +37,7 @@ export default function Pricing() {
             .then(data => {
                 clearTimeout(timeoutId);
                 setPricingData(data);
+                setHasLoaded(true);
             })
             .catch(err => {
                 clearTimeout(timeoutId);
@@ -64,11 +66,28 @@ export default function Pricing() {
             opacity: 1,
             x: 0,
             transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.2
+                // Only stagger children on the very first view entry, 
+                // disable it once data has loaded to prevent flickers on re-render.
+                staggerChildren: hasLoaded ? 0 : 0.1,
+                delayChildren: hasLoaded ? 0 : 0.2
             }
         }
     };
+
+    const pricingItems = useMemo(() => [
+        { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
+        { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: '🌟 Most Popular' },
+        { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: futurePrices.A3, subtitle: 'Maximum detail & group portraits', badge: '💎 Grand Portrait' }
+    ], [pricingData.prices]);
+
+    const policyItems = useMemo(() => [
+        { icon: Users, text: "Group Portraits: A4 & A3 get 50% off for every additional face. A5 charged at base price per person." },
+        { icon: CreditCard, text: "50% advance to confirm. Waitlist reservations: 25% to hold your spot" },
+        { icon: ImageIcon, text: "Detailed background: +₹500" },
+        { icon: Package, text: "Framing & delivery charges apply" },
+        { icon: ShieldCheck, text: "All artworks are packed & shipped with care" },
+        { icon: Globe, text: "Available all over India & worldwide" }
+    ], []);
 
     const itemVariants = {
         hidden: { opacity: 0, y: 10 },
@@ -110,11 +129,7 @@ export default function Pricing() {
 
                             {/* Pricing Cards */}
                             <div className="space-y-5">
-                                {[
-                                    { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
-                                    { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: '🌟 Most Popular' },
-                                    { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: futurePrices.A3, subtitle: 'Maximum detail & group portraits', badge: '💎 Grand Portrait' }
-                                ].map((item) => (
+                                {pricingItems.map((item) => (
                                     <motion.div
                                         key={item.size}
                                         variants={itemVariants}
@@ -181,14 +196,7 @@ export default function Pricing() {
                             <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-8">Policies</h2>
 
                             <ul className="flex-1 flex flex-col gap-5 md:gap-0 md:justify-between">
-                                {[
-                                    { icon: Users, text: "Group Portraits: A4 & A3 get 50% off for every additional face. A5 charged at base price per person." },
-                                    { icon: CreditCard, text: "50% advance to confirm. Waitlist reservations: 25% to hold your spot" },
-                                    { icon: ImageIcon, text: "Detailed background: +₹500" },
-                                    { icon: Package, text: "Framing & delivery charges apply" },
-                                    { icon: ShieldCheck, text: "All artworks are packed & shipped with care" },
-                                    { icon: Globe, text: "Available all over India & worldwide" }
-                                ].map((policy, idx) => (
+                                {policyItems.map((policy, idx) => (
                                     <motion.li
                                         key={idx}
                                         variants={itemVariants}
