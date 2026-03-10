@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Users, CreditCard, ImageIcon, Package, Globe, ShieldCheck } from 'lucide-react';
 
 interface PricingTierData {
@@ -19,7 +19,7 @@ interface PricingTierData {
     };
 }
 
-// 1. Static Variants (Outside component to prevent re-triggering logic)
+// Static Variants for stability
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -34,9 +34,9 @@ const containerVariants = {
 const cardVariants = {
     hidden: {
         opacity: 0,
-        y: 40,
-        rotate: -2,
-        scale: 0.95
+        y: 30,
+        rotate: -1,
+        scale: 0.98
     },
     visible: {
         opacity: 1,
@@ -45,22 +45,22 @@ const cardVariants = {
         scale: 1,
         transition: {
             type: "spring",
-            damping: 20,
-            stiffness: 100
+            damping: 25,
+            stiffness: 120
         }
     }
 };
 
-const policyVariants = {
-    hidden: { opacity: 0, x: 20 },
-    visible: {
-        opacity: 1,
-        x: 0,
-        transition: {
-            duration: 0.5,
-            ease: "easeOut"
-        }
-    }
+const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+};
+
+const valueVariants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+    transition: { duration: 0.2 }
 };
 
 export default function Pricing() {
@@ -116,127 +116,133 @@ export default function Pricing() {
     ], []);
 
     return (
-        <section id="pricing" className="py-24 px-6 md:px-12 bg-surface text-foreground overflow-hidden">
+        <section id="pricing" className="py-24 px-6 md:px-12 bg-surface text-foreground">
             <div className="max-w-6xl mx-auto">
-                <motion.div
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: false, margin: "-100px" }}
-                    variants={policyVariants}
-                    className="text-center mb-16"
-                >
+                <div className="text-center mb-16">
                     <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-4">Commission Details</h2>
                     <p className="text-neutral-400 text-lg">Transparent pricing and clear policies for your custom portrait.</p>
-                </motion.div>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
-                    {/* Left Column: Pricing Cards */}
-                    <div className="rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 p-6 sm:p-8 md:p-10 shadow-sm dark:shadow-none">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                    <div className="p-6 sm:p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
                         <motion.div
+                            variants={containerVariants}
                             initial="hidden"
                             whileInView="visible"
                             viewport={{ once: false }}
-                            variants={containerVariants}
                         >
                             <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-8">Portrait Pricing</h2>
 
                             {pricingData.isEarlyAccess && (
                                 <motion.div
-                                    variants={cardVariants}
-                                    className="mb-8 p-4 rounded-xl bg-foreground/5 dark:bg-accent/5 border border-border/50 dark:border-accent/20"
+                                    variants={itemVariants}
+                                    className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground/5 dark:bg-accent/10 border border-border/50 dark:border-accent/30"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-foreground/70 dark:bg-accent animate-pulse shadow-[0_0_10px_rgba(var(--accent),0.5)]" />
-                                        <span className="text-xs font-bold text-foreground/70 dark:text-accent uppercase tracking-[0.2em]">
-                                            Early Access • {pricingData.progress.current}/{pricingData.progress.total}
-                                        </span>
-                                    </div>
+                                    <span className="w-2 h-2 rounded-full bg-foreground/70 dark:bg-accent animate-pulse" />
+                                    <span className="text-xs font-bold text-foreground/70 dark:text-accent uppercase tracking-wider">
+                                        Early Access • {' '}
+                                        <AnimatePresence initial={false}>
+                                            <motion.span
+                                                key={`${pricingData.progress.current}/${pricingData.progress.total}`}
+                                                {...valueVariants}
+                                            >
+                                                {pricingData.progress.current}/{pricingData.progress.total}
+                                            </motion.span>
+                                        </AnimatePresence>
+                                    </span>
                                 </motion.div>
                             )}
 
-                            <div className="space-y-6">
+                            <div className="space-y-5">
                                 {pricingItems.map((item) => (
                                     <motion.div
                                         key={item.size}
                                         variants={cardVariants}
-                                        whileHover={{ y: -5, scale: 1.01, transition: { duration: 0.2 } }}
-                                        className={`relative group flex flex-col px-6 sm:px-8 py-6 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-colors duration-300 ${item.badge
+                                        whileHover={{ scale: 1.02 }}
+                                        className={`relative flex flex-col px-5 sm:px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-all duration-300 shadow-sm dark:shadow-none ${item.badge
                                             ? 'border-accent/40 dark:border-accent/30 hover:border-accent/60'
                                             : 'border-border/80 dark:border-foreground/10 hover:border-foreground/30 dark:hover:border-accent/40'
                                             }`}
                                     >
                                         {item.badge && (
-                                            <span className="absolute -top-3 left-6 px-4 py-1 text-[10px] font-bold uppercase tracking-widest bg-accent text-background rounded-full shadow-lg shadow-accent/20">
+                                            <span className="absolute -top-3 left-6 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-accent text-background rounded-full">
                                                 {item.badge}
                                             </span>
                                         )}
                                         <div className="flex items-center justify-between">
-                                            <span className="text-xl font-bold text-foreground/90 group-hover:text-foreground transition-colors">{item.size}</span>
+                                            <span className="text-xl font-bold text-foreground">{item.size}</span>
                                             <div className="flex items-center gap-3">
                                                 {pricingData.isEarlyAccess && (
-                                                    <span className="text-sm text-neutral-500 line-through opacity-70">
+                                                    <span className="text-lg text-neutral-600 dark:text-neutral-500 line-through">
                                                         {item.futurePrice}
                                                     </span>
                                                 )}
-                                                <span className="text-2xl font-black text-foreground/80 dark:text-accent tracking-tight transition-all duration-500">
-                                                    {item.price}
-                                                </span>
+                                                <div className="min-w-[4.5rem] text-right flex justify-end">
+                                                    <AnimatePresence initial={false}>
+                                                        <motion.span
+                                                            key={item.price}
+                                                            {...valueVariants}
+                                                            className="text-2xl font-black text-foreground/80 dark:text-accent tracking-tight"
+                                                        >
+                                                            {item.price}
+                                                        </motion.span>
+                                                    </AnimatePresence>
+                                                </div>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 italic group-hover:text-neutral-700 dark:group-hover:text-neutral-200 transition-colors">
-                                            {item.subtitle}
-                                        </p>
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{item.subtitle}</p>
                                     </motion.div>
                                 ))}
                             </div>
 
-                            <motion.p
-                                variants={cardVariants}
-                                className="mt-10 text-xs text-neutral-500 dark:text-neutral-400 text-center leading-relaxed"
-                            >
-                                {pricingData.isEarlyAccess
-                                    ? "Early Access pricing applies until initial slots are filled. Prices will then adjust to market value."
-                                    : "Early Access has concluded. Standard industry rates now apply."}
-                            </motion.p>
+                            {pricingData.isEarlyAccess && (
+                                <motion.p
+                                    variants={itemVariants}
+                                    className="mt-6 text-sm text-neutral-600 dark:text-neutral-400 text-center leading-relaxed"
+                                >
+                                    Early Access pricing applies until 10 commissions are successfully completed.
+                                    <br />
+                                    Prices increase as demand and availability grow.
+                                </motion.p>
+                            )}
+
+                            {!pricingData.isEarlyAccess && (
+                                <motion.p
+                                    variants={itemVariants}
+                                    className="mt-6 text-sm text-neutral-600 dark:text-neutral-400 text-center leading-relaxed"
+                                >
+                                    Early Access has concluded. Current pricing shown above.
+                                </motion.p>
+                            )}
                         </motion.div>
                     </div>
 
-                    {/* Right Column: Policies */}
-                    <motion.div
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: false, margin: "-50px" }}
-                        variants={containerVariants}
-                        className="p-6 sm:p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 h-full"
-                    >
-                        <motion.h2 variants={policyVariants} className="font-serif text-3xl md:text-4xl text-foreground mb-8">Policies</motion.h2>
-
-                        <div className="space-y-8">
-                            {policyItems.map((policy, idx) => (
-                                <motion.div
-                                    key={idx}
-                                    variants={policyVariants}
-                                    className="flex items-start gap-4 group"
-                                >
-                                    <div className="p-3 rounded-xl bg-foreground/5 dark:bg-accent/10 border border-border/50 dark:border-transparent group-hover:scale-110 transition-transform">
-                                        <policy.icon size={20} className="text-foreground/70 dark:text-accent" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm md:text-base text-foreground/80 dark:text-neutral-300 leading-relaxed font-medium">
-                                            {policy.text}
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-
+                    <div className="p-6 sm:p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
                         <motion.div
-                            variants={policyVariants}
-                            className="mt-12 pt-8 border-t border-border/50 dark:border-foreground/10 text-center"
+                            variants={containerVariants}
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: false }}
+                            className="h-full flex flex-col"
                         >
-                            <p className="text-sm text-neutral-500 italic">"Quality takes time. Thank you for your patience."</p>
+                            <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-8">Policies</h2>
+
+                            <ul className="flex-1 flex flex-col gap-5 md:gap-0 md:justify-between">
+                                {policyItems.map((policy, idx) => (
+                                    <motion.li
+                                        key={idx}
+                                        variants={itemVariants}
+                                        className="flex items-start gap-4 text-foreground/80 dark:text-neutral-300 font-medium dark:font-normal"
+                                    >
+                                        <div className="p-2 rounded-full bg-foreground/5 dark:bg-accent/10 mt-[-2px] border border-border/50 dark:border-transparent">
+                                            <policy.icon size={18} className="text-foreground/70 dark:text-accent" />
+                                        </div>
+                                        <span className="text-sm md:text-base leading-relaxed">{policy.text}</span>
+                                    </motion.li>
+                                ))}
+                            </ul>
                         </motion.div>
-                    </motion.div>
+                    </div>
                 </div>
             </div>
         </section>
