@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
             attachment_base64,
             frame_image_base64,
             promo_id,
+            turnstile_token,
         } = body;
 
         // Verify Razorpay Payment if provided
@@ -80,6 +81,27 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
             }
         }
+
+        // --- Turnstile Verification ---
+        if (!turnstile_token) {
+            return NextResponse.json({ error: 'CAPTCHA token missing' }, { status: 403 });
+        }
+
+        const verifyResponse = await fetch(
+            'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `secret=${encodeURIComponent(process.env.TURNSTILE_SECRET_KEY || '1x0000000000000000000000000000000AA')}&response=${encodeURIComponent(turnstile_token)}`,
+            }
+        );
+
+        const verifyData = await verifyResponse.json();
+        if (!verifyData.success) {
+            console.error('Turnstile verification failed:', verifyData);
+            return NextResponse.json({ error: 'Invalid CAPTCHA' }, { status: 403 });
+        }
+        // ------------------------------
 
         // ... existing validation code ...
 

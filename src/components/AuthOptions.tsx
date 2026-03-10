@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import GoogleSignInButton from './GoogleSignInButton';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 interface AuthOptionsProps {
     callbackUrl?: string;
@@ -19,6 +20,7 @@ export default function AuthOptions({
     const [isLoading, setIsLoading] = useState(false);
     const [isSent, setIsSent] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
     const handleEmailSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -104,9 +106,16 @@ export default function AuthOptions({
                                 />
                             </div>
 
+                            <div className="flex justify-center py-2">
+                                <Turnstile
+                                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                                    onSuccess={setTurnstileToken}
+                                />
+                            </div>
+
                             <button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isLoading || !turnstileToken}
                                 className="w-full bg-white text-black font-bold py-4 rounded-2xl hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
                             >
                                 {isLoading ? (

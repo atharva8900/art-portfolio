@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { QRCodeSVG } from 'qrcode.react';
 import AuthOptions from './AuthOptions';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function ReferralGenerator() {
     const { data: session, status: authStatus } = useSession();
@@ -17,6 +18,7 @@ export default function ReferralGenerator() {
     const [infoMessage, setInfoMessage] = useState('');
     const [isRulesOpen, setIsRulesOpen] = useState(false);
     const [showQR, setShowQR] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
     const user = session?.user;
     const authLoading = authStatus === 'loading';
@@ -35,7 +37,10 @@ export default function ReferralGenerator() {
             const res = await fetch('/api/referrals/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                body: JSON.stringify({
+                    ...data,
+                    turnstile_token: turnstileToken
+                }),
             });
 
             const result = await res.json(); // Parse JSON once
@@ -156,9 +161,16 @@ export default function ReferralGenerator() {
 
                                 {error && <p className="text-red-400 text-sm">{error}</p>}
 
+                                <div className="flex justify-center py-2">
+                                    <Turnstile
+                                        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                                        onSuccess={setTurnstileToken}
+                                    />
+                                </div>
+
                                 <button
                                     type="submit"
-                                    disabled={loading}
+                                    disabled={loading || !turnstileToken}
                                     className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-neutral-200 hover:text-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {loading ? <Loader2 className="animate-spin" /> : 'Generate Link'}

@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import ArtVisualizer, { FrameConfig } from './ArtVisualizer';
 import Script from 'next/script';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 declare global {
     interface Window {
@@ -158,6 +159,7 @@ export default function CommissionForm() {
     const [offer, setOffer] = useState<{ id?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, usage_count?: number, usage_limit?: number } | null>(null);
     const [offerError, setOfferError] = useState('');
     const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const [offerAppliedMessage, setOfferAppliedMessage] = useState('');
 
@@ -640,7 +642,8 @@ export default function CommissionForm() {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
-                            payment_type: 'reservation'
+                            payment_type: 'reservation',
+                            turnstile_token: turnstileToken,
                         }),
                     });
 
@@ -1508,9 +1511,16 @@ export default function CommissionForm() {
                             </label>
                         </div>
 
+                        <div className="flex justify-center py-4">
+                            <Turnstile
+                                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                                onSuccess={setTurnstileToken}
+                            />
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={loading || attachments.length === 0 || (status === 'waitlist' && !razorpayLoaded)}
+                            disabled={loading || attachments.length === 0 || !turnstileToken || (status === 'waitlist' && !razorpayLoaded)}
                             className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                         >
                             {loading ? (

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { name, email, phone, instagram } = body;
+        const { name, email, phone, instagram, turnstile_token } = body;
 
         if (!name || !email) {
             return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
@@ -58,6 +58,27 @@ export async function POST(request: NextRequest) {
         if (email !== user.email) {
             return NextResponse.json({ error: 'Email must match your logged-in account' }, { status: 403 });
         }
+
+        // --- Turnstile Verification ---
+        if (!turnstile_token) {
+            return NextResponse.json({ error: 'CAPTCHA token missing' }, { status: 403 });
+        }
+
+        const verifyResponse = await fetch(
+            'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `secret=${encodeURIComponent(process.env.TURNSTILE_SECRET_KEY || '1x0000000000000000000000000000000AA')}&response=${encodeURIComponent(turnstile_token)}`,
+            }
+        );
+
+        const verifyData = await verifyResponse.json();
+        if (!verifyData.success) {
+            console.error('Turnstile verification failed (Referrals):', verifyData);
+            return NextResponse.json({ error: 'Invalid CAPTCHA' }, { status: 403 });
+        }
+        // ------------------------------
 
         // Check for existing active referral link
         const activeReferral = await getActiveReferralForUser(email);

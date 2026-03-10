@@ -14,6 +14,7 @@
     "@ai-sdk/react": "^3.0.118",
     "@google/generative-ai": "^0.24.1",
     "@gsap/react": "^2.1.2",
+    "@marsidev/react-turnstile": "^1.4.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
     "@types/three": "^0.183.1",
