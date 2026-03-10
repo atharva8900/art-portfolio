@@ -110,8 +110,8 @@ export default function Hero() {
                 />
                 {/* Secondary radial gradient for base depth */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-800/20 via-background to-background opacity-40 z-0" />
-                {/* Animated Gradient Mesh Effect (approximated with CSS) */}
-                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] animate-slow-spin bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-[0.03] blur-[100px] z-0" />
+                {/* Animated Gradient Mesh Effect - Desktop Only for performance */}
+                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] animate-slow-spin bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-[0.03] blur-[100px] z-0 hidden md:block" />
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center text-center">

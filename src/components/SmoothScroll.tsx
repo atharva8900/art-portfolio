@@ -15,10 +15,14 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     const lenisRef = useRef<Lenis | null>(null);
 
     useEffect(() => {
+        // Disable Lenis on mobile/touch devices for better performance/INP
+        if (window.innerWidth < 768) return;
+
         const lenis = new Lenis({
             // Optional: tune Lenis settings here for weight/feel
             duration: 1.2,
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            touchMultiplier: 0, // Disable specifically for touch if somehow still active
         });
         lenisRef.current = lenis;
 

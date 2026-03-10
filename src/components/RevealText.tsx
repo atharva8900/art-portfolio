@@ -20,7 +20,7 @@ export default function RevealText({ children, className = "", delay = 0 }: Reve
             {words.map((word, i) => (
                 <span key={i} style={{ marginRight: '0.25em' }} className="inline-block overflow-hidden -mb-[0.1em] align-bottom">
                     <motion.span
-                        initial={{ y: "100%" }}
+                        initial={typeof window !== 'undefined' && window.innerWidth < 768 ? { y: 0 } : { y: "100%" }}
                         animate={isInView ? { y: 0 } : {}}
                         transition={{
                             duration: 0.8,
