@@ -11,7 +11,7 @@ interface RevealTextProps {
 
 export default function RevealText({ children, className = "", delay = 0 }: RevealTextProps) {
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, margin: "-10%" });
+    const isInView = useInView(ref, { once: false, margin: "-10%" });
 
     const words = children.split(" ");
 
@@ -21,7 +21,7 @@ export default function RevealText({ children, className = "", delay = 0 }: Reve
                 <span key={i} style={{ marginRight: '0.25em' }} className="inline-block overflow-hidden -mb-[0.1em] align-bottom">
                     <motion.span
                         initial={typeof window !== 'undefined' && window.innerWidth < 768 ? { y: 0 } : { y: "100%" }}
-                        animate={isInView ? { y: 0 } : {}}
+                        animate={isInView ? { y: 0 } : (typeof window !== 'undefined' && window.innerWidth < 768 ? { y: 0 } : { y: "100%" })}
                         transition={{
                             duration: 0.8,
                             ease: [0.16, 1, 0.3, 1],

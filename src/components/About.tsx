@@ -18,7 +18,7 @@ export default function About() {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
+                            viewport={{ once: false }}
                             transition={{ duration: 0.6, delay: 0.2 }}
                             className="space-y-6 text-neutral-600 dark:text-neutral-400 text-lg font-light leading-relaxed"
                         >
@@ -35,8 +35,6 @@ export default function About() {
                         </motion.div>
                     </div>
 
-                    {/* Image/Visual - Using a placeholder div or an img if we had one. 
-            For now, a stylistic frame or empty frame to represent the artist's workspace or portrait. */}
                     {/* Process Card */}
                     <div className="flex-1 w-full bg-surface border border-foreground/5 rounded-3xl p-6 sm:p-8 md:p-10 flex flex-col space-y-6 md:space-y-8">
                         {/* Card Header */}
@@ -44,7 +42,7 @@ export default function About() {
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
+                                viewport={{ once: false }}
                                 transition={{ duration: 0.5 }}
                             >
                                 <h3 className="font-serif text-2xl tracking-widest uppercase text-foreground">The Process</h3>
@@ -53,7 +51,7 @@ export default function About() {
                             <motion.p
                                 initial={{ opacity: 0, y: 10 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
+                                viewport={{ once: false }}
                                 transition={{ duration: 0.5, delay: 0.2 }}
                                 className="text-neutral-600 dark:text-neutral-400 text-sm md:text-base font-light italic"
                             >
@@ -85,7 +83,7 @@ export default function About() {
                         <motion.div
                             initial={{ opacity: 0 }}
                             whileInView={{ opacity: 1 }}
-                            viewport={{ once: true }}
+                            viewport={{ once: false }}
                             transition={{ duration: 0.5, delay: 0.4 }}
                             className="text-center"
                         >
@@ -96,6 +94,6 @@ export default function About() {
                     </div>
                 </div>
             </div>
-        </section >
+        </section>
     );
 }

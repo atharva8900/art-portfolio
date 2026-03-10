@@ -131,7 +131,7 @@ export default function Portfolio() {
                                 key={art.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
+                                viewport={{ once: false }}
                                 transition={{ duration: 0.5, delay: index * 0.1 }}
                                 className="flex flex-col space-y-6 pb-12 border-b border-foreground/5 md:border-none md:pb-0"
                             >
