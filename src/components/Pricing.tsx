@@ -26,7 +26,6 @@ export default function Pricing() {
         prices: { A5: '₹500', A4: '₹1000', A3: '₹2000' },
         progress: { current: 0, total: 10, remaining: 10 },
     });
-    const [hasLoaded, setHasLoaded] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -37,7 +36,6 @@ export default function Pricing() {
             .then(data => {
                 clearTimeout(timeoutId);
                 setPricingData(data);
-                setHasLoaded(true);
             })
             .catch(err => {
                 clearTimeout(timeoutId);
@@ -66,10 +64,8 @@ export default function Pricing() {
             opacity: 1,
             x: 0,
             transition: {
-                // Only stagger children on the very first view entry, 
-                // disable it once data has loaded to prevent flickers on re-render.
-                staggerChildren: hasLoaded ? 0 : 0.1,
-                delayChildren: hasLoaded ? 0 : 0.2
+                staggerChildren: 0.1,
+                delayChildren: 0.2
             }
         }
     };
@@ -132,6 +128,7 @@ export default function Pricing() {
                                 {pricingItems.map((item) => (
                                     <motion.div
                                         key={item.size}
+                                        layout
                                         variants={itemVariants}
                                         whileHover={{ scale: 1.02 }}
                                         className={`relative flex flex-col px-5 sm:px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-all duration-300 shadow-sm dark:shadow-none ${item.badge
