@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Users, CreditCard, Image as ImageIcon, Package, Globe, ShieldCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Users, CreditCard, ImageIcon, Package, Globe, ShieldCheck } from 'lucide-react';
 
 interface PricingTierData {
     isEarlyAccess: boolean;
@@ -42,7 +42,6 @@ export default function Pricing() {
                 if (err.name !== 'AbortError') {
                     console.error('Failed to fetch pricing tier:', err);
                 }
-                // Silently keep default early access prices on error
             });
 
         return () => {
@@ -51,7 +50,6 @@ export default function Pricing() {
         };
     }, []);
 
-    // Future prices (for strikethrough during Early Access)
     const futurePrices = {
         A5: '₹750',
         A4: '₹1500',
@@ -90,17 +88,22 @@ export default function Pricing() {
         visible: { opacity: 1, y: 0 }
     };
 
+    const valueVariants = {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.2 }
+    };
+
     return (
         <section id="pricing" className="py-24 px-6 md:px-12 bg-surface text-foreground">
             <div className="max-w-6xl mx-auto">
-                {/* Section Header */}
                 <div className="text-center mb-16">
                     <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-4">Commission Details</h2>
                     <p className="text-neutral-400 text-lg">Transparent pricing and clear policies for your custom portrait.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                    {/* Left Column: Pricing */}
                     <div className="p-6 sm:p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
                         <motion.div
                             variants={containerVariants}
@@ -110,7 +113,6 @@ export default function Pricing() {
                         >
                             <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-8">Portrait Pricing</h2>
 
-                            {/* Compact Early Access Badge */}
                             {pricingData.isEarlyAccess && (
                                 <motion.div
                                     variants={itemVariants}
@@ -118,17 +120,23 @@ export default function Pricing() {
                                 >
                                     <span className="w-2 h-2 rounded-full bg-foreground/70 dark:bg-accent animate-pulse" />
                                     <span className="text-xs font-bold text-foreground/70 dark:text-accent uppercase tracking-wider">
-                                        Early Access • {pricingData.progress.current}/{pricingData.progress.total}
+                                        Early Access • {' '}
+                                        <AnimatePresence mode="wait" initial={false}>
+                                            <motion.span
+                                                key={`${pricingData.progress.current}/${pricingData.progress.total}`}
+                                                {...valueVariants}
+                                            >
+                                                {pricingData.progress.current}/{pricingData.progress.total}
+                                            </motion.span>
+                                        </AnimatePresence>
                                     </span>
                                 </motion.div>
                             )}
 
-                            {/* Pricing Cards */}
                             <div className="space-y-5">
                                 {pricingItems.map((item) => (
                                     <motion.div
                                         key={item.size}
-                                        layout
                                         variants={itemVariants}
                                         whileHover={{ scale: 1.02 }}
                                         className={`relative flex flex-col px-5 sm:px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-all duration-300 shadow-sm dark:shadow-none ${item.badge
@@ -149,7 +157,17 @@ export default function Pricing() {
                                                         {item.futurePrice}
                                                     </span>
                                                 )}
-                                                <span className="text-2xl font-black text-foreground/80 dark:text-accent tracking-tight">{item.price}</span>
+                                                <div className="min-w-[4rem] text-right">
+                                                    <AnimatePresence mode="wait" initial={false}>
+                                                        <motion.span
+                                                            key={item.price}
+                                                            {...valueVariants}
+                                                            className="text-2xl font-black text-foreground/80 dark:text-accent tracking-tight"
+                                                        >
+                                                            {item.price}
+                                                        </motion.span>
+                                                    </AnimatePresence>
+                                                </div>
                                             </div>
                                         </div>
                                         <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{item.subtitle}</p>
@@ -157,7 +175,6 @@ export default function Pricing() {
                                 ))}
                             </div>
 
-                            {/* Bottom Explanation Text */}
                             {pricingData.isEarlyAccess && (
                                 <motion.p
                                     variants={itemVariants}
@@ -169,7 +186,6 @@ export default function Pricing() {
                                 </motion.p>
                             )}
 
-                            {/* Post-Early Access Notice */}
                             {!pricingData.isEarlyAccess && (
                                 <motion.p
                                     variants={itemVariants}
@@ -181,7 +197,6 @@ export default function Pricing() {
                         </motion.div>
                     </div>
 
-                    {/* Right Column: Policies */}
                     <div className="p-6 sm:p-8 md:p-10 rounded-2xl bg-background dark:bg-foreground/5 border border-border/80 dark:border-foreground/10 shadow-sm dark:shadow-none">
                         <motion.div
                             variants={containerVariants}
