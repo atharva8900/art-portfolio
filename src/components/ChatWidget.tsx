@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Loader2, Bot, User, Instagram } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { usePathname } from 'next/navigation';
 
 export default function ChatWidget() {
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +94,10 @@ export default function ChatWidget() {
             .map(p => (p as { type: 'text'; text: string }).text)
             .join('') || '';
     };
+
+    if (pathname?.startsWith('/admin') || pathname?.startsWith('/client')) {
+        return null;
+    }
 
     return (
         <>

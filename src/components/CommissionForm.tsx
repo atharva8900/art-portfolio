@@ -1498,12 +1498,12 @@ export default function CommissionForm() {
                                     checked={consent}
                                     onChange={(e) => setConsent(e.target.checked)}
                                 />
-                                <div className={`w-5 h-5 rounded border mt-0.5 flex-shrink-0 flex items-center justify-center mr-3 transition-colors ${consent ? 'border-accent bg-accent text-background' : 'border-neutral-500 group-hover:border-foreground/50'}`}>
-                                    {consent && <CheckCircle size={14} />}
+                                <div className={`w-5 h-5 rounded border mt-0.5 flex-shrink-0 flex items-center justify-center mr-3 transition-all ${consent ? 'border-foreground bg-foreground text-background' : 'border-neutral-500 group-hover:border-foreground/50'}`}>
+                                    {consent && <CheckCircle size={14} className="stroke-[3px]" />}
                                 </div>
-                                <span className="text-sm text-neutral-400">
+                                <span className="text-sm text-foreground/70 group-hover:text-foreground transition-colors">
                                     I consent to having the completed drawing uploaded to the artist&apos;s Instagram page.
-                                    <span className="block text-xs mt-1 text-neutral-500">(Note: Timelapse recordings, if selected, are kept private and sent only to you unless explicit permission is granted.)</span>
+                                    <span className="block text-xs mt-1 text-neutral-500 dark:text-neutral-400">(Note: Timelapse recordings, if selected, are kept private and sent only to you unless explicit permission is granted.)</span>
                                 </span>
                             </label>
                         </div>

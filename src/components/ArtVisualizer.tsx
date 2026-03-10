@@ -559,8 +559,8 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                 className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-sm transition-all shadow-lg active:scale-95 ${frameItState === 'done'
                                     ? 'bg-emerald-500 text-white'
                                     : frameItState === 'capturing'
-                                        ? 'bg-accent/60 text-background cursor-wait'
-                                        : 'bg-accent text-background hover:opacity-90'
+                                        ? 'bg-foreground/60 text-background cursor-wait'
+                                        : 'bg-foreground text-background hover:bg-foreground/90'
                                     }`}
                             >
                                 {frameItState === 'done' ? '✓ Frame Saved!' : frameItState === 'capturing' ? 'Capturing…' : (initialConfig ? 'Update Frame' : 'Frame It')}

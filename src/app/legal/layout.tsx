@@ -7,7 +7,7 @@ export default function LegalLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-background text-foreground pt-32 pb-24">
+        <div className="min-h-screen bg-background text-foreground pt-16 md:pt-32 pb-16 md:pb-24">
             <div className="max-w-3xl mx-auto px-6">
                 <Link
                     href="/"
@@ -16,7 +16,7 @@ export default function LegalLayout({
                     <ArrowLeft size={16} />
                     Back to Home
                 </Link>
-                <div className="prose prose-invert prose-neutral max-w-none">
+                <div className="prose dark:prose-invert prose-neutral max-w-none">
                     {children}
                 </div>
             </div>

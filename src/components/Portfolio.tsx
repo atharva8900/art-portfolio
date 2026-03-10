@@ -141,9 +141,9 @@ export default function Portfolio() {
                                     {/* Main Image Container (Responsive Aspect Ratio) */}
                                     <div className="relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden cursor-zoom-in">
 
-                                        {/* Original Reference (Hover Layer) */}
+                                        {/* Original Reference (Hover Layer - Desktop Only) */}
                                         {art.reference_image_url && (
-                                            <div className="absolute inset-0 z-0">
+                                            <div className="absolute inset-0 z-0 hidden md:block">
                                                 <MotionImage
                                                     src={art.reference_image_url}
                                                     alt={`Reference for ${art.title}`}
@@ -156,20 +156,12 @@ export default function Portfolio() {
                                                         Original Photo
                                                     </span>
                                                 </div>
-
-                                                {/* Mobile 'Tap to View Photo' Indicator at bottom right */}
-                                                <div className="absolute bottom-4 right-4 z-10 transition-opacity duration-500 opacity-0 group-hover:opacity-100 md:hidden">
-                                                    <span className="bg-background/80 backdrop-blur-md text-foreground text-[10px] font-medium uppercase tracking-wider px-3 py-1.5 rounded-full border border-border/50 flex items-center gap-1.5 shadow-lg animate-pulse w-fit">
-                                                        <ScanEye size={12} />
-                                                        Tap to View Photo
-                                                    </span>
-                                                </div>
                                             </div>
                                         )}
 
                                         {/* Final Artwork (Base Layer / Default if no reference) */}
                                         <div
-                                            className={`absolute inset-0 z-10 ${art.reference_image_url ? 'opacity-100 group-hover:opacity-0' : 'opacity-100'} transition-all duration-700 ease-out`}
+                                            className={`absolute inset-0 z-10 ${art.reference_image_url ? 'opacity-100 md:group-hover:opacity-0' : 'opacity-100'} transition-all duration-700 ease-out`}
                                             onClick={() => openLightbox(art, 'final')}
                                         >
                                             <MotionImage
@@ -182,29 +174,25 @@ export default function Portfolio() {
                                             />
 
                                             {/* Final Artwork Label */}
-                                            <div className="absolute top-4 left-4 z-20 transition-opacity duration-500 group-hover:opacity-0">
+                                            <div className="absolute top-4 left-4 z-20 transition-opacity duration-500 md:group-hover:opacity-0">
                                                 <span className="bg-foreground/95 backdrop-blur-md text-background text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
                                                     Final Portrait
                                                 </span>
                                             </div>
 
                                             {/* Gradient Overlay for Text Readability at Bottom */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-500" />
 
-                                            {/* (Moved center button out of this div so it doesn't fade with the artwork) */}
-
-                                            {/* Mobile 'Tap to Compare' Indicator */}
-                                            {art.reference_image_url && (
-                                                <div className="absolute bottom-4 right-4 z-30 md:hidden opacity-100 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none">
-                                                    <span className="bg-background/80 backdrop-blur-md text-foreground text-[10px] font-medium uppercase tracking-wider px-3 py-2 rounded-full border border-border/50 flex items-center gap-1.5 shadow-lg animate-pulse w-fit">
-                                                        <ScanEye size={14} />
-                                                        Tap
-                                                    </span>
-                                                </div>
-                                            )}
+                                            {/* Mobile 'Tap to View' Indicator */}
+                                            <div className="absolute bottom-4 right-4 z-30 md:hidden pointer-events-none">
+                                                <span className="bg-background/80 backdrop-blur-md text-foreground text-[10px] font-medium uppercase tracking-wider px-3 py-2 rounded-full border border-white/10 flex items-center gap-1.5 shadow-lg">
+                                                    <ScanEye size={14} />
+                                                    Tap to View
+                                                </span>
+                                            </div>
                                         </div>
 
-                                        {/* Desktop 'View Comparison' Center Button (Now at root level of the card so it stays visible while parent is hovered) */}
+                                        {/* Desktop 'View Comparison' Center Button */}
                                         {art.reference_image_url && (
                                             <div className="hidden md:flex absolute inset-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100 z-30 pointer-events-none">
                                                 <button
@@ -274,62 +262,65 @@ export default function Portfolio() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.98 }}
                             transition={{ duration: 0.3, ease: "easeOut" }}
-                            className="relative max-w-5xl max-h-[90vh] w-full flex flex-col items-center"
+                            className="relative max-w-5xl max-h-[95vh] w-full flex flex-col items-center overflow-y-auto no-scrollbar py-8"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="relative w-full h-full flex flex-col items-center mt-2">
-                                {/* Title and Category (Moved Up) */}
-                                <div className="mb-6 text-center">
+                            <div className="relative w-full flex flex-col items-center">
+                                {/* Title and Category */}
+                                <div className="mb-6 text-center shrink-0">
                                     <h3 className="font-serif text-2xl tracking-wide text-foreground">{selectedArtwork.title}</h3>
                                     <p className="text-sm text-neutral-600 dark:text-neutral-500 uppercase tracking-widest mt-2">{selectedArtwork.category.replace('_', ' ')}</p>
                                 </div>
 
-                                <div className="relative w-full min-h-[50vh] flex justify-center items-center">
-                                    {isImageLoading && (
-                                        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-                                            <Loader2 className="animate-spin text-foreground/50" size={48} />
+                                <div className="relative w-full flex flex-col items-center justify-center gap-6">
+                                    <div className="relative w-full flex justify-center items-center min-h-[40vh]">
+                                        {isImageLoading && (
+                                            <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+                                                <Loader2 className="animate-spin text-foreground/50" size={48} />
+                                            </div>
+                                        )}
+
+                                        <AnimatePresence mode="wait">
+                                            <motion.img
+                                                layoutId={`artwork-${selectedArtwork.id}-${viewMode}`}
+                                                key={viewMode}
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: isImageLoading ? 0 : 1 }}
+                                                exit={{ opacity: 0 }}
+                                                transition={{
+                                                    opacity: { duration: 0.2 },
+                                                    layout: { type: "spring", stiffness: 300, damping: 30 }
+                                                }}
+                                                src={viewMode === 'final' ? selectedArtwork.image_url : selectedArtwork.reference_image_url}
+                                                alt={selectedArtwork.title}
+                                                className="max-h-[60vh] md:max-h-[70vh] w-auto h-auto object-contain shadow-2xl rounded-lg"
+                                                onLoad={handleImageLoad}
+                                            />
+                                        </AnimatePresence>
+
+                                        {/* Badge overlay on the image */}
+                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-medium backdrop-blur-md shadow-lg ${viewMode === 'final'
+                                                ? 'bg-foreground/90 text-background'
+                                                : 'bg-background/60 text-foreground/90 border border-foreground/10'
+                                                }`}>
+                                                {viewMode === 'final' ? 'Final Artwork' : 'Original Reference'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Toggle Button Container - Fixed height on mobile to prevent jumping */}
+                                    {selectedArtwork.reference_image_url && (
+                                        <div className="flex-none h-12 flex items-center justify-center w-full">
+                                            <button
+                                                onClick={toggleViewMode}
+                                                className="px-6 py-2.5 rounded-full border border-foreground/20 bg-background/50 backdrop-blur-md text-foreground/90 hover:bg-surface transition-all font-serif tracking-wider text-sm flex items-center gap-2 shadow-sm"
+                                            >
+                                                <span>Show {viewMode === 'final' ? 'Reference Photo' : 'Final Artwork'}</span>
+                                            </button>
                                         </div>
                                     )}
-
-                                    <AnimatePresence mode="wait">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <motion.img
-                                            layoutId={`artwork-${selectedArtwork.id}-${viewMode}`}
-                                            key={viewMode}
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: isImageLoading ? 0 : 1 }}
-                                            exit={{ opacity: 0 }}
-                                            transition={{
-                                                opacity: { duration: 0.2 },
-                                                layout: { type: "spring", stiffness: 300, damping: 30 }
-                                            }}
-                                            src={viewMode === 'final' ? selectedArtwork.image_url : selectedArtwork.reference_image_url}
-                                            alt={selectedArtwork.title}
-                                            className="max-h-[70vh] object-contain shadow-2xl rounded-lg"
-                                            onLoad={handleImageLoad}
-                                        />
-                                    </AnimatePresence>
-
-                                    {/* Badge overlay on the image */}
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-medium backdrop-blur-md shadow-lg ${viewMode === 'final'
-                                            ? 'bg-foreground/90 text-background'
-                                            : 'bg-background/60 text-foreground/90 border border-foreground/10'
-                                            }`}>
-                                            {viewMode === 'final' ? 'Final Artwork' : 'Original Reference'}
-                                        </span>
-                                    </div>
                                 </div>
-
-                                {/* Toggle Button (Moved Down) */}
-                                {selectedArtwork.reference_image_url && (
-                                    <button
-                                        onClick={toggleViewMode}
-                                        className="mt-6 px-6 py-2 rounded-full border border-foreground/20 bg-background/50 backdrop-blur-md text-foreground/90 hover:bg-surface/80 transition-all font-serif tracking-wider text-sm flex items-center gap-2"
-                                    >
-                                        <span>Show {viewMode === 'final' ? 'Reference Photo' : 'Final Artwork'}</span>
-                                    </button>
-                                )}
                             </div>
                         </motion.div>
                     </motion.div>
