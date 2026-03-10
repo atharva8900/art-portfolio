@@ -1537,7 +1537,8 @@ export default function CommissionForm() {
                                 type="submit"
                                 disabled={loading ||
                                     attachments.length === 0 ||
-                                    (!turnstileToken && showTurnstile)}
+                                    (!turnstileToken && showTurnstile) ||
+                                    (status === 'waitlist' && !razorpayLoaded)}
                                 className="w-full bg-neutral-400 text-background font-black uppercase tracking-[0.2em] py-5 rounded-xl hover:bg-neutral-200 transition-all duration-300 disabled:opacity-30 disabled:hover:bg-neutral-400 shadow-xl"
                             >
                                 {loading ? (

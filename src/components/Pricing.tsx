@@ -75,17 +75,19 @@ export default function Pricing() {
         };
     }, []);
 
-    const futurePrices = {
-        A5: '₹750',
-        A4: '₹1500',
-        A3: '₹3000',
-    };
+    const pricingItems = useMemo(() => {
+        const futurePrices = {
+            A5: '₹750',
+            A4: '₹1500',
+            A3: '₹3000',
+        };
 
-    const pricingItems = useMemo(() => [
-        { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
-        { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: '🌟 Most Popular' },
-        { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: pricingData.prices.A3 === '₹2000' ? futurePrices.A3 : '₹4000', subtitle: 'Maximum detail & group portraits', badge: '💎 Grand Portrait' }
-    ], [pricingData.prices]);
+        return [
+            { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
+            { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: '🌟 Most Popular' },
+            { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: pricingData.prices.A3 === '₹2000' ? futurePrices.A3 : '₹4000', subtitle: 'Maximum detail & group portraits', badge: '💎 Grand Portrait' }
+        ];
+    }, [pricingData.prices]);
 
     const policyItems = useMemo(() => [
         { icon: Users, text: "Group Portraits: A4 & A3 get 50% off for every additional face. A5 charged at base price per person." },
