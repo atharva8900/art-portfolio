@@ -31,7 +31,7 @@ export default function Pricing() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-        fetch('/api/pricing-tier', { signal: controller.signal })
+        fetch(`/api/pricing-tier?t=${Date.now()}`, { signal: controller.signal })
             .then(res => res.json())
             .then(data => {
                 clearTimeout(timeoutId);

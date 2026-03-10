@@ -67,17 +67,18 @@ export default function Hero() {
 
         // Mobile fallback
         mm.add("(max-width: 767px)", () => {
-            gsap.to(bgContainerRef.current, {
-                opacity: 0,
-                y: -50,
-                ease: "none",
+            gsap.timeline({
                 scrollTrigger: {
                     trigger: sectionRef.current,
                     start: "top top",
                     end: "bottom top",
-                    scrub: true,
+                    scrub: 1,
                 }
-            });
+            })
+                .to(beyondScrollRef.current, { filter: "blur(10px)", opacity: 0, scale: 0.95, duration: 0.8 }, 0)
+                .to(realismScrollRef.current, { filter: "blur(10px)", opacity: 0, scale: 0.95, duration: 0.8 }, 0)
+                .to(lowerContentScrollRef.current, { filter: "blur(10px)", opacity: 0, y: 30, duration: 0.8 }, 0)
+                .to(bgContainerRef.current, { opacity: 0, scale: 1.05, duration: 0.8 }, 0.2);
         });
 
         return () => mm.revert();
@@ -99,10 +100,17 @@ export default function Hero() {
             {/* Background Container (Fades out to reveal next section underneath) */}
             <div ref={bgContainerRef} className="absolute inset-0 w-full h-full bg-background pointer-events-none z-0">
                 <GrainOverlay />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background z-10" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-800/20 via-background to-background opacity-40" />
+                {/* Vignette Overlay: Darker/more opaque at edges/corners, transparent at center */}
+                <div
+                    className="absolute inset-0 z-10"
+                    style={{
+                        background: `radial-gradient(circle at center, transparent 0%, rgba(var(--background-rgb), 0.3) 60%, rgba(var(--background-rgb), 0.7) 100%)`
+                    }}
+                />
+                {/* Secondary radial gradient for base depth */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-800/20 via-background to-background opacity-40 z-0" />
                 {/* Animated Gradient Mesh Effect (approximated with CSS) */}
-                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] animate-slow-spin bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-[0.03] blur-[100px]" />
+                <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] animate-slow-spin bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-[0.03] blur-[100px] z-0" />
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
