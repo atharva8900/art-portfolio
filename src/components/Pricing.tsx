@@ -44,7 +44,6 @@ export default function Pricing() {
         prices: { A5: '₹500', A4: '₹1000', A3: '₹2000' },
         progress: { current: 0, total: 10, remaining: 10 },
     });
-    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -55,15 +54,12 @@ export default function Pricing() {
             .then(data => {
                 clearTimeout(timeoutId);
                 setPricingData(data);
-                setIsLoaded(true);
             })
             .catch(err => {
                 clearTimeout(timeoutId);
                 if (err.name !== 'AbortError') {
                     console.error('Failed to fetch pricing tier:', err);
                 }
-                // Show with defaults on error so section doesn't stay hidden
-                setIsLoaded(true);
             });
 
         return () => {
