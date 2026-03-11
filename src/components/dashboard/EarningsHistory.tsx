@@ -20,7 +20,9 @@ interface EarningsHistoryProps {
 
 export default function EarningsHistory({ history, onPayoutRequested }: EarningsHistoryProps) {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [payoutMethod, setPayoutMethod] = useState<'upi' | 'bank'>('upi');
+    const [payoutMethod, setPayoutMethod] = useState<'upi' | 'bank' | 'wise'>('upi');
+    const [country, setCountry] = useState<'india' | 'other' | null>(null);
+    const [wiseEmail, setWiseEmail] = useState('');
     const [upiId, setUpiId] = useState('');
     const [bankAccount, setBankAccount] = useState('');
     const [bankIfsc, setBankIfsc] = useState('');
@@ -51,12 +53,19 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
         if (!selectedIds.length) return;
 
         let finalDetails = '';
-        if (payoutMethod === 'upi') {
-            if (!upiId) return;
-            finalDetails = JSON.stringify({ type: 'upi', vpa: upiId });
+        if (country === 'india') {
+            if (payoutMethod === 'upi') {
+                if (!upiId) return;
+                finalDetails = JSON.stringify({ type: 'upi', vpa: upiId });
+            } else if (payoutMethod === 'bank') {
+                if (!bankAccount || !bankIfsc || !bankName) return;
+                finalDetails = JSON.stringify({ type: 'bank', account: bankAccount, ifsc: bankIfsc, name: bankName });
+            }
+        } else if (country === 'other') {
+            if (!wiseEmail) return;
+            finalDetails = JSON.stringify({ type: 'wise', email: wiseEmail });
         } else {
-            if (!bankAccount || !bankIfsc || !bankName) return;
-            finalDetails = JSON.stringify({ type: 'bank', account: bankAccount, ifsc: bankIfsc, name: bankName });
+            return;
         }
 
         setIsRequesting(true);
@@ -83,6 +92,8 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
             setBankAccount('');
             setBankIfsc('');
             setBankName('');
+            setWiseEmail('');
+            setCountry(null);
 
         } catch (error: unknown) {
             console.error('Payout Request Failed:', error);
@@ -209,11 +220,12 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                 <p className="text-foreground/60 text-sm mb-6 max-w-xs mx-auto">
                                     Your request has been sent to the admin. You will receive an email confirmation shortly.
                                 </p>
-                                <p className="text-[10px] text-neutral-500 mb-6">Note: Payouts are currently processed for Indian bank accounts and UPI only.</p>
+                                <p className="text-[10px] text-neutral-500 mb-6">Note: Payouts are currently processed via UPI, Indian bank accounts, and Wise.</p>
                                 <button
                                     onClick={() => {
                                         setShowPayoutModal(false);
                                         setIsRequesting(false);
+                                        setCountry(null);
                                     }}
                                     className="px-8 py-3 bg-foreground text-background font-bold rounded hover:bg-foreground/80 transition-colors"
                                 >
@@ -259,43 +271,67 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
 
                                 <div className="mb-6 space-y-4">
                                     <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg mb-4">
-                                        <p className="text-xs text-accent font-medium">Notice: Payouts are available for Indian bank accounts and UPI only.</p>
+                                        <p className="text-xs text-accent font-medium">Notice: Payouts are available via Indian bank accounts, UPI, and Wise (for international).</p>
                                     </div>
 
                                     <div>
-                                        <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Payout Method</label>
+                                        <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Location</label>
                                         <div className="flex gap-2">
-                                            <button onClick={() => setPayoutMethod('upi')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'upi' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
-                                                UPI
+                                            <button onClick={() => { setCountry('india'); setPayoutMethod('upi'); }} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${country === 'india' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
+                                                India
                                             </button>
-                                            <button onClick={() => setPayoutMethod('bank')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'bank' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
-                                                Bank
+                                            <button onClick={() => { setCountry('other'); setPayoutMethod('wise'); }} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${country === 'other' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
+                                                Other Country
                                             </button>
                                         </div>
                                     </div>
 
-                                    {payoutMethod === 'upi' && (
-                                        <div>
-                                            <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">UPI ID</label>
-                                            <input type="text" value={upiId} onChange={e => setUpiId(e.target.value)} placeholder="e.g. yourname@upi" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
-                                            <p className="text-[10px] text-neutral-500 mt-1">Note: Must be a valid UPI Virtual Payment Address.</p>
-                                        </div>
+                                    {country === 'india' && (
+                                        <>
+                                            <div className="mt-4">
+                                                <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Payout Method</label>
+                                                <div className="flex gap-2 mb-4">
+                                                    <button onClick={() => setPayoutMethod('upi')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'upi' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
+                                                        UPI
+                                                    </button>
+                                                    <button onClick={() => setPayoutMethod('bank')} className={`flex-1 py-2 text-sm rounded border transition-colors outline-none ${payoutMethod === 'bank' ? 'bg-accent/20 border-accent text-accent font-medium' : 'bg-background border-foreground/10 text-neutral-400 hover:text-foreground hover:bg-foreground/5'}`}>
+                                                        Bank
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {payoutMethod === 'upi' && (
+                                                <div className="animate-in fade-in slide-in-from-top-2">
+                                                    <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">UPI ID</label>
+                                                    <input type="text" value={upiId} onChange={e => setUpiId(e.target.value)} placeholder="e.g. yourname@upi" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
+                                                    <p className="text-[10px] text-neutral-500 mt-1">Note: Must be a valid UPI Virtual Payment Address.</p>
+                                                </div>
+                                            )}
+
+                                            {payoutMethod === 'bank' && (
+                                                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                                    <div>
+                                                        <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Account Holder Name</label>
+                                                        <input type="text" value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Name on bank account" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Account Number</label>
+                                                        <input type="text" value={bankAccount} onChange={e => setBankAccount(e.target.value)} placeholder="0123456789" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">IFSC Code</label>
+                                                        <input type="text" value={bankIfsc} onChange={e => setBankIfsc(e.target.value)} placeholder="HDFC0001234" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none uppercase" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
 
-                                    {payoutMethod === 'bank' && (
-                                        <div className="space-y-3">
-                                            <div>
-                                                <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Account Holder Name</label>
-                                                <input type="text" value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Name on bank account" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Account Number</label>
-                                                <input type="text" value={bankAccount} onChange={e => setBankAccount(e.target.value)} placeholder="0123456789" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">IFSC Code</label>
-                                                <input type="text" value={bankIfsc} onChange={e => setBankIfsc(e.target.value)} placeholder="HDFC0001234" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none uppercase" />
-                                            </div>
+                                    {country === 'other' && (
+                                        <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                            <label className="block text-neutral-400 text-xs uppercase tracking-wider mb-2">Wise Email Address</label>
+                                            <input type="email" value={wiseEmail} onChange={e => setWiseEmail(e.target.value)} placeholder="your.email@example.com" className="w-full bg-background border border-foreground/10 rounded p-3 text-foreground text-sm focus:border-accent outline-none" />
+                                            <p className="text-[10px] text-neutral-500 mt-1">Note: Provide the email address associated with your Wise account to receive international payouts.</p>
                                         </div>
                                     )}
                                 </div>
@@ -309,7 +345,7 @@ export default function EarningsHistory({ history, onPayoutRequested }: Earnings
                                     </button>
                                     <button
                                         onClick={handlePayoutRequest}
-                                        disabled={!!isRequesting || selectedIds.length === 0 || (payoutMethod === 'upi' ? !upiId.trim() : (!bankAccount.trim() || !bankIfsc.trim() || !bankName.trim()))}
+                                        disabled={!!isRequesting || selectedIds.length === 0 || !country || (country === 'india' ? (payoutMethod === 'upi' ? !upiId.trim() : (!bankAccount.trim() || !bankIfsc.trim() || !bankName.trim())) : !wiseEmail.trim())}
                                         className="flex-1 py-3 bg-accent hover:bg-foreground text-background rounded font-bold uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
                                         {isRequesting === true ? <Loader2 className="animate-spin" size={20} /> : 'Submit Request'}

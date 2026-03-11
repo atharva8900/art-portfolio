@@ -20,6 +20,7 @@ export default function PrivacyPolicy() {
                         <li><strong>Secure Authentication:</strong> We use safe, industry-standard methods for login. For Google Sign-In, we use <strong>NextAuth</strong> which securely authenticates you. For <strong>Magic Link</strong> sign-ins, we use <strong>Supabase</strong> to verify your email and provide access.</li>
                         <li><strong>Shipping Details:</strong> Postal address provided by you for delivering the physical artwork.</li>
                         <li><strong>Reference Materials:</strong> Photographs provided by you to be used as drawing references.</li>
+                        <li><strong>Payout Details:</strong> For the referral program, we may collect your payout information, which securely handles your UPI ID, Indian Bank Account details, or Wise Email address, depending on your location and selected payout method.</li>
                     </ul>
                 </div>
 
@@ -33,6 +34,7 @@ export default function PrivacyPolicy() {
                         <li><strong>Communication:</strong> To discuss order details, send work-in-progress updates, and provide tracking information.</li>
                         <li><strong>Fulfillment:</strong> To draw the portrait based on your provided reference photos.</li>
                         <li><strong>Shipping:</strong> Providing your necessary details to our trusted courier partners (e.g., DTDC, DHL, India Post) solely for delivery.</li>
+                        <li><strong>Referral Payouts:</strong> Processing your earned commissions via your selected payout method (UPI, Bank, or Wise).</li>
                     </ul>
                 </div>
 
@@ -53,6 +55,7 @@ export default function PrivacyPolicy() {
                         <li><strong>Payment Gateways (Razorpay):</strong> To process your payments securely. We do not store your financial data on our servers.</li>
                         <li><strong>Authentication Providers (NextAuth/Google & Supabase):</strong> To manage secure login sessions and protect your access.</li>
                         <li><strong>Shipping Couriers:</strong> To deliver the physical artwork to your address.</li>
+                        <li><strong>Payout Processors (Wise):</strong> To securely process international referral commission payouts.</li>
                     </ul>
                 </div>
 

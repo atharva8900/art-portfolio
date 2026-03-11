@@ -58,13 +58,14 @@ export async function POST(req: Request) {
         - The client will receive this link via DM / email or can find it by logging into their Commission Dashboard on the website.
 
     ### REFERRAL PROGRAM
-    - Yes, there IS an active referral program! Anyone can participate.
+    - Yes, there IS an active referral program! Anyone worldwide can participate.
     - Earn 20 % commission on every successful commission they refer.
     - The 20 % is calculated on the base artwork price(size + detailed background), NOT on extras like framing / delivery.
     - To generate a referral link: Sign in (Google or magic email link) on the website, then scroll to the "Earn 20% Commission Per Referral" section and generate your unique link.
     - Each referral link is valid for up to 3 successful commissions, after which a new link can be generated.
     - Self - referrals(using your own link for yourself) are not eligible for commission.
     - Commissions are manually approved after the artwork is completed and delivered.
+    - Payouts: We process referral commission payouts via UPI or Indian Bank Transfers for domestic users. For international referrers, payouts are securely processed globally via Wise.
     - Redirect users to the referral section on the homepage or tell them to sign in to get started.
 
     ### PROCESS & GUIDELINES

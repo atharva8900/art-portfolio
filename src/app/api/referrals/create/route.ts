@@ -37,16 +37,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Authentication required. Please sign in to create a referral link.' }, { status: 401 });
         }
 
-        // Check for Geo-blocking (Restrict to India)
+        // IP-based Geo-blocking restriction has been removed to allow global referrers.
         const country = request.headers.get('x-vercel-ip-country');
-
-        // If the country header exists and is NOT India, block the request.
-        if (country && country !== 'IN') {
-            return NextResponse.json(
-                { error: 'Referrer links are currently only available for users located in India.' },
-                { status: 403 }
-            );
-        }
 
         const body = await request.json();
         const { name, email, phone, instagram, turnstile_token } = body;

@@ -50,7 +50,19 @@ export default function TermsOfService() {
                 </div>
 
                 <div>
-                    <h2 className="text-2xl font-serif text-foreground mb-4">5. Revisions to Terms</h2>
+                    <h2 className="text-2xl font-serif text-foreground mb-4">5. Referral Program & Payouts</h2>
+                    <p className="leading-relaxed">
+                        Our referral program is open to users worldwide. By participating, you agree to the following:
+                    </p>
+                    <ul className="list-disc pl-6 mt-4 space-y-2">
+                        <li><strong>Global Participation:</strong> Anyone can generate a referral link, regardless of their location.</li>
+                        <li><strong>Payout Methods:</strong> We process referral commission payouts via UPI or Indian Bank Transfers for domestic users. For our international referrers, payouts are securely processed via Wise.</li>
+                        <li><strong>Payment Details:</strong> You are responsible for providing accurate payout information (e.g., UPI ID, bank details, or Wise email) when requesting a withdrawal.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 className="text-2xl font-serif text-foreground mb-4">6. Revisions to Terms</h2>
                     <p className="leading-relaxed">
                         Atharva Sherlekar Art reserves the right, at our sole discretion, to modify or replace these Terms at any time. Significant changes will be communicated via top-level website announcements.
                     </p>
