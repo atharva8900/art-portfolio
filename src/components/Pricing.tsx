@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Users, CreditCard, ImageIcon, Package, Globe, ShieldCheck } from 'lucide-react';
 
 interface PricingTierData {
@@ -37,13 +37,6 @@ const itemVariants = {
     visible: { opacity: 1, y: 0 }
 } as const;
 
-const valueVariants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: { opacity: 0 },
-    transition: { duration: 0.2 }
-} as const;
-
 export default function Pricing() {
     const [pricingData, setPricingData] = useState<PricingTierData>({
         isEarlyAccess: true,
@@ -51,6 +44,7 @@ export default function Pricing() {
         prices: { A5: '₹500', A4: '₹1000', A3: '₹2000' },
         progress: { current: 0, total: 10, remaining: 10 },
     });
+    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -61,12 +55,15 @@ export default function Pricing() {
             .then(data => {
                 clearTimeout(timeoutId);
                 setPricingData(data);
+                setIsLoaded(true);
             })
             .catch(err => {
                 clearTimeout(timeoutId);
                 if (err.name !== 'AbortError') {
                     console.error('Failed to fetch pricing tier:', err);
                 }
+                // Show with defaults on error so section doesn't stay hidden
+                setIsLoaded(true);
             });
 
         return () => {
@@ -123,15 +120,7 @@ export default function Pricing() {
                                 >
                                     <span className="w-2 h-2 rounded-full bg-foreground/70 dark:bg-accent animate-pulse" />
                                     <span className="text-xs font-bold text-foreground/70 dark:text-accent uppercase tracking-wider">
-                                        Early Access • {' '}
-                                        <AnimatePresence mode="wait" initial={false}>
-                                            <motion.span
-                                                key={`${pricingData.progress.current}/${pricingData.progress.total}`}
-                                                {...valueVariants}
-                                            >
-                                                {pricingData.progress.current}/{pricingData.progress.total}
-                                            </motion.span>
-                                        </AnimatePresence>
+                                        Early Access • {pricingData.progress.current}/{pricingData.progress.total}
                                     </span>
                                 </motion.div>
                             )}
@@ -142,7 +131,7 @@ export default function Pricing() {
                                         key={item.size}
                                         variants={itemVariants}
                                         whileHover={{ scale: 1.02 }}
-                                        className={`relative flex flex-col px-5 sm:px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-all duration-300 shadow-sm dark:shadow-none ${item.badge
+                                        className={`relative flex flex-col px-5 sm:px-8 py-5 rounded-2xl bg-surface/30 dark:bg-foreground/5 border-2 transition-colors duration-300 shadow-sm dark:shadow-none ${item.badge
                                             ? 'border-accent/40 dark:border-accent/30 hover:border-accent/60'
                                             : 'border-border/80 dark:border-foreground/10 hover:border-foreground/30 dark:hover:border-accent/40'
                                             }`}
@@ -161,15 +150,9 @@ export default function Pricing() {
                                                     </span>
                                                 )}
                                                 <div className="min-w-[4rem] text-right">
-                                                    <AnimatePresence mode="wait" initial={false}>
-                                                        <motion.span
-                                                            key={item.price}
-                                                            {...valueVariants}
-                                                            className="text-2xl font-black text-foreground/80 dark:text-accent tracking-tight"
-                                                        >
-                                                            {item.price}
-                                                        </motion.span>
-                                                    </AnimatePresence>
+                                                    <span className="text-2xl font-black text-foreground/80 dark:text-accent tracking-tight transition-opacity duration-200">
+                                                        {item.price}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
