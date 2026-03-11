@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
         }
 
         // IP-based Geo-blocking restriction has been removed to allow global referrers.
-        const country = request.headers.get('x-vercel-ip-country');
 
         const body = await request.json();
         const { name, email, phone, instagram, turnstile_token } = body;
