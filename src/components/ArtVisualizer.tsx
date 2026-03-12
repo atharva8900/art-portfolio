@@ -14,7 +14,6 @@ import {
     RefreshCcw
 } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
-import { ColorPicker } from './ui/ColorPicker';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import Image from 'next/image';
 
@@ -477,9 +476,11 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                             <div className="grid grid-cols-2 gap-2">
                                 {[
                                     { id: 'minimal-black', name: 'Ink Black', color: 'bg-zinc-900' },
+                                    /* Temporarily disabled until confirmed with frame shop
                                     { id: 'classic-wood', name: 'Oak Wood', color: 'bg-[#5D4037]' },
                                     { id: 'premium-gold', name: 'Vintage Gold', color: 'bg-[#D4AF37]' },
                                     { id: 'sleek-white', name: 'Cloud White', color: 'bg-stone-100 border border-black/5' },
+                                    */
                                 ].map((style) => (
                                     <button
                                         key={style.id}
@@ -514,8 +515,8 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                 className="w-full accent-accent h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
                             />
 
-                            {/* Matting Color swatches */}
-                            <div className="flex flex-wrap gap-2">
+                            {/* Temporarily disabled matting color selection until confirmed with frame shop */}
+                            {/* <div className="flex flex-wrap gap-2">
                                 {['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f'].map((c) => (
                                     <button
                                         key={c}
@@ -526,13 +527,12 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                         title={c}
                                     />
                                 ))}
-                                {/* Custom Color Picker — sits in the same row as swatches */}
                                 <ColorPicker
                                     color={mattingColor}
                                     onChange={setMattingColor}
                                     presetColors={['#f5f5f4', '#ffffff', '#000000', '#3c2f2f', '#d2b48c', '#800000', '#2f4f4f']}
                                 />
-                            </div>
+                            </div> */}
                         </div>
 
                         {/* Frame Width */}

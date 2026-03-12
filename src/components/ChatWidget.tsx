@@ -159,7 +159,7 @@ export default function ChatWidget() {
                                 </div>
                                 <div className="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed bg-white/5 border border-white/5 text-foreground/90 prose prose-invert prose-p:leading-relaxed prose-pre:p-0 min-w-0">
                                     <ReactMarkdown>
-                                        {"Hi! I'm Atharva's AI assistant. 🎨 I can help you with pricing, sizing, and any questions about commissioning a portrait. How can I help you today?"}
+                                        {"Hi! I'm Atharva's AI assistant. 🎨 I can help you with pricing, sizing, and any questions about commissioning a portrait. \n\n*Note: I can answer up to 25 messages per visitor each day.* \n\nHow can I help you today?"}
                                     </ReactMarkdown>
                                 </div>
                             </div>

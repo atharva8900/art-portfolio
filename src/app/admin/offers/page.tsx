@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import {
     Loader2, Copy, Users, Check, Lock, MousePointer2,
-    QrCode, X, Plus, Percent, Trash2
+    QrCode, X, Plus, Percent, Trash2, Calendar, Clock
 } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminNav from '@/components/admin/AdminNav';
+import ClockTimePicker from '@/components/admin/ClockTimePicker';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface OfferData {
@@ -27,6 +28,7 @@ interface OfferData {
         framing?: boolean;
     };
     is_active: boolean;
+    is_public: boolean;
     created_at: string;
 }
 
@@ -149,7 +151,7 @@ export default function AdminOffersPage() {
                             animate={{ opacity: 1, x: 0 }}
                             className="text-accent text-[10px] uppercase tracking-[0.3em] font-bold mb-2 block"
                         >
-                            Marketing Campaigns
+                            Active Offers
                         </motion.span>
                         <motion.h1
                             initial={{ opacity: 0, y: 10 }}
@@ -300,7 +302,7 @@ export default function AdminOffersPage() {
                                 className="px-8 py-4 bg-accent text-background rounded-2xl font-bold uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
                             >
                                 <Copy size={18} />
-                                Copy Campaign URL
+                                Copy Offer URL
                             </button>
                         </motion.div>
                     </div>
@@ -352,7 +354,12 @@ function OfferListView({ offers, onDelete, onShowQR, showNotification }: {
                     <div key={offer.id} className="bg-surface border border-foreground/5 rounded-3xl p-6 space-y-4 hover:border-accent/20 transition-all group shadow-xl">
                         <div className="flex justify-between items-start">
                             <div className="space-y-1">
-                                <h3 className="font-serif text-xl">{offer.name}</h3>
+                                <h3 className="font-serif text-xl flex items-center gap-2">
+                                    {offer.name}
+                                    <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ${offer.is_public !== false ? 'bg-emerald-500/20 text-emerald-400' : 'bg-neutral-500/20 text-neutral-400'}`}>
+                                        {offer.is_public !== false ? 'Public' : 'Private'}
+                                    </span>
+                                </h3>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono text-accent text-xs font-bold uppercase tracking-wider">{offer.code}</span>
                                     <button
@@ -385,6 +392,18 @@ function OfferListView({ offers, onDelete, onShowQR, showNotification }: {
                                 <p className="font-cinzel text-lg">{offer.usage_count} / {offer.usage_limit}</p>
                             </div>
                         </div>
+
+                        {offer.expires_at && (
+                            <div className="flex items-center justify-between p-3 bg-red-500/5 rounded-2xl border border-red-500/10">
+                                <div className="flex items-center gap-2 text-red-400/80">
+                                    <Clock size={12} />
+                                    <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400">Expires</span>
+                                </div>
+                                <span className="font-mono text-[11px] font-bold text-neutral-300">
+                                    {new Date(offer.expires_at).toLocaleDateString('en-GB')} {new Date(offer.expires_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                        )}
 
                         <div className="flex items-center justify-between p-3 bg-foreground/5 rounded-2xl">
                             <div className="flex items-center gap-2 text-neutral-400">
@@ -422,61 +441,98 @@ function OfferListView({ offers, onDelete, onShowQR, showNotification }: {
 
 function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
     const [loading, setLoading] = useState(false);
+    const [showClockPicker, setShowClockPicker] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: '',
         code: '',
         discount_percent: 10,
         usage_limit: 3,
-        expires_at: '',
+        expiry_date: '',
+        expiry_time: '23:59',
         free_extras: {
             delivery: false,
             timelapse: false,
             background: false,
             framing: false
-        }
+        },
+        is_public: true
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError(null);
         try {
             const res = await fetch('/api/admin/offers', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...formData,
+                    name: formData.name,
                     code: formData.code.toUpperCase(),
-                    expires_at: formData.expires_at ? new Date(formData.expires_at).toISOString() : null
+                    discount_percent: formData.discount_percent,
+                    usage_limit: formData.usage_limit,
+                    free_extras: formData.free_extras,
+                    is_public: formData.is_public,
+                    is_active: true,
+                    // Append +05:30 so the time is always treated as IST before converting to UTC
+                    expires_at: formData.expiry_date
+                        ? new Date(`${formData.expiry_date}T${formData.expiry_time || '23:59'}:00+05:30`).toISOString()
+                        : null
                 })
             });
-            if (!res.ok) throw new Error('Failed to create offer');
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data?.error || `Server error: ${res.status}`);
+            }
             onSuccess();
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            console.error(err);
+            setError(err instanceof Error ? err.message : 'Failed to create offer. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xl">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xl"
+            onWheel={(e) => e.stopPropagation()}
+        >
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="bg-surface border border-foreground/10 rounded-[2.5rem] p-8 max-w-2xl w-full shadow-2xl relative overflow-hidden"
+                className="bg-surface border border-foreground/10 rounded-[2rem] p-6 max-w-2xl w-full shadow-2xl relative max-h-[90vh] overflow-y-scroll overscroll-contain custom-scrollbar"
+                onWheel={(e) => { e.stopPropagation(); }}
+                onTouchMove={(e) => e.stopPropagation()}
             >
+                <style jsx>{`
+                    .custom-scrollbar::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-track {
+                        background: transparent;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background: rgba(255, 255, 255, 0.1);
+                        border-radius: 10px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: rgba(181, 153, 94, 0.4);
+                    }
+                `}</style>
                 <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full hover:bg-foreground/5 transition-colors text-neutral-500">
                     <X size={20} />
                 </button>
 
-                <div className="space-y-8">
-                    <div className="space-y-2">
-                        <h2 className="text-3xl font-serif">Create New Campaign</h2>
-                        <p className="text-neutral-400 text-sm italic">Define your unique promotional parameters</p>
+                <div className="space-y-5">
+                    <div className="space-y-1">
+                        <h2 className="text-2xl font-serif">Create New Offer</h2>
+                        <p className="text-neutral-400 text-xs italic">Define your unique promotional parameters</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 px-2">Offer Name</label>
                                 <input
@@ -525,13 +581,51 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
                                 </div>
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                                <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 px-2">Expiry Date (Optional)</label>
-                                <input
-                                    type="datetime-local"
-                                    value={formData.expires_at}
-                                    onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                                    className="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-3.5 focus:border-accent outline-none transition-all text-neutral-400"
-                                />
+                                <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 px-2">Expiry Date & Time (Optional)</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="relative">
+                                        <Calendar size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
+                                        <input
+                                            type="date"
+                                            value={formData.expiry_date}
+                                            onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                                            className="w-full bg-foreground/5 border border-foreground/10 rounded-2xl pl-10 pr-4 py-3.5 focus:border-accent outline-none transition-all text-neutral-300 [color-scheme:dark]"
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
+                                        {/* Custom Clock Picker trigger */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowClockPicker(true)}
+                                            className="w-full text-left bg-foreground/5 border border-foreground/10 rounded-2xl pl-10 pr-4 py-3.5 focus:border-accent outline-none transition-all text-neutral-300 hover:border-foreground/30"
+                                        >
+                                            {formData.expiry_time}
+                                        </button>
+                                    </div>
+
+                                    {/* Clock picker overlay */}
+                                    {showClockPicker && (
+                                        <ClockTimePicker
+                                            value={formData.expiry_time}
+                                            onClose={() => setShowClockPicker(false)}
+                                            onConfirm={(t: string) => {
+                                                setFormData({ ...formData, expiry_time: t });
+                                                setShowClockPicker(false);
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                                {formData.expiry_date && (
+                                    <div className="mt-1 flex items-center gap-2 px-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                                        <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">
+                                            Expiry Format: <span className="text-foreground">
+                                                {new Date(`${formData.expiry_date}T${formData.expiry_time || '23:59'}:00`).toLocaleDateString('en-GB')} {formData.expiry_time}
+                                            </span>
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -561,12 +655,42 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
                             </div>
                         </div>
 
+                        <div className="space-y-4 pt-4">
+                            <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 px-2">Visibility</label>
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, is_public: !formData.is_public })}
+                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all w-full text-left ${formData.is_public
+                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+                                    : 'bg-neutral-500/10 border-neutral-500/30 text-neutral-500'
+                                    }`}
+                            >
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${formData.is_public ? 'border-emerald-500' : 'border-neutral-500'}`}>
+                                    {formData.is_public && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                                </div>
+                                <div>
+                                    <span className="font-bold text-sm block">{formData.is_public ? 'Public Offer' : 'Private Offer'}</span>
+                                    <span className="text-xs opacity-70">
+                                        {formData.is_public ? 'Visible to AI and can be promoted in chat.' : 'Hidden from AI. Works only via direct link or typing code.'}
+                                    </span>
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Error message */}
+                        {error && (
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs mt-2">
+                                <span className="shrink-0 mt-0.5">⚠</span>
+                                <span>{error}</span>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             disabled={loading}
                             className="w-full py-5 bg-foreground text-background rounded-3xl font-bold flex items-center justify-center gap-3 hover:bg-neutral-200 transition-all disabled:opacity-50 mt-4 shadow-2xl"
                         >
-                            {loading ? <Loader2 size={20} className="animate-spin" /> : "Publish Campaign"}
+                            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Publish Offer'}
                         </button>
                     </form>
                 </div>

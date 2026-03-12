@@ -372,7 +372,19 @@ export default function CommissionForm() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
-        const files = Array.from(e.target.files);
+        
+        let files = Array.from(e.target.files);
+        
+        if (attachments.length + files.length > 6) {
+            alert(`You can only upload a maximum of 6 reference photos. The remaining files were skipped.`);
+            files = files.slice(0, Math.max(0, 6 - attachments.length));
+        }
+
+        if (files.length === 0) {
+            e.target.value = '';
+            return;
+        }
+
         const oversized = files.filter(f => f.size > MAX_FILE_SIZE);
         if (oversized.length > 0) {
             alert(`These files exceed the 20MB limit and were skipped:\n${oversized.map(f => f.name).join('\n')}`);
@@ -381,7 +393,10 @@ export default function CommissionForm() {
         valid.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setAttachments(prev => [...prev, { name: file.name, content: reader.result as string }]);
+                setAttachments(prev => {
+                    if (prev.length >= 6) return prev;
+                    return [...prev, { name: file.name, content: reader.result as string }];
+                });
             };
             reader.readAsDataURL(file);
         });
@@ -465,6 +480,13 @@ export default function CommissionForm() {
 
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
+
+        // Validate that either phone or instagram_id is provided
+        if (!data.phone && !data.instagram_id) {
+            setError('Please provide either a Phone Number or an Instagram ID so I can contact you about your commission.');
+            setLoading(false);
+            return;
+        }
 
         try {
             // Auto-attach referral code from sessionStorage
@@ -554,6 +576,16 @@ export default function CommissionForm() {
 
         if (!window.Razorpay) {
             setError('Payment system is still loading. Please wait a moment.');
+            setLoading(false);
+            return;
+        }
+
+        const formData = new FormData(formElement);
+        const data = Object.fromEntries(formData.entries());
+
+        // Validate that either phone or instagram_id is provided
+        if (!data.phone && !data.instagram_id) {
+            setError('Please provide either a Phone Number or an Instagram ID so I can contact you about your commission.');
             setLoading(false);
             return;
         }
@@ -1022,11 +1054,11 @@ export default function CommissionForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Phone</label>
-                                <input required name="phone" type="tel" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="+91 ..." />
+                                <input name="phone" type="tel" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="+91 ... (optional if Instagram provided)" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Instagram ID (Optional)</label>
-                                <input name="instagram_id" type="text" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="@username" />
+                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Instagram ID</label>
+                                <input name="instagram_id" type="text" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="@username (optional if Phone provided)" />
                             </div>
                         </div>
 
@@ -1454,7 +1486,7 @@ export default function CommissionForm() {
                             <label className="text-xs uppercase tracking-widest text-neutral-500 flex items-center gap-2">
                                 Reference Photos
                                 <span className="text-red-400 font-bold">*</span>
-                                <span className="text-neutral-600">(Required · Max 20MB each · Multiple allowed)</span>
+                                <span className="text-neutral-600">(Required · Max 20MB each · Max 6 photos)</span>
                             </label>
                             <input
                                 name="reference_images"
@@ -1488,7 +1520,7 @@ export default function CommissionForm() {
 
                         <div className="space-y-2">
                             <label className="text-xs uppercase tracking-widest text-neutral-500">Additional Notes</label>
-                            <textarea name="notes" rows={3} className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="Any specific requests or deadline..." />
+                            <textarea name="notes" rows={3} className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="Any specific requests, deadlines, or links to more reference photos..." />
                         </div>
 
                         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
