@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import AuthProvider from "@/components/AuthProvider";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { GoogleAnalytics } from '@next/third-parties/google';
 import ChatWidget from "@/components/ChatWidget";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap', preload: true });
@@ -65,6 +66,7 @@ export default function RootLayout({
             </SmoothScroll>
             <Analytics />
             <SpeedInsights />
+            <GoogleAnalytics gaId="G-00470JC3GM" />
             {process.env.NEXT_PUBLIC_ENABLE_CHATBOT === 'true' && <ChatWidget />}
           </AuthProvider>
         </ThemeProvider>
