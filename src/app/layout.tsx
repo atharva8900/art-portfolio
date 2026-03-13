@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     default: 'Atharva Sherlekar Art - Realistic Graphite Portrait Artist',
   },
   description: "Turn your photos into hyper-realistic hand-drawn graphite portraits. Custom artwork commissions by Atharva Sherlekar Art.",
+  verification: {
+    google: "ASoU69R0hNMIj9upMwU-aDekM-VwyNFSPcMfFm0WIp0",
+  },
   keywords: ["graphite portrait", "pencil sketch", "custom artwork", "hand drawn portrait", "commission artist", "realistic drawing", "portrait artist india"],
   authors: [{ name: "Atharva Sherlekar Art" }],
   creator: "Atharva Sherlekar Art",
