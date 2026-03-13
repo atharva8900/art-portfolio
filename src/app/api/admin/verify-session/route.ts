@@ -1,17 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+
+import { checkAdminAuth } from '@/lib/admin-auth';
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
-// Normalize emails to lowercase for comparison
-const ALLOWED_EMAILS = [
-    'atharva.sherlekar@gmail.com',
-    'atharva8900@gmail.com',
-    'atharvasherlekarart@gmail.com',
-    process.env.NEXT_PUBLIC_ARTIST_EMAIL
-]
-    .filter(Boolean)
-    .map(email => email?.toLowerCase());
 
 export async function POST() {
     try {
@@ -19,16 +10,12 @@ export async function POST() {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        const session = await getServerSession(authOptions);
+        const isAdmin = await checkAdminAuth();
 
-        if (!session || !session.user || !session.user.email) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        if (ALLOWED_EMAILS.includes(session.user.email.toLowerCase())) {
+        if (isAdmin) {
             return NextResponse.json({ success: true, secret: ADMIN_SECRET });
         } else {
-            return NextResponse.json({ error: 'Unauthorized email' }, { status: 403 });
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
     } catch (error) {
         console.error('Session verification error:', error);

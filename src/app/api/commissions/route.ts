@@ -9,13 +9,14 @@ import {
     incrementReferralCount,
     hasReachedCommissionCap,
     isReferralExpired
-} from '@/lib/referrals';
-import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount } from '@/lib/commissions';
-import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing'; // Import price helper
+} from '../../../lib/referrals';
+import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount } from '../../../lib/commissions';
+import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '../../../lib/pricing'; // Import price helper
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { sendDiscordNotification } from '@/lib/discord';
-import { getOfferById, incrementOfferUsage } from '@/lib/offers';
+import { authOptions } from '../../../lib/auth';
+import { sendDiscordNotification } from '../../../lib/discord';
+import { getOfferById, incrementOfferUsage } from '../../../lib/offers';
+import { commissionSchema } from '../../../lib/schemas';
 
 
 
@@ -34,7 +35,17 @@ function getClientIP(request: NextRequest): string {
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        const jsonBody = await request.json();
+        const result = commissionSchema.safeParse(jsonBody);
+
+        if (!result.success) {
+            console.error('Validation error:', result.error.issues);
+            return NextResponse.json({ 
+                error: 'Invalid input data', 
+                details: result.error.issues.map((e: { message: string }) => e.message).join(', ') 
+            }, { status: 400 });
+        }
+
         const {
             name,
             email,
@@ -49,7 +60,6 @@ export async function POST(request: NextRequest) {
             consent,
             notes,
             referral_code,
-            attachment_name,
             referrer_name,
             referrer_email,
             needed_by,
@@ -67,7 +77,7 @@ export async function POST(request: NextRequest) {
             frame_image_base64,
             promo_id,
             turnstile_token,
-        } = body;
+        } = result.data;
 
         // Verify Razorpay Payment if provided
         if (razorpay_order_id && razorpay_payment_id && razorpay_signature) {
@@ -113,10 +123,7 @@ export async function POST(request: NextRequest) {
         // ... validation logic ...
 
 
-        // Validate required fields
-        if (!name || !email || !phone || !size || !number_of_people || !address) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
+        // Required fields are now handled by Zod
 
         if (await hasActiveCommission(email)) {
             return NextResponse.json({
@@ -191,7 +198,7 @@ export async function POST(request: NextRequest) {
                     currentUserId = undefined;
                 }
 
-                const isValidReferral = await validateNotSelfReferral(email, phone, instagram_id, referral_code, currentUserId);
+                const isValidReferral = await validateNotSelfReferral(email, phone, instagram_id || undefined, referral_code, currentUserId);
 
                 if (!isValidReferral) {
                     return NextResponse.json({
@@ -438,7 +445,6 @@ export async function POST(request: NextRequest) {
                                 <p style="margin:4px 0;"><strong>Referred By (Legacy):</strong> ${referrer_name} (${referrer_email || 'N/A'})</p>
                             ` : ''}
                         </div>
-                        ${attachment_name ? `<p style="margin:8px 0;font-size:12px;color:#666;">Legacy Attachment: ${attachment_name}</p>` : ''}
                     </div>
                 `,
             });
@@ -588,7 +594,7 @@ export async function POST(request: NextRequest) {
                 client_name: name,
                 client_email: email,
                 phone: phone,
-                instagram_id: instagram_id,
+                instagram_id: instagram_id || undefined,
                 size: size,
                 number_of_people: number_of_people,
                 detailed_background: !!detailed_background,
@@ -605,15 +611,15 @@ export async function POST(request: NextRequest) {
                 } : null,
                 status: commissionStatus,
                 submitted_at: new Date().toISOString(),
-                needed_by: needed_by,
+                needed_by: needed_by || undefined,
                 base_price: totalBasePrice,
                 extras_total: extrasTotal,
                 commission_amount: referrersShare,
                 promo_id: appliedOffer?.id || null,
                 promotion_code: appliedOffer?.code || null,
-                frame_image: frame_image,
-                razorpay_order_id: razorpay_order_id,
-                razorpay_payment_id: razorpay_payment_id,
+                frame_image: frame_image || undefined,
+                razorpay_order_id: razorpay_order_id || undefined,
+                razorpay_payment_id: razorpay_payment_id || undefined,
                 payment_status: isWaitlist ? 'reservation_paid' : 'pending',
                 is_self_referral_flag: isSelfReferralFlag,
                 flag_reason: flagReason

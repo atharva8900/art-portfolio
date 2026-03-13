@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+
 import { deleteOffer } from '@/lib/offers';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+import { checkAdminAuth } from '@/lib/admin-auth';
 
-async function checkAdminAuth() {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || !session.user.email) return false;
-    return ALLOWED_EMAILS.includes(session.user.email.toLowerCase());
-}
+// Auth check centralized
 
 export async function DELETE(
     req: Request,

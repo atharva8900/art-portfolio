@@ -3,17 +3,16 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+import { checkAdminAuth } from '@/lib/admin-auth';
+
 const BUCKET = 'commission-wip';
 const WIP_SLOTS = ['start', 'mid', 'finished'] as const;
 type WipSlot = typeof WIP_SLOTS[number];
 
 async function getAdminSession() {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email || !ALLOWED_EMAILS.includes(session.user.email.toLowerCase())) {
-        return null;
-    }
-    return session;
+    const isAdmin = await checkAdminAuth();
+    if (!isAdmin) return null;
+    return await getServerSession(authOptions);
 }
 
 // POST /api/admin/commissions/[id]/wip  — upload a WIP image for a slot

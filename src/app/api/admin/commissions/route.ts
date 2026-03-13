@@ -1,23 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount, promoteNextInWaitlist } from '@/lib/commissions';
-import { setAvailability } from '@/lib/availability';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { sendCommissionStatusEmail } from '@/lib/emails';
-import { sendEmail } from '@/lib/email';
+import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount, promoteNextInWaitlist } from '../../../../lib/commissions';
+import { setAvailability } from '../../../../lib/availability';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+import { checkAdminAuth } from '../../../../lib/admin-auth';
+import { adminStatusUpdateSchema } from '../../../../lib/schemas';
+import { sendCommissionStatusEmail } from '../../../../lib/emails';
+import { sendEmail } from '../../../../lib/email';
 
-async function checkAdminAuth() {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user || !session.user.email) {
-        return false;
-    }
-
-    return ALLOWED_EMAILS.includes(session.user.email.toLowerCase());
-}
+// Auth check is now handled by checkAdminAuth from @/lib/admin-auth
 
 // GET: Return all commissions (Requires Admin Auth)
 export async function GET() {
@@ -50,8 +41,17 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = await request.json();
-        const { id, status, admin_note, payout_status, payment_status } = body;
+        const jsonBody = await request.json();
+        const result = adminStatusUpdateSchema.safeParse(jsonBody);
+
+        if (!result.success) {
+            return NextResponse.json({ 
+                error: 'Invalid input data', 
+                details: result.error.issues.map((e: { message: string }) => e.message).join(', ') 
+            }, { status: 400 });
+        }
+
+        const { id, status, admin_note, payout_status, payment_status } = result.data;
 
         // Validate inputs
         if (!id) {
@@ -89,7 +89,7 @@ export async function PATCH(request: NextRequest) {
                 return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
             }
             try {
-                const result = await updateCommissionStatus(id, status, admin_note);
+                const result = await updateCommissionStatus(id, status, admin_note || undefined);
                 if (result) {
                     updatedCommission = result;
 
@@ -186,11 +186,12 @@ export async function PATCH(request: NextRequest) {
                         }
                     }
                 }
-            } catch (transitionError: unknown) {
-                return NextResponse.json({
-                    error: (transitionError as { message?: string }).message || 'Invalid status transition'
-                }, { status: 400 });
-            }
+        } catch (transitionError: unknown) {
+            const errorMessage = transitionError instanceof Error ? transitionError.message : 'Invalid status transition';
+            return NextResponse.json({
+                error: errorMessage
+            }, { status: 400 });
+        }
         }
 
         // Update Payout Status

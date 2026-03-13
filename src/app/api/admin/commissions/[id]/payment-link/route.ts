@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+
 import { getCommissionById } from '@/lib/commissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { sendDiscordNotification } from '@/lib/discord';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+import { checkAdminAuth } from '@/lib/admin-auth';
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
@@ -18,8 +17,8 @@ export async function POST(
     { params }: { params: { id: string } }
 ) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user?.email || !ALLOWED_EMAILS.includes(session.user.email.toLowerCase())) {
+        const isAdmin = await checkAdminAuth();
+        if (!isAdmin) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

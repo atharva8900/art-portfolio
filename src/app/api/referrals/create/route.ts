@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/email';
-import { saveReferral, hashIP, getActiveReferralForUser } from '@/lib/referrals';
+import { sendEmail } from '../../../../lib/email';
+import { saveReferral, hashIP, getActiveReferralForUser } from '../../../../lib/referrals';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '../../../../lib/auth';
+import { referralSchema } from '../../../../lib/schemas';
 
 
 
@@ -39,12 +40,17 @@ export async function POST(request: NextRequest) {
 
         // IP-based Geo-blocking restriction has been removed to allow global referrers.
 
-        const body = await request.json();
-        const { name, email, phone, instagram, turnstile_token } = body;
+        const jsonBody = await request.json();
+        const result = referralSchema.safeParse(jsonBody);
 
-        if (!name || !email) {
-            return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
+        if (!result.success) {
+            return NextResponse.json({ 
+                error: 'Invalid input data', 
+                details: result.error.issues.map((e: { message: string }) => e.message).join(', ') 
+            }, { status: 400 });
         }
+
+        const { name, email, phone, instagram, turnstile_token } = result.data;
 
         if (email !== user.email) {
             return NextResponse.json({ error: 'Email must match your logged-in account' }, { status: 403 });
@@ -100,8 +106,8 @@ export async function POST(request: NextRequest) {
                 code: referralCode,
                 referrer_email: email,
                 referrer_name: name,
-                referrer_phone: phone,
-                referrer_instagram: instagram,
+                referrer_phone: phone || undefined,
+                referrer_instagram: instagram || undefined,
                 referrer_user_id: user.email || undefined, // Use email as identifier for NextAuth
                 created_at: new Date().toISOString(),
                 ip_hash: ipHash,

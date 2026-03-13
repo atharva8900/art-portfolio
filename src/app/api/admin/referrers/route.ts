@@ -1,20 +1,11 @@
 import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { getAllReferrals } from '@/lib/referrals';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
-async function checkAdminAuth() {
-    const session = await getServerSession(authOptions);
+import { checkAdminAuth } from '@/lib/admin-auth';
 
-    if (!session || !session.user || !session.user.email) {
-        return false;
-    }
-
-    return ALLOWED_EMAILS.includes(session.user.email.toLowerCase());
-}
+// Auth check centralized
 
 export async function GET() {
     try {
