@@ -52,6 +52,8 @@ interface CommissionData {
     promo_id?: string | null;
     promotion_code?: string | null;
     discount_percent?: number | null;
+    is_self_referral_flag?: boolean;
+    flag_reason?: string | null;
 }
 
 const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
@@ -556,6 +558,12 @@ export default function AdminCommissionsPage() {
                                                         </div>
                                                         <ChevronDown size={14} className={`text-neutral-500 ml-1 transition-transform duration-200 ${expandedId === commission.id ? 'rotate-180' : ''}`} />
                                                     </div>
+                                                    {commission.is_self_referral_flag && (
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded mt-1.5 w-fit">
+                                                            <AlertTriangle size={10} />
+                                                            POTENTIAL SELF-REFERRAL
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 px-4" onClick={e => e.stopPropagation()}>
                                                     {commission.referral_code ? (
@@ -716,6 +724,18 @@ export default function AdminCommissionsPage() {
                                                                                         <span className="font-mono text-accent font-bold text-sm">₹{commission.commission_amount}</span>
                                                                                     </div>
                                                                                 ) : null}
+
+                                                                                {commission.is_self_referral_flag && (
+                                                                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg space-y-1 mt-2">
+                                                                                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest flex items-center gap-1.5">
+                                                                                            <AlertTriangle size={12} />
+                                                                                            Self-Referral Flagged
+                                                                                        </p>
+                                                                                        <p className="text-xs text-neutral-400 italic">
+                                                                                            {commission.flag_reason || 'Unknown reason'}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                )}
 
                                                                                 <button
                                                                                     onClick={(e) => {

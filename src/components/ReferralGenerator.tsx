@@ -9,6 +9,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import AuthOptions from './AuthOptions';
 import { Turnstile } from '@marsidev/react-turnstile';
 
+const REF_LOCK_KEY = 'atharva_referral_lock';
+
 export default function ReferralGenerator() {
     const { data: session, status: authStatus } = useSession();
     const [loading, setLoading] = useState(false);
@@ -176,6 +178,8 @@ export default function ReferralGenerator() {
                                                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
                                                 onSuccess={(token) => {
                                                     setTurnstileToken(token);
+                                                    // Store in local storage to prevent self-referral on this device
+                                                    localStorage.setItem(REF_LOCK_KEY, 'true');
                                                     setTimeout(() => setShowTurnstile(false), 5000);
                                                 }}
                                                 options={{ theme: 'dark' }}

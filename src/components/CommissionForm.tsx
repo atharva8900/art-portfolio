@@ -22,6 +22,9 @@ declare global {
 
 
 
+const REF_LOCK_KEY = 'atharva_referral_lock';
+const PREVENT_RELOAD_MSG = "You have unsaved changes. Are you sure you want to leave?";
+
 // Custom paper size dropdown — portal-based so it escapes any overflow container
 function PaperSizeDropdown({ value, onChange, options }: {
     value: string;
@@ -150,6 +153,8 @@ export default function CommissionForm() {
     const [frameConfig, setFrameConfig] = useState<FrameConfig | null>(null);
     const [showFrameModal, setShowFrameModal] = useState(false);
     const [isSelfReferral, setIsSelfReferral] = useState(false);
+    const [referralLocked, setReferralLocked] = useState(false);
+    const [referralInfo, setReferralInfo] = useState<any>(null);
     const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
@@ -270,6 +275,20 @@ export default function CommissionForm() {
         }
     }, [session]);
 
+    useEffect(() => {
+        if (session?.user?.email && referralInfo?.referrer_email) {
+            if (session.user.email === referralInfo.referrer_email || referralLocked) {
+                setIsSelfReferral(true);
+            } else {
+                setIsSelfReferral(false);
+            }
+        } else if (referralLocked) {
+            setIsSelfReferral(true);
+        } else {
+            setIsSelfReferral(false);
+        }
+    }, [session, referralInfo, referralLocked]);
+
     const checkActiveCommission = async () => {
         try {
             const res = await fetch('/api/commissions/check');
@@ -356,7 +375,14 @@ export default function CommissionForm() {
         const checkStorage = () => {
             if (typeof window === 'undefined') return;
 
-            const code = sessionStorage.getItem('referrer_code');
+            const storedReferral = sessionStorage.getItem('referrer_code');
+            const lockPresent = localStorage.getItem(REF_LOCK_KEY) === 'true';
+
+            if (lockPresent) {
+                setReferralLocked(true);
+                setIsSelfReferral(true);
+            }
+
             const name = sessionStorage.getItem('referrer_name');
             const email = sessionStorage.getItem('referrer_email');
             const phone = sessionStorage.getItem('referrer_phone');
@@ -364,7 +390,7 @@ export default function CommissionForm() {
             // If there's an email in storage, compare with current session
             const isSelf = email && user?.email && email.toLowerCase() === user.email.toLowerCase();
 
-            if (isSelf) {
+            if (isSelf || lockPresent) {
                 console.log('Self-referral detected, blocking in UI');
                 setIsSelfReferral(true);
                 setReferralCode(null);
@@ -376,7 +402,7 @@ export default function CommissionForm() {
 
             // Also check if the current user generated this code (using email prefix/pattern if possible, but email is primary)
             setIsSelfReferral(false);
-            if (code) setReferralCode(code);
+            if (storedReferral) setReferralCode(storedReferral);
             if (name) setReferrerName(name);
             if (email) setReferrerEmail(email);
             if (phone) setReferrerPhone(phone);
@@ -578,6 +604,18 @@ export default function CommissionForm() {
             if (!res.ok) {
                 const errorData = await res.json();
                 throw new Error(errorData.error || 'Failed to save commission. Please contact us.');
+            }
+
+            const responseData = await res.json();
+            if (responseData.success && responseData.referral) {
+                setReferralInfo(responseData.referral);
+                // Check if current user is the referrer
+                if (session?.user?.email === responseData.referral.referrer_email || referralLocked) {
+                    setIsSelfReferral(true);
+                }
+                // Set referral lock on successful submission if a referral was used
+                localStorage.setItem(REF_LOCK_KEY, 'true');
+                setReferralLocked(true);
             }
 
             setSuccess(true);
