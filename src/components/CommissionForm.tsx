@@ -23,7 +23,14 @@ declare global {
 
 
 const REF_LOCK_KEY = 'atharva_referral_lock';
-const PREVENT_RELOAD_MSG = "You have unsaved changes. Are you sure you want to leave?";
+
+interface ReferralInfo {
+    referrer_email: string;
+    referrer_name: string;
+    referrer_phone?: string;
+    referrer_instagram?: string;
+    code: string;
+}
 
 // Custom paper size dropdown — portal-based so it escapes any overflow container
 function PaperSizeDropdown({ value, onChange, options }: {
@@ -154,7 +161,7 @@ export default function CommissionForm() {
     const [showFrameModal, setShowFrameModal] = useState(false);
     const [isSelfReferral, setIsSelfReferral] = useState(false);
     const [referralLocked, setReferralLocked] = useState(false);
-    const [referralInfo, setReferralInfo] = useState<any>(null);
+    const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
     const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
