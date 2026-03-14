@@ -43,7 +43,14 @@ CREATE TABLE public.commissions (
     base_price NUMERIC,
     extras_total NUMERIC,
     commission_amount NUMERIC,
-    frame_image TEXT
+    frame_image TEXT,
+    razorpay_order_id TEXT,
+    razorpay_payment_id TEXT,
+    payment_status TEXT DEFAULT 'pending',
+    is_self_referral_flag BOOLEAN DEFAULT FALSE,
+    flag_reason TEXT,
+    promo_id TEXT,
+    promotion_code TEXT
 );
 
 -- 4. SECURITY (RLS)

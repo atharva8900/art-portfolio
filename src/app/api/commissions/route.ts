@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/email';
+import { sendEmail } from '../../../lib/email';
 import crypto from 'crypto';
 import {
     validateNotSelfReferral,
@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
             frame_image_base64,
             promo_id,
             turnstile_token,
+            referral_locked_browser,
         } = result.data;
 
         // Verify Razorpay Payment if provided
@@ -198,36 +199,47 @@ export async function POST(request: NextRequest) {
                     currentUserId = undefined;
                 }
 
+                // Get referral information first for comparison
+                referralInfo = await getReferralByCode(referral_code);
+
                 const isValidReferral = await validateNotSelfReferral(email, phone, instagram_id || undefined, referral_code, currentUserId);
 
                 if (!isValidReferral) {
-                    return NextResponse.json({
-                        error: 'You cannot use your own referral code.'
-                    }, { status: 400 });
+                    // HYBRID LOGIC: 
+                    // If exact email match: Hard Block (Obvious)
+                    if (referralInfo?.referrer_email?.toLowerCase() === email.toLowerCase() || 
+                        currentUserId?.toLowerCase() === referralInfo?.referrer_email?.toLowerCase()) {
+                        return NextResponse.json({
+                            error: 'You cannot use your own referral code.'
+                        }, { status: 400 });
+                    }
+                    
+                    // If different email but Phone/Insta/User ID match: Silent Flag (Sting)
+                    isSelfReferralFlag = true;
+                    flagReason = 'Identity Match (Phone/Instagram/User ID matched referrer)';
                 }
-
-                // Get referral information from storage
-                referralInfo = await getReferralByCode(referral_code);
 
                 if (referralInfo) {
                     validReferralCode = referral_code;
 
                     // LAYER 4: Commission Cap Check
-                    // Referrer only earns if under cap
-                    // BUYER GETS NO DISCOUNT (Per new Referral System Rules)
                     commissionEligible = !(await hasReachedCommissionCap(referral_code));
 
-                    // LAYER 5: IP Match Flagging (Anti-Self-Referral)
-                    if (referralInfo.ip_hash === ipHash) {
+                    // LAYER 5: "Sting" Flagging (Anti-Self-Referral)
+                    
+                    // A: Browser Lock (Most reliable for same device switching)
+                    if (referral_locked_browser) {
                         isSelfReferralFlag = true;
-                        flagReason = 'IP Match (Client IP matches Referrer creation IP)';
+                        flagReason = flagReason ? `${flagReason} + Browser Lock Detected` : 'Browser Lock Match (Detected via device storage)';
+                    }
+                    // B: IP Match (Device/Network overlap)
+                    else if (referralInfo.ip_hash === ipHash) {
+                        isSelfReferralFlag = true;
+                        flagReason = flagReason ? `${flagReason} + IP Match` : 'IP Match (Device/Network overlap)';
                     }
 
-                    // Increment count BEFORE checking expiration
-                    await incrementReferralCount(referral_code, email, ipHash);
-
-                    // Check if link just expired (reached 3rd use)
-                    justExpired = await isReferralExpired(referral_code);
+                    // Transactional tracking moved to after successful commission save
+                    // to prevent "burning" a referral if the database save fails.
                 }
                 // Backwards compatibility with legacy codes
                 else if (referrer_name || referrer_email) {
@@ -624,6 +636,16 @@ export async function POST(request: NextRequest) {
                 is_self_referral_flag: isSelfReferralFlag,
                 flag_reason: flagReason
             });
+
+            // LAYER 6: Post-Save Referral Tracking
+            // Only increment counts and check for expiration AFTER successful commission save
+            if (validReferralCode) {
+                const ipHash = hashIP(getClientIP(request));
+                await incrementReferralCount(validReferralCode, email, ipHash);
+                
+                // Track if link just expired (reached 3rd use) for email notifications
+                justExpired = await isReferralExpired(validReferralCode);
+            }
         } catch (storageError) {
             console.error('Failed to save commission data:', storageError);
             return NextResponse.json({

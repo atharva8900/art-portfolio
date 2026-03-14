@@ -61,6 +61,10 @@ export default function ReferralGenerator() {
 
             const link = `${window.location.origin}?ref=${result.referral_code}&d=${referrerData}`;
             setReferralLink(link);
+            
+            // Set browser lock when a link is generated - they shouldn't use their own link on this device
+            localStorage.setItem(REF_LOCK_KEY, 'true');
+
             if (result.message) {
                 setInfoMessage(result.message);
             }

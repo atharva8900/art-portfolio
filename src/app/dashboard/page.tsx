@@ -45,6 +45,10 @@ export default function DashboardPage() {
             router.push('/');
         } else if (status === 'authenticated') {
             fetchAnalytics();
+            // Set browser lock for referrers - they shouldn't refer themselves on their own device
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('atharva_referral_lock', 'true');
+            }
         }
     }, [status, router]);
 

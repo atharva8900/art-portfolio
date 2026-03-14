@@ -24,14 +24,6 @@ declare global {
 
 const REF_LOCK_KEY = 'atharva_referral_lock';
 
-interface ReferralInfo {
-    referrer_email: string;
-    referrer_name: string;
-    referrer_phone?: string;
-    referrer_instagram?: string;
-    code: string;
-}
-
 // Custom paper size dropdown — portal-based so it escapes any overflow container
 function PaperSizeDropdown({ value, onChange, options }: {
     value: string;
@@ -160,8 +152,6 @@ export default function CommissionForm() {
     const [frameConfig, setFrameConfig] = useState<FrameConfig | null>(null);
     const [showFrameModal, setShowFrameModal] = useState(false);
     const [isSelfReferral, setIsSelfReferral] = useState(false);
-    const [referralLocked, setReferralLocked] = useState(false);
-    const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
     const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
@@ -282,19 +272,8 @@ export default function CommissionForm() {
         }
     }, [session]);
 
-    useEffect(() => {
-        if (session?.user?.email && referralInfo?.referrer_email) {
-            if (session.user.email === referralInfo.referrer_email || referralLocked) {
-                setIsSelfReferral(true);
-            } else {
-                setIsSelfReferral(false);
-            }
-        } else if (referralLocked) {
-            setIsSelfReferral(true);
-        } else {
-            setIsSelfReferral(false);
-        }
-    }, [session, referralInfo, referralLocked]);
+    // Unified self-referral detection moved to checkStorage within useEffect below to avoid conflicts.
+    // This allows us to handle "Obvious" vs "Hidden" flagging consistently.
 
     const checkActiveCommission = async () => {
         try {
@@ -385,29 +364,31 @@ export default function CommissionForm() {
             const storedReferral = sessionStorage.getItem('referrer_code');
             const lockPresent = localStorage.getItem(REF_LOCK_KEY) === 'true';
 
-            if (lockPresent) {
-                setReferralLocked(true);
-                setIsSelfReferral(true);
-            }
-
+            // Distinct flags for "Obvious" vs "Hidden" detection
             const name = sessionStorage.getItem('referrer_name');
             const email = sessionStorage.getItem('referrer_email');
             const phone = sessionStorage.getItem('referrer_phone');
 
-            // If there's an email in storage, compare with current session
-            const isSelf = email && user?.email && email.toLowerCase() === user.email.toLowerCase();
-
-            if (isSelf || lockPresent) {
-                console.log('Self-referral detected, blocking in UI');
+            // 1. OBVIOUS: Same account match (Show explicit warning)
+            const isEmailMatch = email && user?.email && email.trim().toLowerCase() === user.email.trim().toLowerCase();
+            
+            if (isEmailMatch) {
+                // Obvious same-account match: Show yellow warning, Block referral
                 setIsSelfReferral(true);
                 setReferralCode(null);
-                setReferrerName(null);
-                setReferrerEmail(null);
-                setReferrerPhone(null);
+                localStorage.setItem(REF_LOCK_KEY, 'true');
                 return;
             }
 
-            // Also check if the current user generated this code (using email prefix/pattern if possible, but email is primary)
+            if (lockPresent) {
+                // Hidden/Device match: SILENT flagging
+                // We keep warning hidden and visually "Apply" the referral to avoid tipping them off
+                setIsSelfReferral(false);
+                if (storedReferral) setReferralCode(storedReferral);
+                return;
+            }
+
+            // Norml Flow
             setIsSelfReferral(false);
             if (storedReferral) setReferralCode(storedReferral);
             if (name) setReferrerName(name);
@@ -605,6 +586,8 @@ export default function CommissionForm() {
                     razorpay_payment_id: data.razorpay_payment_id || null,
                     razorpay_signature: data.razorpay_signature || null,
                     payment_type: status === 'waitlist' ? 'reservation' : null,
+                    referral_locked_browser: localStorage.getItem(REF_LOCK_KEY) === 'true',
+                    turnstile_token: turnstileToken,
                 }),
             });
 
@@ -615,14 +598,13 @@ export default function CommissionForm() {
 
             const responseData = await res.json();
             if (responseData.success && responseData.referral) {
-                setReferralInfo(responseData.referral);
-                // Check if current user is the referrer
-                if (session?.user?.email === responseData.referral.referrer_email || referralLocked) {
-                    setIsSelfReferral(true);
+                // Only show "Obvious" warning if emails match. 
+                // Browser lock remains silent here to avoid giving it away after submission.
+                if (session?.user?.email === responseData.referral.referrer_email) {
+                setIsSelfReferral(true);
                 }
-                // Set referral lock on successful submission if a referral was used
+                // Ensure lock is set for next time
                 localStorage.setItem(REF_LOCK_KEY, 'true');
-                setReferralLocked(true);
             }
 
             setSuccess(true);
@@ -744,6 +726,7 @@ export default function CommissionForm() {
                             razorpay_signature: response.razorpay_signature,
                             payment_type: 'reservation',
                             turnstile_token: turnstileToken,
+                            referral_locked_browser: localStorage.getItem(REF_LOCK_KEY) === 'true',
                         }),
                     });
 
@@ -754,6 +737,8 @@ export default function CommissionForm() {
                     } else {
                         setSuccess(true);
                         setLoading(false);
+                        // Lock the browser for any future self-referrals
+                        localStorage.setItem(REF_LOCK_KEY, 'true');
                     }
                 },
                 prefill: {
@@ -1639,7 +1624,7 @@ export default function CommissionForm() {
                                     attachments.length === 0 ||
                                     (!turnstileToken && showTurnstile) ||
                                     (status === 'waitlist' && !razorpayLoaded)}
-                                className="w-full bg-neutral-400 text-background font-black uppercase tracking-[0.2em] py-5 rounded-xl hover:bg-neutral-200 transition-all duration-300 disabled:opacity-30 disabled:hover:bg-neutral-400 shadow-xl"
+                                className="w-full bg-neutral-400 text-background font-black uppercase tracking-[0.2em] py-5 rounded-xl hover:bg-neutral-200 transition-all duration-300 disabled:opacity-30 disabled:hover:bg-neutral-400 shadow-xl flex items-center justify-center"
                             >
                                 {loading ? (
                                     <Loader2 className="animate-spin" />

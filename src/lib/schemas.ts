@@ -35,6 +35,7 @@ export const commissionSchema = z.object({
   frame_image_base64: z.string().optional().nullable(),
   promo_id: z.string().optional().nullable(),
   turnstile_token: z.string().min(1, "Captcha is required"),
+  referral_locked_browser: z.boolean().optional(),
 });
 
 // Referral Creation Schema

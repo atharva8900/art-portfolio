@@ -559,9 +559,16 @@ export default function AdminCommissionsPage() {
                                                         <ChevronDown size={14} className={`text-neutral-500 ml-1 transition-transform duration-200 ${expandedId === commission.id ? 'rotate-180' : ''}`} />
                                                     </div>
                                                     {commission.is_self_referral_flag && (
-                                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded mt-1.5 w-fit">
-                                                            <AlertTriangle size={10} />
-                                                            POTENTIAL SELF-REFERRAL
+                                                        <div className="space-y-1 mt-1.5">
+                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded w-fit">
+                                                                <AlertTriangle size={10} />
+                                                                POTENTIAL SELF-REFERRAL
+                                                            </div>
+                                                            {commission.flag_reason && (
+                                                                <div className="text-[10px] text-neutral-500 italic max-w-[200px] leading-tight">
+                                                                    {commission.flag_reason}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </td>
@@ -1040,6 +1047,19 @@ export default function AdminCommissionsPage() {
                                                 </div>
                                             </div>
                                             <div className="text-neutral-400 text-sm truncate pr-16">{commission.client_email}</div>
+                                            {commission.is_self_referral_flag && (
+                                                <div className="space-y-1 mt-2">
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded w-fit">
+                                                        <AlertTriangle size={10} />
+                                                        POTENTIAL SELF-REFERRAL
+                                                    </div>
+                                                    {commission.flag_reason && (
+                                                        <div className="text-[10px] text-neutral-500 italic leading-tight">
+                                                            {commission.flag_reason}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center justify-between py-2 border-t border-foreground/5">
