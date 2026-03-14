@@ -125,7 +125,7 @@ export default function AuthOptions({
                                         className="overflow-hidden"
                                     >
                                         <div 
-                                            className="flex justify-center py-2 min-h-[70px]"
+                                            className="flex justify-center items-center min-h-[70px]"
                                             onMouseEnter={() => window.dispatchEvent(new CustomEvent('cursor-hide'))}
                                             onMouseLeave={() => window.dispatchEvent(new CustomEvent('cursor-show'))}
                                         >
@@ -136,6 +136,7 @@ export default function AuthOptions({
                                                         : (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA')
                                                 }
                                                 onSuccess={setTurnstileToken}
+                                                options={{ theme: 'dark' }}
                                             />
                                         </div>
                                     </motion.div>

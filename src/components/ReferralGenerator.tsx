@@ -168,7 +168,7 @@ export default function ReferralGenerator() {
                                             initial={{ opacity: 1, height: 'auto' }}
                                             exit={{ opacity: 0, height: 0 }}
                                             transition={{ duration: 0.5, ease: 'easeInOut' }}
-                                            className="flex justify-center py-2 transition-all duration-500 overflow-hidden min-h-[70px]"
+                                            className="flex justify-center items-center transition-all duration-500 overflow-hidden min-h-[70px]"
                                             onMouseEnter={() => window.dispatchEvent(new Event('cursor-hide'))}
                                             onMouseLeave={() => window.dispatchEvent(new Event('cursor-show'))}
                                         >
@@ -178,6 +178,7 @@ export default function ReferralGenerator() {
                                                     setTurnstileToken(token);
                                                     setTimeout(() => setShowTurnstile(false), 5000);
                                                 }}
+                                                options={{ theme: 'dark' }}
                                             />
                                         </motion.div>
                                     )}

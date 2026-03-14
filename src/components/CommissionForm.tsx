@@ -1572,7 +1572,7 @@ export default function CommissionForm() {
                                     <motion.div
                                         initial={{ opacity: 1, height: 'auto' }}
                                         exit={{ opacity: 0, height: 0 }}
-                                        className="flex justify-center transition-all duration-500 overflow-hidden min-h-[70px]"
+                                        className="flex justify-center items-center transition-all duration-500 overflow-hidden min-h-[70px]"
                                         onMouseEnter={() => window.dispatchEvent(new Event('cursor-hide'))}
                                         onMouseLeave={() => window.dispatchEvent(new Event('cursor-show'))}
                                     >
@@ -1582,6 +1582,7 @@ export default function CommissionForm() {
                                                 setTurnstileToken(token);
                                                 setTimeout(() => setShowTurnstile(false), 5000);
                                             }}
+                                            options={{ theme: 'dark' }}
                                         />
                                     </motion.div>
                                 )}
