@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent, useRef } from 'react';
+import { useState, useEffect, FormEvent, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X } from 'lucide-react';
 import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing-shared';
@@ -163,11 +163,33 @@ export default function CommissionForm() {
     const [showTurnstile, setShowTurnstile] = useState(true);
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const [offerAppliedMessage, setOfferAppliedMessage] = useState('');
+    const originalBodyOverflow = useRef('');
 
     const supabase = createClient();
 
+    // Background Scroll Lock for Frame Modal
+    useEffect(() => {
+        if (showFrameModal) {
+            // Store current overflow
+            originalBodyOverflow.current = document.body.style.overflow;
+            // Lock background
+            document.body.style.overflow = 'hidden';
+            // Also handle mobile touch-action to prevent background scrolling
+            document.body.style.touchAction = 'none';
+        } else {
+            // Restore overflow
+            document.body.style.overflow = originalBodyOverflow.current || 'auto';
+            document.body.style.touchAction = 'auto';
+        }
+
+        return () => {
+            document.body.style.overflow = originalBodyOverflow.current || 'auto';
+            document.body.style.touchAction = 'auto';
+        };
+    }, [showFrameModal]);
+
     // Promo Validation
-    const validatePromo = async (code: string) => {
+    const validatePromo = useCallback(async (code: string) => {
         if (!code) {
             setOffer(null);
             setOfferError('');
@@ -191,7 +213,7 @@ export default function CommissionForm() {
         } finally {
             setIsValidatingPromo(false);
         }
-    };
+    }, [setOffer, setOfferError, setIsValidatingPromo, setOfferAppliedMessage, setPromoCode]);
 
     // Auto-validate from URL
     useEffect(() => {
@@ -201,7 +223,7 @@ export default function CommissionForm() {
             setPromoCode(promo);
             validatePromo(promo);
         }
-    }, []);
+    }, [validatePromo]);
 
     // Countdown Timer Logic
     useEffect(() => {
@@ -1550,7 +1572,7 @@ export default function CommissionForm() {
                                     <motion.div
                                         initial={{ opacity: 1, height: 'auto' }}
                                         exit={{ opacity: 0, height: 0 }}
-                                        className="flex justify-center transition-all duration-500 overflow-hidden"
+                                        className="flex justify-center transition-all duration-500 overflow-hidden min-h-[70px]"
                                         onMouseEnter={() => window.dispatchEvent(new Event('cursor-hide'))}
                                         onMouseLeave={() => window.dispatchEvent(new Event('cursor-show'))}
                                     >

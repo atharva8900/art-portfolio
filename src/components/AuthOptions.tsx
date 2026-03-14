@@ -125,7 +125,7 @@ export default function AuthOptions({
                                         className="overflow-hidden"
                                     >
                                         <div 
-                                            className="flex justify-center py-2"
+                                            className="flex justify-center py-2 min-h-[70px]"
                                             onMouseEnter={() => window.dispatchEvent(new CustomEvent('cursor-hide'))}
                                             onMouseLeave={() => window.dispatchEvent(new CustomEvent('cursor-show'))}
                                         >
