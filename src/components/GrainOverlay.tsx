@@ -15,7 +15,6 @@ const vertexShader = /* glsl */ `
 `;
 
 const fragmentShader = /* glsl */ `
-  uniform float u_time;
   uniform float u_scroll;
   uniform vec2  u_mouse;    // 0..1 UV space
   uniform float u_isDark;   // 1.0 = dark mode, 0.0 = light mode
@@ -41,8 +40,9 @@ const fragmentShader = /* glsl */ `
   }
 
   // ── Graphite flake: high-contrast noise with sharp cutoff ────────────────
-  float graphite(vec2 uv, float scale, float time) {
-    float n = noise(uv * scale + time);
+  float graphite(vec2 uv, float scale) {
+    // We removed u_time here to stop the constant idle shimmer
+    float n = noise(uv * scale);
     // threshold + steep ramp → sharp-edged dark "flakes"
     n = smoothstep(0.38, 0.62, n);
     return n;
@@ -59,16 +59,14 @@ const fragmentShader = /* glsl */ `
 
     // ── Level 1 : Multi-scale graphite noise ──────────────────────────────
     // Fine layer  → micro graphite dust
-    float fine   = graphite(uv, 720.0, u_time * 0.6);
+    float fine   = graphite(uv, 720.0);
     // Coarse layer → larger, irregular flakes
-    float coarse = graphite(uv, 280.0, u_time * 0.3 + 5.1); // phase-shifted
+    float coarse = graphite(uv, 280.0);
     // Combine: mostly fine with accents of coarse
     float g = fine * 0.70 + coarse * 0.30;
 
-    // Optional: tiny random sparkle to break up uniformity
-    float sparkle = step(0.985, hash(vUv * 1200.0 + u_time));
-    g = max(g, sparkle * 0.5);
-
+    // We removed the 'sparkle' logic as it required u_time constant updates
+    
     // ── Level 2 : Scroll boosts opacity ──────────────────────────────────
     float base      = 0.06;
     float scrollAmt = clamp(u_scroll, 0.0, 1.0) * 0.07;
@@ -76,8 +74,6 @@ const fragmentShader = /* glsl */ `
     float alpha     = (base + scrollAmt + mouseAmt) * g;
 
     // ── Theme : colour of the graphite particles ──────────────────────────
-    // Dark mode  → warm near-white  (graphite shimmer on black)
-    // Light mode → cool dark-grey   (pencil dust on white paper)
     vec3 darkColor  = vec3(0.88, 0.86, 0.84);   // warm white
     vec3 lightColor = vec3(0.22, 0.22, 0.24);   // cool dark grey
     vec3 col = mix(lightColor, darkColor, u_isDark);
@@ -118,7 +114,6 @@ export default function GrainOverlay() {
 
     const geometry = new THREE.PlaneGeometry(2, 2);
     const uniforms = {
-      u_time: { value: 0.0 },
       u_scroll: { value: 0.0 },
       u_mouse: { value: new THREE.Vector2(0.5, 0.5) },
       u_isDark: { value: isDarkRef.current },
@@ -132,13 +127,21 @@ export default function GrainOverlay() {
     });
     scene.add(new THREE.Mesh(geometry, material));
 
+    // ── Render on Demand ────────────────────────────────────────────────
+    let needsRender = true;
+    const requestRender = () => { needsRender = true; };
+
     // ── Resize ───────────────────────────────────────────────────────────
-    const onResize = () => renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+    const onResize = () => {
+      renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+      requestRender();
+    };
     window.addEventListener("resize", onResize);
 
     // ── Scroll → Level 2 ─────────────────────────────────────────────────
     const onScroll = () => {
       uniforms.u_scroll.value = Math.min(window.scrollY / window.innerHeight, 1);
+      requestRender();
     };
     window.addEventListener("scroll", onScroll, { passive: true });
 
@@ -149,6 +152,7 @@ export default function GrainOverlay() {
         (cx - r.left) / r.width,
         1.0 - (cy - r.top) / r.height  // flip Y for WebGL
       );
+      requestRender();
     };
     const onMouse = (e: MouseEvent) => setMouse(e.clientX, e.clientY);
     const onTouch = (e: TouchEvent) => {
@@ -157,16 +161,23 @@ export default function GrainOverlay() {
     window.addEventListener("mousemove", onMouse, { passive: true });
     window.addEventListener("touchmove", onTouch, { passive: true });
 
-    // ── Render loop ──────────────────────────────────────────────────────
+    // ── Render loop (Throttled by RAF but only draws if flag is set) ─────
     let raf: number;
     let visible = true;
 
-    const tick = (t: number) => {
+    const tick = () => {
       raf = requestAnimationFrame(tick);
-      if (!visible) return;
-      uniforms.u_time.value = t * 0.001;
-      uniforms.u_isDark.value = isDarkRef.current; // pick up theme changes
+      
+      // Pick up theme changes as potential render triggers
+      if (uniforms.u_isDark.value !== isDarkRef.current) {
+        uniforms.u_isDark.value = isDarkRef.current;
+        requestRender();
+      }
+
+      if (!visible || !needsRender) return;
+      
       renderer.render(scene, camera);
+      needsRender = false;
     };
     raf = requestAnimationFrame(tick);
 

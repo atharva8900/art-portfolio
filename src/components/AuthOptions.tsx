@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
@@ -14,13 +14,23 @@ interface AuthOptionsProps {
 
 export default function AuthOptions({
     callbackUrl = '/',
-    description = "Sign in with Google for instant access, or use your email to receive a secure login link."
+    description = "Sign in with Google for instant access, or use your email to receive a passwordless secure login link."
 }: AuthOptionsProps) {
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSent, setIsSent] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [showTurnstile, setShowTurnstile] = useState(true);
+
+    useEffect(() => {
+        if (turnstileToken) {
+            const timer = setTimeout(() => {
+                setShowTurnstile(false);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [turnstileToken]);
 
     const handleEmailSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -106,12 +116,31 @@ export default function AuthOptions({
                                 />
                             </div>
 
-                            <div className="flex justify-center py-2">
-                                <Turnstile
-                                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-                                    onSuccess={setTurnstileToken}
-                                />
-                            </div>
+                            <AnimatePresence>
+                                {showTurnstile && (
+                                    <motion.div
+                                        initial={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
+                                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                                        className="overflow-hidden"
+                                    >
+                                        <div 
+                                            className="flex justify-center py-2"
+                                            onMouseEnter={() => window.dispatchEvent(new CustomEvent('cursor-hide'))}
+                                            onMouseLeave={() => window.dispatchEvent(new CustomEvent('cursor-show'))}
+                                        >
+                                            <Turnstile
+                                                siteKey={
+                                                    (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+                                                        ? '1x00000000000000000000AA' 
+                                                        : (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA')
+                                                }
+                                                onSuccess={setTurnstileToken}
+                                            />
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
                             <button
                                 type="submit"
