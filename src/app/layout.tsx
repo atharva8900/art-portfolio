@@ -19,6 +19,10 @@ export const metadata: Metadata = {
     default: 'Atharva Sherlekar Art - Realistic Graphite Portrait Artist',
   },
   description: "Turn your photos into hyper-realistic hand-drawn graphite portraits. Custom artwork commissions by Atharva Sherlekar Art.",
+  metadataBase: new URL('https://atharva-sherlekar-art.vercel.app'),
+  alternates: {
+    canonical: '/',
+  },
   verification: {
     google: "ASoU69R0hNMIj9upMwU-aDekM-VwyNFSPcMfFm0WIp0",
   },
