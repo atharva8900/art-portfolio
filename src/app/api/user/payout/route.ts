@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { sendEmail } from '@/lib/api/email';
 import { getAllCommissions, CommissionData } from '@/lib/db/commissions';
 import { getAllReferrals, ReferralData } from '@/lib/db/referrals';
@@ -8,24 +6,14 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 
 
 
+import { getServerSession } from "next-auth/next";
+import { authOptions } from '@/lib/auth/auth';
+
 export async function POST(request: NextRequest) {
     try {
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    get(name: string) {
-                        return cookieStore.get(name)?.value;
-                    },
-                },
-            }
-        );
+        const session = await getServerSession(authOptions);
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
+        if (!session || !session.user || !session.user.email) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -38,7 +26,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No commissions selected' }, { status: 400 });
         }
 
-        const userEmail = user.email!;
+        const userEmail = session.user.email;
 
         // Disable verify-your-own-referral check for simplicity, 
         // relying on the fact that we only update commissions that match the user's referral code 

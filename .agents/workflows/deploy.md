@@ -30,6 +30,10 @@ description: Build, Lint, and Security Audit before manual push (Verified).
    - **Input Validation**: Check API routes for proper validation (Zod/Schema checks).
    - **Environment Guard**: Confirm all variables in `.env.local` are accounted for.
 
-5. **Final Confirmation**
+5. **Final Confirmation & Push**
    After the audit, I will provide a final report.
-   I will **NEVER** push automatically. I will wait for you to say "git push" before finishing.
+   I will **NEVER** push automatically. When you authorize the push:
+   - **Commit Message Rule**: The git commit message must **ONLY** describe specific changes made to the website/code. Do **NOT** mention anything about the deployment process (verification, audit, cleanup, etc) in the commit message.
+   - Example: "Fix admin access for X email, update commission toggle logic, fix payout auth" (GOOD)
+   - Example: "Completed deployment audit and pushed changes" (BAD)
+   I will wait for you to say "lets push" (or similar) before finishing.
