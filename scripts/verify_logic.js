@@ -1,4 +1,4 @@
-const fs = require('fs');
+/* eslint-disable */
 const path = require('path');
 
 // Mock data generator
