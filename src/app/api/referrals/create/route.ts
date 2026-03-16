@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        const { name, email, phone, instagram, turnstile_token } = result.data;
+        const { name, email, phone, instagram, turnstile_token, fingerprint_hash } = result.data;
 
         if (email !== user.email) {
             return NextResponse.json({ error: 'Email must match your logged-in account' }, { status: 403 });
@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
                 successful_referrals_count: 0,
                 used_by_emails: [],
                 ip_submissions: [], // Initialize empty IP tracking array
+                fingerprint_hash: fingerprint_hash || undefined,
             });
         } catch (storageError) {
             console.error('Failed to store referral:', storageError);

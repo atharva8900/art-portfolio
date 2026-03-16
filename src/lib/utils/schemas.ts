@@ -36,6 +36,7 @@ export const commissionSchema = z.object({
   promo_id: z.string().optional().nullable(),
   turnstile_token: z.string().min(1, "Captcha is required"),
   referral_locked_browser: z.boolean().optional(),
+  fingerprint_hash: z.string().optional().nullable(),
 });
 
 // Referral Creation Schema
@@ -45,6 +46,7 @@ export const referralSchema = z.object({
   phone: z.string().max(20).optional().nullable(),
   instagram: z.string().max(50).optional().nullable(),
   turnstile_token: z.string().min(1, "Captcha is required"),
+  fingerprint_hash: z.string().optional().nullable(),
 });
 
 // Admin Status Update Schema

@@ -13,6 +13,7 @@ export interface ReferralData {
     successful_referrals_count: number;
     used_by_emails: string[];
     ip_submissions: Array<{ ip_hash: string; timestamp: string }>;
+    fingerprint_hash?: string;
 }
 
 // Hash IP address for privacy

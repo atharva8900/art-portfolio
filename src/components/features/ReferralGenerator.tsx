@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight, QrCode, X } from 'lucide-react';
 import Link from 'next/link';
@@ -22,6 +22,20 @@ export default function ReferralGenerator() {
     const [showQR, setShowQR] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [showTurnstile, setShowTurnstile] = useState(true);
+    const [fingerprintHash, setFingerprintHash] = useState<string | null>(null);
+
+    // Load FingerprintJS on mount and capture the visitor ID
+    useEffect(() => {
+        import('@fingerprintjs/fingerprintjs').then(FingerprintJS => {
+            FingerprintJS.load().then(fp => {
+                fp.get().then(result => {
+                    setFingerprintHash(result.visitorId);
+                });
+            });
+        }).catch(() => {
+            // Non-fatal: fingerprinting is best-effort
+        });
+    }, []);
 
     const user = session?.user;
     const authLoading = authStatus === 'loading';
@@ -42,7 +56,8 @@ export default function ReferralGenerator() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...data,
-                    turnstile_token: turnstileToken
+                    turnstile_token: turnstileToken,
+                    fingerprint_hash: fingerprintHash,
                 }),
             });
 

@@ -155,6 +155,20 @@ export default function CommissionForm() {
     const [showFrameModal, setShowFrameModal] = useState(false);
     const [isSelfReferral, setIsSelfReferral] = useState(false);
     const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+    const [fingerprintHash, setFingerprintHash] = useState<string | null>(null);
+
+    // Load FingerprintJS on mount and capture the visitor ID
+    useEffect(() => {
+        import('@fingerprintjs/fingerprintjs').then(FingerprintJS => {
+            FingerprintJS.load().then(fp => {
+                fp.get().then(result => {
+                    setFingerprintHash(result.visitorId);
+                });
+            });
+        }).catch(() => {
+            // Non-fatal: fingerprinting is best-effort
+        });
+    }, []);
 
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
     const [originalTotalValue, setOriginalTotalValue] = useState<number>(0);
@@ -592,12 +606,18 @@ export default function CommissionForm() {
                     payment_type: status === 'waitlist' ? 'reservation' : null,
                     referral_locked_browser: localStorage.getItem(REF_LOCK_KEY) === 'true',
                     turnstile_token: turnstileToken,
+                    fingerprint_hash: fingerprintHash,
                 }),
             });
 
             if (!res.ok) {
                 const errorData = await res.json();
-                throw new Error(errorData.error || 'Failed to save commission. Please contact us.');
+                let errorMessage = errorData.error || 'Failed to save commission. Please contact us.';
+                if (errorData.details && Array.isArray(errorData.details)) {
+                    const detailMessages = errorData.details.map((d: { path: (string | number)[]; message: string }) => `${d.path.join('.')}: ${d.message}`).join(', ');
+                    errorMessage = `Validation Error: ${detailMessages}`;
+                }
+                throw new Error(errorMessage);
             }
 
             const responseData = await res.json();
@@ -731,6 +751,7 @@ export default function CommissionForm() {
                             payment_type: 'reservation',
                             turnstile_token: turnstileToken,
                             referral_locked_browser: localStorage.getItem(REF_LOCK_KEY) === 'true',
+                            fingerprint_hash: fingerprintHash,
                         }),
                     });
 

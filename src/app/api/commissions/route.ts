@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
             promo_id,
             turnstile_token,
             referral_locked_browser,
+            fingerprint_hash,
         } = result.data;
 
         // Verify Razorpay Payment if provided
@@ -225,17 +226,34 @@ export async function POST(request: NextRequest) {
                     // LAYER 4: Commission Cap Check
                     commissionEligible = !(await hasReachedCommissionCap(referral_code));
 
-                    // LAYER 5: "Sting" Flagging (Anti-Self-Referral)
-                    
+                    // LAYER 5: "Sting" Flagging (Anti-Self-Referral) — all checks run independently
+
                     // A: Browser Lock (Most reliable for same device switching)
                     if (referral_locked_browser) {
                         isSelfReferralFlag = true;
-                        flagReason = flagReason ? `${flagReason} + Browser Lock Detected` : 'Browser Lock Match (Detected via device storage)';
+                        flagReason = flagReason
+                            ? `${flagReason} + Browser Lock Match (Detected via device storage)`
+                            : 'Browser Lock Match (Detected via device storage)';
                     }
-                    // B: IP Match (Device/Network overlap)
-                    else if (referralInfo.ip_hash === ipHash) {
+
+                    // B: IP Match (Device/Network overlap) — runs independently of A
+                    if (referralInfo.ip_hash === ipHash) {
                         isSelfReferralFlag = true;
-                        flagReason = flagReason ? `${flagReason} + IP Match` : 'IP Match (Device/Network overlap)';
+                        flagReason = flagReason
+                            ? `${flagReason} + IP Match (Same network as referrer)`
+                            : 'IP Match (Same network as referrer)';
+                    }
+
+                    // C: Device Fingerprint Match (Strongest signal)
+                    if (
+                        fingerprint_hash &&
+                        referralInfo.fingerprint_hash &&
+                        fingerprint_hash === referralInfo.fingerprint_hash
+                    ) {
+                        isSelfReferralFlag = true;
+                        flagReason = flagReason
+                            ? `${flagReason} + Fingerprint Match (Same device detected)`
+                            : 'Fingerprint Match (Same device detected)';
                     }
 
                     // Transactional tracking moved to after successful commission save
