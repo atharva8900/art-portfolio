@@ -57,11 +57,14 @@ export async function getAvailability(): Promise<AvailabilityData> {
     // Slots 3-4: Waitlist
     // Total: 4
 
-    // People currently in Review or being worked on
-    const immediateOccupied = (await getPendingReviewCount()) + (await getActiveCommissionCount());
+    // Parallelize workload queries to improve TTFB
+    const [pendingReviewCount, activeCount, totalActive] = await Promise.all([
+        getPendingReviewCount(),
+        getActiveCommissionCount(),
+        getActiveWorkloadCount()
+    ]);
 
-    // Total people in system (including waitlist)
-    const totalActive = await getActiveWorkloadCount();
+    const immediateOccupied = pendingReviewCount + activeCount;
 
     const MAX_TOTAL = 4;
     const MAX_IMMEDIATE = 2;

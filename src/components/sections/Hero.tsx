@@ -5,7 +5,9 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import MagneticButton from '@/components/shared/MagneticButton';
-import GrainOverlay from '@/components/features/GrainOverlay';
+import dynamic from 'next/dynamic';
+
+const GrainOverlay = dynamic(() => import('@/components/features/GrainOverlay'), { ssr: false });
 
 // Register locally to be safe against bundle order
 if (typeof window !== "undefined") {
