@@ -38,6 +38,7 @@ const itemVariants = {
 } as const;
 
 export default function Pricing() {
+
     const [pricingData, setPricingData] = useState<PricingTierData>({
         isEarlyAccess: true,
         commissionCount: 0,
@@ -52,15 +53,12 @@ export default function Pricing() {
         fetch(`/api/pricing-tier?t=${Date.now()}`, { signal: controller.signal })
             .then(res => res.json())
             .then(data => {
-                clearTimeout(timeoutId);
                 setPricingData(data);
             })
             .catch(err => {
-                clearTimeout(timeoutId);
-                if (err.name !== 'AbortError') {
-                    console.error('Failed to fetch pricing tier:', err);
-                }
+                if (err.name !== 'AbortError') console.error('Failed to fetch pricing tier:', err);
             });
+
 
         return () => {
             clearTimeout(timeoutId);

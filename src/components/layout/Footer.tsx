@@ -12,7 +12,7 @@ export default function Footer() {
                 <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                     <Youtube size={24} />
                 </a>
-                <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com'}`} className="hover:text-foreground transition-colors">
+                <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharva_sherlekar_art@gmail.com'}`} className="hover:text-foreground transition-colors">
                     <Mail size={24} />
                 </a>
             </div>

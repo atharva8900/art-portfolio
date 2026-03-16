@@ -3,7 +3,7 @@ import { getAvailability, setAvailability } from '@/lib/db/availability';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharva_sherlekar_art@gmail.com'];
 
 async function checkAdminAuth() {
     const cookieStore = cookies();
@@ -54,14 +54,14 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { isOpen } = body;
+        const { isOpen, reason, reopenDate } = body;
 
         if (typeof isOpen !== 'boolean') {
             return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
         }
 
         // Update Status
-        const newData = await setAvailability(isOpen);
+        const newData = await setAvailability(isOpen, reason, reopenDate);
 
         return NextResponse.json({
             success: true,

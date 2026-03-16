@@ -7,13 +7,15 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AdminNav from '@/components/admin/AdminNav';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharva_sherlekar_art@gmail.com'];
 
 export default function AdminAvailability() {
     const { data: session, status } = useSession();
     const [statusLoading, setStatusLoading] = useState(false);
     const [error, setError] = useState('');
     const [isOpen, setIsOpen] = useState<boolean | null>(null);
+    const [reason, setReason] = useState('');
+    const [reopenDate, setReopenDate] = useState('');
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const router = useRouter();
@@ -24,6 +26,8 @@ export default function AdminAvailability() {
             const res = await fetch('/api/availability');
             const data = await res.json();
             setIsOpen(data.is_accepting_commissions);
+            setReason(data.closure_reason || '');
+            setReopenDate(data.reopen_date ? new Date(data.reopen_date).toISOString().split('T')[0] : '');
             setLastUpdated(data.last_updated);
         } catch {
             console.error('Failed to fetch status');
@@ -47,7 +51,11 @@ export default function AdminAvailability() {
             const res = await fetch('/api/availability', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isOpen: targetStatus }),
+                body: JSON.stringify({ 
+                    isOpen: targetStatus,
+                    reason: targetStatus ? '' : reason,
+                    reopenDate: targetStatus ? null : reopenDate
+                }),
             });
 
             const data = await res.json();
@@ -156,9 +164,62 @@ export default function AdminAvailability() {
                             {isOpen ? 'Close Commissions' : 'Open Commissions'}
                         </button>
 
+                        {!isOpen && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="w-full space-y-4 pt-4 border-t border-red-500/20"
+                            >
+                                <div className="space-y-2 text-left">
+                                    <label className="text-xs uppercase tracking-widest text-neutral-500 font-bold">Closure Reason</label>
+                                    <select 
+                                        value={reason}
+                                        onChange={(e) => setReason(e.target.value)}
+                                        className="w-full bg-background/50 border border-foreground/10 p-3 rounded-lg text-foreground outline-none focus:border-red-500/50 appearance-none cursor-pointer hover:bg-background/80 transition-colors"
+                                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(255,255,255,0.3)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.5em' }}
+                                    >
+                                        <option value="Busy with current orders" className="bg-neutral-900">Busy with current orders</option>
+                                        <option value="Personal break" className="bg-neutral-900">Personal break</option>
+                                        <option value="Unavailable at this moment" className="bg-neutral-900">Unavailable at this moment</option>
+                                        <option value="Taking a short break" className="bg-neutral-900">Taking a short break</option>
+                                        <option value="CUSTOM" className="bg-neutral-900">Custom Reason...</option>
+                                    </select>
+                                    {reason === 'CUSTOM' && (
+                                        <input 
+                                            type="text"
+                                            placeholder="Enter custom reason..."
+                                            className="w-full bg-background/50 border border-foreground/10 p-3 rounded-lg text-foreground outline-none focus:border-red-500/50 mt-2"
+                                            onChange={(e) => setReason(e.target.value)}
+                                        />
+                                    )}
+                                </div>
+
+                                <div className="space-y-2 text-left">
+                                    <label className="text-xs uppercase tracking-widest text-neutral-500 font-bold">Expected Reopen Date (Optional)</label>
+                                    <input 
+                                        type="date"
+                                        value={reopenDate}
+                                        onChange={(e) => setReopenDate(e.target.value)}
+                                        className="w-full bg-background/50 border border-foreground/10 p-3 rounded-lg text-foreground outline-none focus:border-red-500/50"
+                                    />
+                                    <p className="text-[10px] text-neutral-500 italic">
+                                        The site will automatically reopen on this date.
+                                    </p>
+                                </div>
+
+                                <button 
+                                    onClick={() => toggleStatus(false)}
+                                    disabled={statusLoading}
+                                    className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/50 rounded-lg text-red-500 text-xs font-bold uppercase tracking-widest transition-all"
+                                >
+                                    Update Closure Settings
+                                </button>
+                            </motion.div>
+                        )}
+
                         {lastUpdated && (
                             <p className="text-xs text-neutral-600 font-mono">
-                                Last Updated: {new Date(lastUpdated).toLocaleString()}
+                                Last Updated: {new Date(lastUpdated).toLocaleDateString('en-GB')} {new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </p>
                         )}
                     </motion.div>

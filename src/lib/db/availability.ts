@@ -5,6 +5,8 @@ export interface AvailabilityData {
     is_accepting_commissions: boolean;
     status: 'open' | 'waitlist' | 'closed';
     last_updated: string;
+    closure_reason?: string;
+    reopen_date?: string;
     slots_remaining?: number;
     immediate_slots_remaining?: number;
     waitlist_slots_remaining?: number;
@@ -34,7 +36,21 @@ export async function getAvailability(): Promise<AvailabilityData> {
 
         if (error) throw error;
         if (data) {
-            baseData.is_accepting_commissions = data.is_accepting_commissions;
+            let isAccepting = data.is_accepting_commissions;
+            
+            // Auto-reopen logic: If a reopen date is set and has passed, override manual closure
+            if (!isAccepting && data.reopen_date) {
+                const reopenDate = new Date(data.reopen_date);
+                if (reopenDate <= new Date()) {
+                    isAccepting = true;
+                    // Proactively clear the old reopen date and reason in the background if we want, 
+                    // but for now just overriding the local variable is enough to "Open" the site.
+                }
+            }
+
+            baseData.is_accepting_commissions = isAccepting;
+            baseData.closure_reason = data.closure_reason;
+            baseData.reopen_date = data.reopen_date;
             baseData.last_updated = data.last_updated || new Date().toISOString();
         }
     } catch (error) {
@@ -97,10 +113,16 @@ export async function getAvailability(): Promise<AvailabilityData> {
 /**
  * Set the admin commission toggle.
  */
-export async function setAvailability(isOpen: boolean): Promise<AvailabilityData> {
+export async function setAvailability(
+    isOpen: boolean, 
+    reason?: string, 
+    reopenDate?: string
+): Promise<AvailabilityData> {
     try {
         const newData = {
             is_accepting_commissions: isOpen,
+            closure_reason: isOpen ? null : (reason || null),
+            reopen_date: isOpen ? null : (reopenDate || null),
             last_updated: new Date().toISOString(),
         };
 

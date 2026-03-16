@@ -41,7 +41,7 @@ interface GroupedReferrals {
     };
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharva_sherlekar_art@gmail.com'];
 
 const PAYOUT_OPTIONS = [
     { value: 'unpaid', label: 'Unpaid', colorClass: 'bg-neutral-700/60 text-neutral-300 border-foreground/5utral-600' },

@@ -129,7 +129,7 @@ export default function Navbar() {
                         <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
                             <Youtube size={20} />
                         </a>
-                        <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com'}`} className="hover:text-accent transition-colors">
+                        <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharva_sherlekar_art@gmail.com'}`} className="hover:text-accent transition-colors">
                             <Mail size={20} />
                         </a>
                         <ThemeToggle />
@@ -196,7 +196,7 @@ export default function Navbar() {
                                 <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-2">
                                     <Youtube size={24} />
                                 </a>
-                                <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com'}`} className="hover:text-accent transition-colors p-2">
+                                <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharva_sherlekar_art@gmail.com'}`} className="hover:text-accent transition-colors p-2">
                                     <Mail size={24} />
                                 </a>
                             </motion.div>

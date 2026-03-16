@@ -56,7 +56,7 @@ interface CommissionData {
     flag_reason?: string | null;
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharva_sherlekar_art@gmail.com'];
 
 const STATUS_OPTIONS = [
     { value: 'pending', label: 'Pending Review', colorClass: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },

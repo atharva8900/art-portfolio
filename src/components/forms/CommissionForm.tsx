@@ -129,6 +129,8 @@ export default function CommissionForm() {
     const [status, setStatus] = useState<'open' | 'waitlist' | 'closed'>('open');
     const [immediateSlotsRemaining, setImmediateSlotsRemaining] = useState<number | null>(null);
     const [waitlistSlotsRemaining, setWaitlistSlotsRemaining] = useState<number | null>(null);
+    const [closureReason, setClosureReason] = useState<string | null>(null);
+    const [reopenDate, setReopenDate] = useState<string | null>(null);
     const { data: session, status: authStatus } = useSession();
     const [hasActive, setHasActive] = useState(false);
     const [activeStatus, setActiveStatus] = useState<string | null>(null);
@@ -454,6 +456,8 @@ export default function CommissionForm() {
                     setStatus(data.status);
                     setImmediateSlotsRemaining(data.immediate_slots_remaining);
                     setWaitlistSlotsRemaining(data.waitlist_slots_remaining);
+                    setClosureReason(data.closure_reason);
+                    setReopenDate(data.reopen_date);
                 }
             } catch (error) {
                 console.error('Failed to fetch availability:', error);
@@ -788,13 +792,23 @@ export default function CommissionForm() {
                     </h2>
 
                     <p className="text-foreground/80 dark:text-neutral-400 leading-relaxed mb-10 text-sm md:text-base">
-                        I am currently fully booked for the next 2 months and not taking new requests at this time. Thank you so much for your interest! Keep an eye on my Instagram for when slots reopen.
+                        {closureReason || "I am currently fully booked and not taking new requests at this time. Thank you so much for your interest! Keep an eye on my Instagram for when slots reopen."}
                     </p>
 
+                    {reopenDate && (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="mb-8 p-4 bg-accent/10 border border-accent/20 rounded-lg text-accent text-sm font-bold uppercase tracking-widest"
+                        >
+                            Estimated Reopening: {new Date(reopenDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </motion.div>
+                    )}
+
                     <a
-                        href="https://instagram.com/atharvasherlekarart"
+                        href="https://instagram.com/atharva_sherlekar_art"
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background hover:bg-neutral-200 uppercase tracking-widest font-bold text-sm transition-colors rounded-lg"
                     >
                         <Instagram className="w-4 h-4" />

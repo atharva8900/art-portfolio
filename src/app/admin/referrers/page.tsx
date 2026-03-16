@@ -22,7 +22,7 @@ interface ReferrerData {
     used_by_emails: string[];
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharva_sherlekar_art@gmail.com'];
 
 export default function AdminReferrersPage() {
     const router = useRouter();

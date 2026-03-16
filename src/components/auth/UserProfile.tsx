@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ALLOWED_EMAILS = [
     'atharva8900@gmail.com',
-    'atharvasherlekarart@gmail.com',
+    'atharva_sherlekar_art@gmail.com',
 ];
 
 export default function UserProfile() {
