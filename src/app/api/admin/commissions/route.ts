@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { getAllCommissions, updateCommissionStatus, getCommissionById, deleteCommission, updateCommissionPayoutStatus, getActiveWorkloadCount, promoteNextInWaitlist } from '../../../../lib/commissions';
-import { setAvailability } from '../../../../lib/availability';
+import { adminStatusUpdateSchema } from '@/lib/utils/schemas';
+import { 
+    getAllCommissions, 
+    getCommissionById, 
+    updateCommissionStatus, 
+    updateCommissionPayoutStatus, 
+    deleteCommission,
+    getActiveWorkloadCount,
+    promoteNextInWaitlist
+} from '@/lib/db/commissions';
+import { setAvailability } from '@/lib/db/availability';
 
-import { checkAdminAuth } from '../../../../lib/admin-auth';
-import { adminStatusUpdateSchema } from '../../../../lib/schemas';
-import { sendCommissionStatusEmail } from '../../../../lib/emails';
-import { sendEmail } from '../../../../lib/email';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
+import { sendCommissionStatusEmail } from '@/lib/api/emails';
+import { sendEmail } from '@/lib/api/email';
 
 // Auth check is now handled by checkAdminAuth from @/lib/admin-auth
 
@@ -71,13 +79,13 @@ export async function PATCH(request: NextRequest) {
             if (!['pending', 'reservation_paid', 'deposit_paid', 'fully_paid'].includes(payment_status)) {
                 return NextResponse.json({ error: 'Invalid payment status value' }, { status: 400 });
             }
-            const { updateCommissionPaymentStatus } = await import('@/lib/commissions');
+            const { updateCommissionPaymentStatus } = await import('@/lib/db/commissions');
             const result = await updateCommissionPaymentStatus(id, payment_status);
             if (result) {
                 updatedCommission = result;
                 // If manually updated to fully_paid, send confirmation email
                 if (payment_status === 'fully_paid') {
-                    const { sendCommissionStatusEmail } = await import('@/lib/emails');
+                    const { sendCommissionStatusEmail } = await import('@/lib/api/emails');
                     await sendCommissionStatusEmail(updatedCommission, 'payment_fully_paid');
                 }
             }
@@ -119,7 +127,7 @@ export async function PATCH(request: NextRequest) {
                     // --- Offer Usage Restoration ---
                     // If a commission with a promo is rejected or cancelled, restore the spot
                     if (['rejected', 'cancelled'].includes(status) && existingCommission.promo_id) {
-                        const { decrementOfferUsage } = await import('@/lib/offers');
+                        const { decrementOfferUsage } = await import('@/lib/db/offers');
                         await decrementOfferUsage(existingCommission.promo_id);
                         console.log(`Restored usage for offer ${existingCommission.promo_id} after status change to ${status}`);
                     }
@@ -145,7 +153,7 @@ export async function PATCH(request: NextRequest) {
 
                             // Send Discord Notification to Admin
                             try {
-                                const { sendDiscordNotification } = await import('@/lib/discord');
+                                const { sendDiscordNotification } = await import('@/lib/api/discord');
                                 await sendDiscordNotification({
                                     content: '🎉 **Referral Commission Unlocked!**',
                                     embeds: [{
@@ -249,3 +257,4 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to delete commission' }, { status: 500 });
     }
 }
+

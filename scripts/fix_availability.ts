@@ -1,5 +1,5 @@
-import { setAvailability } from '../src/lib/availability';
-import { getActiveCommissionCount } from '../src/lib/commissions';
+import { setAvailability } from '../src/lib/db/availability';
+import { getActiveCommissionCount } from '../src/lib/db/commissions';
 
 // Force update availability based on current active count
 (async () => {

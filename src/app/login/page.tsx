@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import AuthOptions from '@/components/AuthOptions';
+import AuthOptions from '@/components/auth/AuthOptions';
 
 export default function AdminLoginPage() {
     const { status } = useSession();
@@ -92,3 +92,4 @@ export default function AdminLoginPage() {
         </div>
     );
 }
+

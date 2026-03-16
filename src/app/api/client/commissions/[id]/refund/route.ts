@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { getCommissionById } from '@/lib/commissions';
+import { authOptions } from '@/lib/auth/auth';
+import { getCommissionById } from '@/lib/db/commissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const razorpay = new Razorpay({
@@ -70,7 +70,7 @@ export async function POST(
 
         // Send Email Notifications
         try {
-            const { sendCommissionStatusEmail } = await import('@/lib/emails');
+            const { sendCommissionStatusEmail } = await import('@/lib/api/emails');
             await sendCommissionStatusEmail(commission, 'cancelled');
         } catch (e) {
             console.error('Failed to send cancellation email:', e);
@@ -78,7 +78,7 @@ export async function POST(
 
         // Send a discord notification about the cancellation
         try {
-            const { sendDiscordNotification } = await import('@/lib/discord');
+            const { sendDiscordNotification } = await import('@/lib/api/discord');
             await sendDiscordNotification({
                 content: '⚠️ **Commission Cancelled & Refunded!**',
                 embeds: [{

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { getAllCommissions, CommissionData } from '@/lib/commissions';
+import { getAllCommissions, CommissionData } from '@/lib/db/commissions';
 
 
-import { checkAdminAuth } from '@/lib/admin-auth';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 // DATE_CUTOFF helper...
 
@@ -229,3 +229,4 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Failed to calculate analytics' }, { status: 500 });
     }
 }
+

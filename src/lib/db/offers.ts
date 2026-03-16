@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase/admin';
+import { supabaseAdmin } from '../supabase/admin';
 
 export interface OfferData {
     id: string;

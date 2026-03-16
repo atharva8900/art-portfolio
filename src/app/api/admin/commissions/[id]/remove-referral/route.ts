@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { removeReferralFromCommission, getCommissionById } from '@/lib/commissions';
+import { removeReferralFromCommission, getCommissionById } from '@/lib/db/commissions';
 
 
-import { checkAdminAuth } from '@/lib/admin-auth';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 // Auth check handled by centralized utility
 

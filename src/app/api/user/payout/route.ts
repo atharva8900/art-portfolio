@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { sendEmail } from '@/lib/email';
-import { getAllCommissions, CommissionData } from '@/lib/commissions';
-import { getAllReferrals, ReferralData } from '@/lib/referrals';
+import { sendEmail } from '@/lib/api/email';
+import { getAllCommissions, CommissionData } from '@/lib/db/commissions';
+import { getAllReferrals, ReferralData } from '@/lib/db/referrals';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 
@@ -167,3 +167,4 @@ export async function POST(request: NextRequest) {
         }, { status: 500 });
     }
 }
+

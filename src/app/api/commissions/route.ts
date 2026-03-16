@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail } from '../../../lib/email';
+import { sendEmail } from '@/lib/api/email';
 import crypto from 'crypto';
 import {
     validateNotSelfReferral,
@@ -9,14 +9,14 @@ import {
     incrementReferralCount,
     hasReachedCommissionCap,
     isReferralExpired
-} from '../../../lib/referrals';
-import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount } from '../../../lib/commissions';
-import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '../../../lib/pricing'; // Import price helper
+} from '@/lib/db/referrals';
+import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount } from '@/lib/db/commissions';
+import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../lib/auth';
-import { sendDiscordNotification } from '../../../lib/discord';
-import { getOfferById, incrementOfferUsage } from '../../../lib/offers';
-import { commissionSchema } from '../../../lib/schemas';
+import { authOptions } from '@/lib/auth/auth';
+import { sendDiscordNotification } from '@/lib/api/discord';
+import { getOfferById, incrementOfferUsage } from '@/lib/db/offers';
+import { commissionSchema } from '@/lib/utils/schemas';
 
 
 

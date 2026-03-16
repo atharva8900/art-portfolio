@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { getActiveCommissionStatus } from '@/lib/commissions';
+import { authOptions } from '@/lib/auth/auth';
+import { getActiveCommissionStatus } from '@/lib/db/commissions';
 
 export async function GET() {
     try {
@@ -22,3 +22,4 @@ export async function GET() {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+

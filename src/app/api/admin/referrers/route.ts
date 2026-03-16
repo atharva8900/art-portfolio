@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { getAllReferrals } from '@/lib/referrals';
+import { getAllReferrals } from '@/lib/db/referrals';
 
 
-import { checkAdminAuth } from '@/lib/admin-auth';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 // Auth check centralized
 
@@ -26,3 +26,4 @@ export async function GET() {
         );
     }
 }
+

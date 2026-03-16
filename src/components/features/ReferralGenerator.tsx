@@ -6,7 +6,7 @@ import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight, QrCode,
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { QRCodeSVG } from 'qrcode.react';
-import AuthOptions from './AuthOptions';
+import AuthOptions from '@/components/auth/AuthOptions';
 import { Turnstile } from '@marsidev/react-turnstile';
 
 const REF_LOCK_KEY = 'atharva_referral_lock';

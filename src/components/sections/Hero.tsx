@@ -4,8 +4,8 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import MagneticButton from "./MagneticButton";
-import GrainOverlay from "./GrainOverlay";
+import MagneticButton from '@/components/shared/MagneticButton';
+import GrainOverlay from '@/components/features/GrainOverlay';
 
 // Register locally to be safe against bundle order
 if (typeof window !== "undefined") {

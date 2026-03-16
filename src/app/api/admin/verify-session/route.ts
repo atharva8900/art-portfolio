@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { checkAdminAuth } from '@/lib/admin-auth';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 
@@ -22,3 +22,4 @@ export async function POST() {
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
+

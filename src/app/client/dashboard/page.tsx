@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Loader2, ArrowLeft, ExternalLink, CalendarClock, Ban, Clock, CheckCircle, X, FileDown } from 'lucide-react';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import { motion } from 'framer-motion';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import Image from 'next/image';
@@ -46,7 +46,7 @@ export default function ClientDashboardPage() {
 
     const handleDownloadInvoice = async (commission: ClientCommission) => {
         // Dynamically import to avoid SSR issues with jspdf
-        const { generateInvoice } = await import('@/lib/invoice');
+        const { generateInvoice } = await import('@/lib/api/invoice');
         const extras = commission.extras || [];
         generateInvoice({
             id: commission.id,
@@ -647,3 +647,4 @@ export default function ClientDashboardPage() {
         </>
     );
 }
+

@@ -1,8 +1,8 @@
 import { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import EmailProvider from "next-auth/providers/email"
-import { SupabaseVerificationAdapter } from "./auth-adapter"
-import { sendEmail } from "./email"
+import { SupabaseVerificationAdapter } from '@/lib/auth/auth-adapter';
+import { sendEmail } from '@/lib/api/email';
 
 export const authOptions: NextAuthOptions = {
     adapter: SupabaseVerificationAdapter(),

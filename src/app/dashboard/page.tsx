@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import StatsOverview from '@/components/dashboard/StatsOverview';
 import ReferralCodes from '@/components/dashboard/ReferralCodes';
 import EarningsHistory from '@/components/dashboard/EarningsHistory';
@@ -110,3 +110,4 @@ export default function DashboardPage() {
         </main>
     );
 }
+

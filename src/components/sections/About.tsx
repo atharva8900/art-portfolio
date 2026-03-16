@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import RevealText from './RevealText';
+import RevealText from '@/components/shared/RevealText';
 
 export default function About() {
     return (

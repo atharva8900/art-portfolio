@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Inter, Cinzel } from "next/font/google"; // Using Cinzel for that premium/artist feel, or could use Playfair Display
 import "./globals.css";
-import SmoothScroll from "@/components/SmoothScroll";
-import CustomCursor from "@/components/CustomCursor";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import AuthProvider from "@/components/AuthProvider";
+import SmoothScroll from '@/components/layout/SmoothScroll';
+import CustomCursor from '@/components/features/CustomCursor';
+import { ThemeProvider } from '@/components/shared/ThemeProvider';
+import AuthProvider from '@/components/auth/AuthProvider';
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { GoogleAnalytics } from '@next/third-parties/google';
-import ChatWidget from "@/components/ChatWidget";
+import ChatWidget from '@/components/features/ChatWidget';
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap', preload: true });
 const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel", display: 'swap', preload: true });
@@ -74,3 +74,4 @@ export default function RootLayout({
     </html>
   );
 }
+

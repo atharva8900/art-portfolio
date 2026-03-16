@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { validateOffer, incrementOfferClick } from '@/lib/offers';
+import { validateOffer, incrementOfferClick } from '@/lib/db/offers';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,3 +26,4 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+

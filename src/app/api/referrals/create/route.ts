@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail } from '../../../../lib/email';
-import { saveReferral, hashIP, getActiveReferralForUser } from '../../../../lib/referrals';
+import { sendEmail } from '@/lib/api/email';
+import { getActiveReferralForUser, hashIP, saveReferral } from '@/lib/db/referrals';
+import { referralSchema } from '@/lib/utils/schemas';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../lib/auth';
-import { referralSchema } from '../../../../lib/schemas';
+import { authOptions } from '@/lib/auth/auth';
 
 
 

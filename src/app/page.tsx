@@ -1,18 +1,18 @@
-import Navbar from '@/components/Navbar';
-import Hero from '@/components/Hero';
-import About from '@/components/About';
-import Portfolio from '@/components/Portfolio';
-import Testimonials from '@/components/Testimonials';
-import CommissionCTA from '@/components/CommissionCTA';
+import Navbar from '@/components/layout/Navbar';
+import Hero from '@/components/sections/Hero';
+import About from '@/components/sections/About';
+import Portfolio from '@/components/sections/Portfolio';
+import Testimonials from '@/components/sections/Testimonials';
+import CommissionCTA from '@/components/shared/CommissionCTA';
 
-import Timeline from '@/components/Timeline';
-import Categories from '@/components/Categories';
-import Pricing from '@/components/Pricing';
-import FAQ from '@/components/FAQ';
-import CommissionForm from '@/components/CommissionForm';
-import Footer from '@/components/Footer';
-import ReferralTracker from '@/components/ReferralTracker';
-import ReferralGenerator from '@/components/ReferralGenerator';
+import Timeline from '@/components/sections/Timeline';
+import Categories from '@/components/sections/Categories';
+import Pricing from '@/components/sections/Pricing';
+import FAQ from '@/components/sections/FAQ';
+import CommissionForm from '@/components/forms/CommissionForm';
+import Footer from '@/components/layout/Footer';
+import ReferralTracker from '@/components/features/ReferralTracker';
+import ReferralGenerator from '@/components/features/ReferralGenerator';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -40,3 +40,4 @@ export default function Home() {
     </main>
   );
 }
+

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 
-import { getCommissionById } from '@/lib/commissions';
+import { getCommissionById } from '@/lib/db/commissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { sendDiscordNotification } from '@/lib/discord';
+import { sendDiscordNotification } from '@/lib/api/discord';
 
-import { checkAdminAuth } from '@/lib/admin-auth';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,

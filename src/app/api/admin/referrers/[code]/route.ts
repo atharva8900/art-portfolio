@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { deleteReferral } from '@/lib/referrals';
+import { deleteReferral } from '@/lib/db/referrals';
 
-import { checkAdminAuth } from '@/lib/admin-auth';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 // Auth check centralized
 

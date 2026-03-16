@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
-import { deleteOffer } from '@/lib/offers';
+import { deleteOffer } from '@/lib/db/offers';
 
-import { checkAdminAuth } from '@/lib/admin-auth';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 // Auth check centralized
 

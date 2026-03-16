@@ -3,13 +3,13 @@
 import { useState, useEffect, FormEvent, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X } from 'lucide-react';
-import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/pricing-shared';
+import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
 import { useSession } from 'next-auth/react';
 import { createClient } from '@/lib/supabase/client';
-import AuthOptions from './AuthOptions';
+import AuthOptions from '@/components/auth/AuthOptions';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import ArtVisualizer, { FrameConfig } from './ArtVisualizer';
+import ArtVisualizer, { FrameConfig } from '@/components/features/ArtVisualizer';
 import Script from 'next/script';
 import { Turnstile } from '@marsidev/react-turnstile';
 
@@ -1694,3 +1694,4 @@ export default function CommissionForm() {
         </section >
     );
 }
+

@@ -5,8 +5,8 @@ import {
     getCurrentPrices,
     getEarlyAccessProgress,
     isEarlyAccessActive,
-    getCompletedCommissionCount,
-} from '@/lib/pricing';
+    getCompletedCommissionCount
+} from '@/lib/utils/pricing';
 
 export async function GET() {
     try {
@@ -40,3 +40,4 @@ export async function GET() {
         });
     }
 }
+

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { getCommissionById } from '@/lib/commissions';
+import { getCommissionById } from '@/lib/db/commissions';
 
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
                     // Send auto-email to client confirming we received their payment
                     try {
-                        const { sendCommissionStatusEmail } = await import('@/lib/emails');
+                        const { sendCommissionStatusEmail } = await import('@/lib/api/emails');
                         if (isFinalPayment) {
                             await sendCommissionStatusEmail(commission, 'payment_fully_paid');
                         }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
                     // Optional: Send auto-email to client confirming we received their payment
                     try {
-                        const { sendDiscordNotification } = await import('@/lib/discord');
+                        const { sendDiscordNotification } = await import('@/lib/api/discord');
                         await sendDiscordNotification({
                             content: isFinalPayment ? '💰 **Final Payment Received!**' : (isReservationCompletion ? '💰 **Reservation Completion Received!**' : '💰 **Deposit Received!**'),
                             embeds: [{
@@ -118,3 +118,4 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: (error as Error).message || 'Webhook processing failed' }, { status: 500 });
     }
 }
+

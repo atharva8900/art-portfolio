@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
-import { getAllOffers, createOffer } from '@/lib/offers';
+import { getAllOffers, createOffer } from '@/lib/db/offers';
 
 export const dynamic = 'force-dynamic';
 
-import { checkAdminAuth } from '@/lib/admin-auth';
+import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 // Auth check centralized
 
@@ -37,3 +37,4 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+

@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from '@/lib/auth/auth';
 
 export const ALLOWED_ADMIN_EMAILS = [
     'atharva8900@gmail.com',
@@ -15,3 +15,4 @@ export async function checkAdminAuth() {
 
     return ALLOWED_ADMIN_EMAILS.includes(session.user.email.toLowerCase());
 }
+

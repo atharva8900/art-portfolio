@@ -1,13 +1,13 @@
-import { getAllCommissions } from './commissions';
+import { getAllCommissions } from '@/lib/db/commissions';
 import {
     EARLY_ACCESS_PRICES,
     REGULAR_PRICES,
     EARLY_ACCESS_LIMIT,
     PricingTier
-} from './pricing-shared';
+} from '@/lib/utils/pricing-shared';
 
 // Re-export shared types and constants for server-side convenience
-export * from './pricing-shared';
+export * from '@/lib/utils/pricing-shared';
 
 // Get count of completed commissions
 export async function getCompletedCommissionCount(): Promise<number> {

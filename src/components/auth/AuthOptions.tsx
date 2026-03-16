@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
-import GoogleSignInButton from './GoogleSignInButton';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 import { Turnstile } from '@marsidev/react-turnstile';
 
 interface AuthOptionsProps {

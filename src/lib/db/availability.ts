@@ -1,5 +1,5 @@
-import { supabaseAdmin } from './supabase/admin';
-import { getActiveWorkloadCount, getPendingReviewCount, getActiveCommissionCount } from './commissions';
+import { supabaseAdmin } from '../supabase/admin';
+import { getActiveWorkloadCount, getPendingReviewCount, getActiveCommissionCount } from '@/lib/db/commissions';
 
 export interface AvailabilityData {
     is_accepting_commissions: boolean;

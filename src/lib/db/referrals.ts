@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase/admin';
+import { supabaseAdmin } from '../supabase/admin';
 import crypto from 'crypto';
 
 export interface ReferralData {

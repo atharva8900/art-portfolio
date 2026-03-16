@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import { Adapter } from "next-auth/adapters";
-import { supabaseAdmin } from "./supabase/admin";
+import { supabaseAdmin } from "../supabase/admin";
 
 /**
  * A lightweight custom NextAuth adapter that only handles verification tokens.

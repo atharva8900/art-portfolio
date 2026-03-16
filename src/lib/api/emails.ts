@@ -1,6 +1,6 @@
-import { sendEmail } from './email';
-import { CommissionData } from './commissions';
-import { sendDiscordNotification } from './discord';
+import { sendEmail } from '@/lib/api/email';
+import { CommissionData } from '@/lib/db/commissions';
+import { sendDiscordNotification } from '@/lib/api/discord';
 
 
 

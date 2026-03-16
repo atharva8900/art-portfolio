@@ -1,8 +1,8 @@
 import { google } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
-import { getAllOffers, OfferData } from '@/lib/offers';
-import { getAvailability } from '@/lib/availability';
+import { getAllOffers, OfferData } from '@/lib/db/offers';
+import { getAvailability } from '@/lib/db/availability';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -192,3 +192,4 @@ export async function POST(req: Request) {
         );
     }
 }
+

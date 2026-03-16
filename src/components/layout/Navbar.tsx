@@ -1,13 +1,13 @@
 'use client';
 
-import MagneticLink from './MagneticLink';
+import MagneticLink from '@/components/shared/MagneticLink';
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Instagram, Mail, Youtube, Menu, X, Home, Palette, DollarSign, Send, Grid, Users } from 'lucide-react';
 import Link from 'next/link';
-import UserProfile from './UserProfile';
-import { ThemeToggle } from './ThemeToggle';
+import UserProfile from '@/components/auth/UserProfile';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const navLinks = [
     { name: 'Home', href: '/', icon: Home },

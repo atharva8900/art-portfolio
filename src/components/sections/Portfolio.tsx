@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, ScanEye } from 'lucide-react';
 import { Artwork } from '@/types';
-import RevealText from './RevealText';
+import RevealText from '@/components/shared/RevealText';
 import Image from 'next/image';
 
 const MotionImage = motion(Image);

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/auth/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { CommissionData } from '@/lib/commissions';
+import { CommissionData } from '@/lib/db/commissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +33,7 @@ export async function GET() {
         console.log(`DEBUG: Found ${commissions?.length || 0} commissions for ${email}`);
 
         // Dynamically import getOfferById to avoid circular dependencies if any
-        const { getOfferById } = await import('@/lib/offers');
+        const { getOfferById } = await import('@/lib/db/offers');
 
         // Enrich commissions with extras array
         const enrichedCommissions = await Promise.all((commissions || []).map(async (c: CommissionData) => {
@@ -76,3 +76,4 @@ export async function GET() {
         return NextResponse.json({ error: (error as Error).message || 'Server error' }, { status: 500 });
     }
 }
+

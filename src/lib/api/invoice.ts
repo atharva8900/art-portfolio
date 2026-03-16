@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { CommissionData } from './commissions';
+import { CommissionData } from '@/lib/db/commissions';
 
 export interface InvoiceCommissionData extends CommissionData {
     extras_list?: string[];
