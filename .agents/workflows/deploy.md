@@ -16,6 +16,9 @@ description: Build, Lint, and Security Audit before manual push (Verified).
 
 3. **Codebase Cleanup**
    Scan the repository for unnecessary files (e.g., temporary logs, redundant test scripts, or unused assets). I will list the candidate files and the reason for deletion, then wait for your explicit approval before performing any `rm` operations.
+   **Critical Requirement**: For every proposed deletion, I must answer:
+   - "Are those files necessary currently with what we are doing?"
+   - "Will it affect anything from our project?"
 
 4. **User Notification**
    Present the final verified and cleaned state, and request your explicit approval to proceed with the security audit.

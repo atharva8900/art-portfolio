@@ -318,8 +318,8 @@ export const generateInvoice = (commission: InvoiceCommissionData) => {
     const igText = 'IG: @atharva_sherlekar_art';
     doc.textWithLink(igText, centerX - 30, iconY, { url: 'https://www.instagram.com/atharva_sherlekar_art?igsh=cXNkNnpybmQ5dnFm', align: 'center' });
 
-    const emailText = 'Email: atharva_sherlekar_art@gmail.com';
-    doc.textWithLink(emailText, centerX + 30, iconY, { url: 'mailto:atharva_sherlekar_art@gmail.com', align: 'center' });
+    const emailText = 'Email: atharvasherlekarart@gmail.com';
+    doc.textWithLink(emailText, centerX + 30, iconY, { url: 'mailto:atharvasherlekarart@gmail.com', align: 'center' });
 
     doc.save(`Invoice_${commission.id}.pdf`);
 };

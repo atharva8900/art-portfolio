@@ -3,7 +3,7 @@ import { getAvailability, setAvailability } from '@/lib/db/availability';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharva_sherlekar_art@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
 async function checkAdminAuth() {
     const cookieStore = cookies();

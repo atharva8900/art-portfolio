@@ -32,7 +32,7 @@ interface OfferData {
     created_at: string;
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharva_sherlekar_art@gmail.com'];
+const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
 
 export default function AdminOffersPage() {
     const router = useRouter();

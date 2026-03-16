@@ -381,7 +381,7 @@ export async function POST(request: NextRequest) {
 
             // Artist notification via Gmail SMTP
             await sendEmail({
-                to: process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharva_sherlekar_art@gmail.com',
+                to: process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com',
                 subject: isWaitlist ? 'New Waitlist Joiner – Atharva Sherlekar Art' : 'New Commission Request – Atharva Sherlekar Art',
                 attachments: emailAttachments,
                 html: `
