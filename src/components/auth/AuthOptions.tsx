@@ -93,7 +93,34 @@ export default function AuthOptions({
                             {description}
                         </p>
 
-                        <GoogleSignInButton callbackUrl={callbackUrl} />
+                        <AnimatePresence>
+                            {showTurnstile && (
+                                <motion.div
+                                    initial={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
+                                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                                    className="overflow-hidden"
+                                >
+                                    <div 
+                                        className="flex justify-center items-center min-h-[70px]"
+                                        onMouseEnter={() => window.dispatchEvent(new CustomEvent('cursor-hide'))}
+                                        onMouseLeave={() => window.dispatchEvent(new CustomEvent('cursor-show'))}
+                                    >
+                                        <Turnstile
+                                            siteKey={
+                                                (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+                                                    ? '1x00000000000000000000AA' 
+                                                    : (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA')
+                                            }
+                                            onSuccess={setTurnstileToken}
+                                            options={{ theme: 'dark' }}
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <GoogleSignInButton callbackUrl={callbackUrl} turnstileToken={turnstileToken} />
 
                         <div className="relative flex items-center gap-4 py-2">
                             <div className="h-px flex-1 bg-white/5" />
@@ -115,33 +142,6 @@ export default function AuthOptions({
                                     className="w-full bg-zinc-900/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-neutral-600 focus:outline-none focus:border-accent/50 transition-all"
                                 />
                             </div>
-
-                            <AnimatePresence>
-                                {showTurnstile && (
-                                    <motion.div
-                                        initial={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
-                                        transition={{ duration: 0.5, ease: "easeInOut" }}
-                                        className="overflow-hidden"
-                                    >
-                                        <div 
-                                            className="flex justify-center items-center min-h-[70px]"
-                                            onMouseEnter={() => window.dispatchEvent(new CustomEvent('cursor-hide'))}
-                                            onMouseLeave={() => window.dispatchEvent(new CustomEvent('cursor-show'))}
-                                        >
-                                            <Turnstile
-                                                siteKey={
-                                                    (typeof window !== 'undefined' && window.location.hostname === 'localhost')
-                                                        ? '1x00000000000000000000AA' 
-                                                        : (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA')
-                                                }
-                                                onSuccess={setTurnstileToken}
-                                                options={{ theme: 'dark' }}
-                                            />
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
 
                             <button
                                 type="submit"

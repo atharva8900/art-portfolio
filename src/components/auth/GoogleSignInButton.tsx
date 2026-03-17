@@ -6,13 +6,15 @@ import { signIn } from 'next-auth/react';
 interface GoogleSignInButtonProps {
     onSuccess?: () => void;
     callbackUrl?: string;
+    turnstileToken?: string | null;
 }
 
-export default function GoogleSignInButton({ onSuccess, callbackUrl = '/' }: GoogleSignInButtonProps) {
+export default function GoogleSignInButton({ onSuccess, callbackUrl = '/', turnstileToken }: GoogleSignInButtonProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleGoogleSignIn = async () => {
+        if (!turnstileToken) return;
         try {
             setLoading(true);
             setError('');
@@ -52,7 +54,7 @@ export default function GoogleSignInButton({ onSuccess, callbackUrl = '/' }: Goo
         <div className="space-y-2">
             <button
                 onClick={handleGoogleSignIn}
-                disabled={loading}
+                disabled={loading || !turnstileToken}
                 className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-background text-foreground rounded-lg font-medium hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-border"
             >
                 {loading ? (
