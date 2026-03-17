@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Calendar, Users } from 'lucide-react';
+import { Calendar, Users, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Timeline() {
     return (
@@ -52,6 +53,23 @@ export default function Timeline() {
                         </div>
                     </motion.div>
                 </div>
+
+                {/* Learn more link */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: false }}
+                    transition={{ delay: 0.3 }}
+                    className="text-center"
+                >
+                    <Link
+                        href="/commission-process"
+                        className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-foreground transition-colors group"
+                    >
+                        Read the full commission process
+                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                </motion.div>
             </div>
         </section>
     );

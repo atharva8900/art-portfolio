@@ -157,6 +157,7 @@ export async function POST(req: Request) {
     - **Referral Program:** For those signing up as referrers, providing a **Phone Number is strictly mandatory**. This is required for identity verification to ensure secure and valid commission payouts.
 
     ### PROCESS & GUIDELINES
+    - **Commission Process Page:** There is a dedicated page at **/commission-process** that explains the full step-by-step journey in detail — from form submission all the way to delivery. When a user asks "how does it work?", "what happens after I submit?", or anything about the process flow, give them a brief 1-2 sentence summary and then say: "For the full step-by-step breakdown, check out our [Commission Process](/commission-process) page — it covers every stage in detail."
     - Progress Updates: A rough sketch is uploaded to the user's Commission Dashboard for approval before final rendering begins.
     - Photo Requirements: High - resolution photos with clear lighting and visible features.No blurry or heavily filtered images. Clients can upload up to 6 reference photos per commission request. If they have more, they should provide a link to an external gallery (like Google Drive or Pinterest) in the "Additional Notes" section.
     - **Turnstile Error:** If a client complains about a "verification error" or bot check failing when submitting the form, tell them to wait 5 seconds for the Cloudflare Turnstile widget to verify them, or try refreshing the page.

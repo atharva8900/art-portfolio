@@ -18,6 +18,7 @@ export default function Footer() {
             </div>
 
             <div className="flex justify-center flex-wrap gap-4 md:gap-6 mb-8 text-neutral-600 dark:text-neutral-500 text-xs md:text-sm">
+                <Link href="/commission-process" className="hover:text-foreground transition-colors">Commission Process</Link>
                 <Link href="/legal/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
                 <Link href="/legal/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</Link>
                 <Link href="/legal/terms-of-service" className="hover:text-foreground transition-colors">Terms of Service</Link>

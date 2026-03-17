@@ -120,7 +120,7 @@ To proceed with the shipping via DTDC, please complete the remaining 50% payment
 You can make the final payment securely here:
 ${paymentLink.short_url}
 
-Once paid, I will drop the package at DTDC and send you the tracking ID immediately!
+Once paid, I will drop the package at DTDC!
 
 Best regards,
 Atharva Sherlekar`;
