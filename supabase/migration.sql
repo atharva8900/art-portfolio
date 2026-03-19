@@ -62,10 +62,11 @@ CREATE POLICY "Public can submit commissions"
 ON public.commissions FOR INSERT 
 WITH CHECK (true);
 
--- Allow the public form to check if a referral code exists
-CREATE POLICY "Public can view referral codes" 
-ON public.referrals FOR SELECT 
-USING (true);
+-- Note: Public select is disabled to prevent email leaks. 
+-- Validation and Dashboard fetching are handled server-side via Service Role.
+-- CREATE POLICY "Public can view referral codes" 
+-- ON public.referrals FOR SELECT 
+-- USING (true);
 
 -- Note: Admin access (select/update/delete) should be handled via 
 -- SUPABASE_SERVICE_ROLE_KEY on the server to bypass RLS safely.

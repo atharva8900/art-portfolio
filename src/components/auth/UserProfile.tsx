@@ -28,6 +28,7 @@ export default function UserProfile() {
     }
 
     const user = session?.user;
+    if (user?.image) console.log('User Profile Image URL:', user.image);
 
     if (!user) {
         return (
@@ -54,6 +55,7 @@ export default function UserProfile() {
                         width={32}
                         height={32}
                         className="rounded-full"
+                        referrerPolicy="no-referrer"
                         onError={() => setImageError(true)}
                         unoptimized
                     />

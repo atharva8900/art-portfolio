@@ -26,7 +26,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
 
 # vercel
 .vercel
@@ -49,32 +51,3 @@ next-env.d.ts
 !tailwind.config.ts
 !components.json
 data/
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!composer.json
-!deno.json
-build_check.log
-build_check_utf8.log
-build_output.log
-build_output_clean.log
-build_output_dashboard.log
-current_dev_server.log
-dev_server.log
-dev_server_2.log
-dev_server_3.log
-dev_server_3001.log
-dev_server_4.log
-dev_server_5.log
-dev_server_6.log
-dev_server_7.log
-fresh_dev_server.log
-lint_output.txt
-new_resend_logs.json
-resend_logs.json
-resend_logs.txt
-resend_logs_clean.json
-resend_test_output.json
-tsc_output.txt
-tsc_output_2.txt

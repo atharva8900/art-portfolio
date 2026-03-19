@@ -62,6 +62,8 @@ create policy "Anyone can submit a commission"
   on public.commissions for insert
   with check ( true );
 
-create policy "Anyone can validate referral code"
-  on public.referrals for select
-  using ( true );
+-- Note: Public select is disabled to prevent email leaks. 
+-- Validation and Dashboard fetching are handled server-side via Service Role.
+-- create policy "Anyone can validate referral code"
+--   on public.referrals for select
+--   using ( true );

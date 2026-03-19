@@ -1,14 +1,29 @@
+// Extract hostname from Supabase URL for remotePatterns
+const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL 
+    ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname 
+    : '';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
+        // Restricted to specific hostnames to prevent SSRF and hotlinking
+        // Note: transparenttextures.com used as CSS background only, no Next.js Image component needed
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: '**',
+                hostname: supabaseHostname,
             },
             {
-                protocol: 'http',
-                hostname: '**',
+                protocol: 'https',
+                hostname: 'images.unsplash.com',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.googleusercontent.com',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.ggpht.com',
             },
         ],
     },
@@ -17,7 +32,7 @@ const nextConfig = {
         return [
             {
                 source: '/_supabase/:path*',
-                destination: 'https://appfiheckvfptasvkily.supabase.co/:path*',
+                destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/:path*`,
             },
         ];
     },
@@ -30,10 +45,14 @@ const nextConfig = {
             },
         ];
     },
-    // Force CSS/Tailwind to recompile correctly on Windows
+    // Optimized dev performance on Windows/Tailwind
     webpack: (config, { dev }) => {
         if (dev) {
-            config.cache = false;
+            config.watchOptions = {
+                ...config.watchOptions,
+                poll: 1000,
+                aggregateTimeout: 300,
+            };
         }
         return config;
     },
