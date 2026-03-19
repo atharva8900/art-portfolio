@@ -28,7 +28,6 @@ export default function UserProfile() {
     }
 
     const user = session?.user;
-    if (user?.image) console.log('User Profile Image URL:', user.image);
 
     if (!user) {
         return (
