@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Copy, Check, ChevronDown, LayoutDashboard, ArrowRight, QrCode, X } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { QRCodeSVG } from 'qrcode.react';
 import AuthOptions from '@/components/auth/AuthOptions';
-import { Turnstile } from '@marsidev/react-turnstile';
+import SafeTurnstile from '@/components/shared/SafeTurnstile';
 
 const REF_LOCK_KEY = 'atharva_referral_lock';
 
@@ -21,8 +21,14 @@ export default function ReferralGenerator() {
     const [isRulesOpen, setIsRulesOpen] = useState(false);
     const [showQR, setShowQR] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-    const [showTurnstile, setShowTurnstile] = useState(true);
+// (Removed showTurnstile state as SafeTurnstile handles it internally)
     const [fingerprintHash, setFingerprintHash] = useState<string | null>(null);
+
+    const handleTurnstileSuccess = useCallback((token: string) => {
+        setTurnstileToken(token);
+        // Store in local storage to prevent self-referral on this device
+        localStorage.setItem(REF_LOCK_KEY, 'true');
+    }, []);
 
     // Load FingerprintJS on mount and capture the visitor ID
     useEffect(() => {
@@ -183,33 +189,15 @@ export default function ReferralGenerator() {
 
                                 {error && <p className="text-red-400 text-sm">{error}</p>}
 
-                                <AnimatePresence>
-                                    {showTurnstile && (
-                                        <motion.div
-                                            initial={{ opacity: 1, height: 'auto' }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            transition={{ duration: 0.5, ease: 'easeInOut' }}
-                                            className="flex justify-center items-center transition-all duration-500 overflow-hidden min-h-[70px]"
-                                            onMouseEnter={() => window.dispatchEvent(new Event('cursor-hide'))}
-                                            onMouseLeave={() => window.dispatchEvent(new Event('cursor-show'))}
-                                        >
-                                            <Turnstile
-                                                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-                                                onSuccess={(token) => {
-                                                    setTurnstileToken(token);
-                                                    // Store in local storage to prevent self-referral on this device
-                                                    localStorage.setItem(REF_LOCK_KEY, 'true');
-                                                    setTimeout(() => setShowTurnstile(false), 5000);
-                                                }}
-                                                options={{ theme: 'dark' }}
-                                            />
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                <div className="flex justify-center items-center overflow-hidden">
+                                    <SafeTurnstile
+                                        onSuccess={handleTurnstileSuccess}
+                                    />
+                                </div>
 
                                 <button
                                     type="submit"
-                                    disabled={loading || (!turnstileToken && showTurnstile)}
+                                    disabled={loading || (!turnstileToken)}
                                     className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-neutral-200 hover:text-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {loading ? <Loader2 className="animate-spin" /> : 'Generate Link'}

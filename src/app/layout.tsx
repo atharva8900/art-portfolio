@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 const SmoothScroll = dynamic(() => import('@/components/layout/SmoothScroll'), { ssr: false });
 const CustomCursor = dynamic(() => import('@/components/features/CustomCursor'), { ssr: false });
 const ChatWidget = dynamic(() => import('@/components/features/ChatWidget'), { ssr: false });
+const TurnstileScript = dynamic(() => import('@/components/shared/TurnstileScript'), { ssr: false });
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap', preload: true });
 const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel", display: 'swap', preload: true });
@@ -74,6 +75,7 @@ export default function RootLayout({
             <SpeedInsights />
             <GoogleAnalytics gaId="G-00470JC3GM" />
             {process.env.NEXT_PUBLIC_ENABLE_CHATBOT === 'true' && <ChatWidget />}
+            <TurnstileScript />
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -8,7 +8,7 @@ import { Artwork } from '@/types';
 import RevealText from '@/components/shared/RevealText';
 import Image from 'next/image';
 
-const MotionImage = motion(Image);
+const MotionImage = motion.create(Image);
 
 export default function Portfolio() {
     const [artworks, setArtworks] = useState<Artwork[]>([]);

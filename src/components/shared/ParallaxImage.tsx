@@ -8,7 +8,7 @@ interface ParallaxImageProps {
     className?: string;
 }
 
-const MotionImage = motion(Image);
+const MotionImage = motion.create(Image);
 
 export default function ParallaxImage({ src, alt, className = "" }: ParallaxImageProps) {
     const ref = useRef(null);

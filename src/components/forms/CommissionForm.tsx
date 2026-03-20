@@ -5,20 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X } from 'lucide-react';
 import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
 import { useSession } from 'next-auth/react';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import AuthOptions from '@/components/auth/AuthOptions';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import ArtVisualizer, { FrameConfig } from '@/components/features/ArtVisualizer';
-import Script from 'next/script';
-import { Turnstile } from '@marsidev/react-turnstile';
+import SafeTurnstile, { type SafeTurnstileHandle } from '@/components/shared/SafeTurnstile';
+import { loadRazorpay } from '@/lib/load-razorpay';
 
-declare global {
-    interface Window {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Razorpay: any;
-    }
-}
+
 
 
 
@@ -121,6 +116,8 @@ function PaperSizeDropdown({ value, onChange, options }: {
 }
 
 
+// Removed manual createClient() call here, we use the exported singleton instead.
+
 export default function CommissionForm() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -154,7 +151,7 @@ export default function CommissionForm() {
     const [frameConfig, setFrameConfig] = useState<FrameConfig | null>(null);
     const [showFrameModal, setShowFrameModal] = useState(false);
     const [isSelfReferral, setIsSelfReferral] = useState(false);
-    const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+    const turnstileRef = useRef<SafeTurnstileHandle>(null);
     const [fingerprintHash, setFingerprintHash] = useState<string | null>(null);
 
     // Load FingerprintJS on mount and capture the visitor ID
@@ -178,12 +175,16 @@ export default function CommissionForm() {
     const [offerError, setOfferError] = useState('');
     const [isValidatingPromo, setIsValidatingPromo] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-    const [showTurnstile, setShowTurnstile] = useState(true);
+// (Removed showTurnstile state as SafeTurnstile handles it internally)
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const [offerAppliedMessage, setOfferAppliedMessage] = useState('');
     const originalBodyOverflow = useRef('');
 
-    const supabase = createClient();
+
+    const handleTurnstileSuccess = useCallback((token: string) => {
+        setTurnstileToken(token);
+    }, []);
+
 
     // Background Scroll Lock for Frame Modal
     useEffect(() => {
@@ -276,22 +277,7 @@ export default function CommissionForm() {
     const authLoading = authStatus === 'loading';
 
     // Check Active Commission Status when authenticated
-    useEffect(() => {
-        if (session?.user) {
-            setUserName(session.user.name || '');
-            setUserEmail(session.user.email || '');
-            checkActiveCommission();
-        } else {
-            setHasActive(false);
-            setUserName('');
-            setUserEmail('');
-        }
-    }, [session]);
-
-    // Unified self-referral detection moved to checkStorage within useEffect below to avoid conflicts.
-    // This allows us to handle "Obvious" vs "Hidden" flagging consistently.
-
-    const checkActiveCommission = async () => {
+    const checkActiveCommission = useCallback(async () => {
         try {
             const res = await fetch('/api/commissions/check');
             if (res.ok) {
@@ -304,7 +290,24 @@ export default function CommissionForm() {
         } catch (error) {
             console.error('Failed to check active commission status', error);
         }
-    };
+    }, []);
+
+    // Check Active Commission Status when authenticated
+    useEffect(() => {
+        if (session?.user) {
+            setUserName(session.user.name || '');
+            setUserEmail(session.user.email || '');
+            checkActiveCommission();
+        } else {
+            setHasActive(false);
+            setUserName('');
+            setUserEmail('');
+        }
+    }, [session?.user, checkActiveCommission]); // Specific dependencies to prevent loop
+
+    // Unified self-referral detection moved to checkStorage within useEffect below to avoid conflicts.
+    // This allows us to handle "Obvious" vs "Hidden" flagging consistently.
+
 
     // Fetch current pricing tier
     useEffect(() => {
@@ -635,6 +638,7 @@ export default function CommissionForm() {
         } catch (error: unknown) {
             console.error('Submission error:', error);
             setError((error as Error).message || 'Something went wrong. Please try again.');
+            turnstileRef.current?.reset();
         } finally {
             setLoading(false);
         }
@@ -647,8 +651,11 @@ export default function CommissionForm() {
         setLoading(true);
         setError('');
 
-        if (!window.Razorpay) {
-            setError('Payment system is still loading. Please wait a moment.');
+        let Razorpay: Awaited<ReturnType<typeof loadRazorpay>>;
+        try {
+            Razorpay = await loadRazorpay();
+        } catch {
+            setError('Could not load the payment SDK. Check your connection and try again.');
             setLoading(false);
             return;
         }
@@ -682,7 +689,7 @@ export default function CommissionForm() {
 
             // 2. Open Razorpay
             const options = {
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
                 amount: orderData.amount,
                 currency: orderData.currency,
                 name: "Atharva Sherlekar Art",
@@ -759,6 +766,7 @@ export default function CommissionForm() {
                         const errorData = await res.json();
                         setError(errorData.error || 'Payment recorded but form failed. PLEASE CONTACT ME with your Payment ID.');
                         setLoading(false);
+                        turnstileRef.current?.reset();
                     } else {
                         setSuccess(true);
                         setLoading(false);
@@ -774,17 +782,19 @@ export default function CommissionForm() {
                 modal: {
                     ondismiss: function () {
                         setLoading(false);
+                        turnstileRef.current?.reset();
                     }
                 }
             };
 
-            const rzp = new window.Razorpay(options);
+            const rzp = new Razorpay(options);
             rzp.open();
 
         } catch (error: unknown) {
             console.error('Waitlist payment error:', error);
             setError((error as Error).message || 'Payment initiation failed.');
             setLoading(false);
+            turnstileRef.current?.reset();
         }
     }
 
@@ -1104,23 +1114,25 @@ export default function CommissionForm() {
                         {/* the rest of the form stays inside but needs indentation update visually but we can just leave the tags */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Full Name</label>
-                                <input required name="name" type="text" value={userName} onChange={(e) => setUserName(e.target.value)} className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="John Doe" />
+                                <label htmlFor="full_name" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Full Name</label>
+                                <input required id="full_name" name="name" type="text" value={userName} onChange={(e) => setUserName(e.target.value)} autoComplete="name" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="John Doe" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Email Address</label>
-                                <input required name="email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="john@example.com" />
+                                <label htmlFor="email" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Email Address</label>
+                                <input required id="email" name="email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} autoComplete="email" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="john@example.com" />
                             </div>
 
                             {/* Promo Code Input */}
                             <div className="space-y-2 md:col-span-2">
-                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Promo Code (Optional)</label>
+                                <label htmlFor="promo_code" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Promo Code (Optional)</label>
                                 <div className="flex gap-2">
                                     <input
+                                        id="promo_code"
                                         name="promo_code"
                                         type="text"
                                         value={promoCode}
                                         onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                        autoComplete="off"
                                         placeholder="HAVE A CODE?"
                                         className={`flex-1 bg-surface border ${offer ? 'border-emerald-500/50' : 'border-foreground/10'} p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors font-mono tracking-widest placeholder:text-neutral-500`}
                                     />
@@ -1140,20 +1152,20 @@ export default function CommissionForm() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Phone</label>
-                                <input name="phone" type="tel" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="+91 ... (optional if Instagram provided)" />
+                                <label htmlFor="phone" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Phone</label>
+                                <input id="phone" name="phone" type="tel" autoComplete="tel" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="+91 ... (optional if Instagram provided)" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Instagram ID</label>
-                                <input name="instagram_id" type="text" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="@username (optional if Phone provided)" />
+                                <label htmlFor="instagram_id" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Instagram ID</label>
+                                <input id="instagram_id" name="instagram_id" type="text" autoComplete="off" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="@username (optional if Phone provided)" />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Paper Size</label>
+                                <label htmlFor="paper_size_select" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Paper Size</label>
                                 {/* Hidden input so the form still submits the size value */}
-                                <input type="hidden" name="size" value={selectedSize} />
+                                <input id="paper_size_select" type="hidden" name="size" value={selectedSize} />
                                 <PaperSizeDropdown
                                     value={selectedSize}
                                     onChange={setSelectedSize}
@@ -1165,10 +1177,10 @@ export default function CommissionForm() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Number of People in Reference/Artwork</label>
+                                <label htmlFor="number_of_people" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Number of People in Reference/Artwork</label>
 
                                 {/* Hidden Input for Form Submission */}
-                                <input type="hidden" name="number_of_people" value={peopleCount} />
+                                <input id="number_of_people" type="hidden" name="number_of_people" value={peopleCount} />
 
                                 <div className="flex items-center w-full bg-surface border border-foreground/10 rounded-md overflow-hidden">
                                     <button
@@ -1225,8 +1237,9 @@ export default function CommissionForm() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Date Needed By (Optional)</label>
+                            <label htmlFor="needed_by" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Date Needed By (Optional)</label>
                             <input
+                                id="needed_by"
                                 name="needed_by"
                                 type="date"
                                 min={minDateStr}
@@ -1241,11 +1254,12 @@ export default function CommissionForm() {
                         <div className="space-y-4">
                             <label className="text-xs uppercase tracking-widest text-neutral-500 block">Add-ons</label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <label className={`
+                                <label htmlFor="detailed_background" className={`
                                 flex items-center p-4 border rounded-md cursor-pointer transition-all
                                 ${detailedBackground ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
                             `}>
                                     <input
+                                        id="detailed_background"
                                         type="checkbox"
                                         className="hidden"
                                         checked={detailedBackground}
@@ -1291,11 +1305,12 @@ export default function CommissionForm() {
                                     </div>
                                 </label>
 
-                                <label className={`
+                                <label htmlFor="timelapse_recording" className={`
                                 flex items-center p-4 border rounded-md cursor-pointer transition-all
                                 ${timelapse ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
                             `}>
                                     <input
+                                        id="timelapse_recording"
                                         type="checkbox"
                                         className="hidden"
                                         checked={timelapse}
@@ -1340,11 +1355,12 @@ export default function CommissionForm() {
                                     </div>
                                 </label>
 
-                                <label className={`
+                                <label htmlFor="framing" className={`
                                 flex items-center p-4 border rounded-md cursor-pointer transition-all md:col-span-2
                                 ${framing ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
                             `}>
                                     <input
+                                        id="framing"
                                         type="checkbox"
                                         className="hidden"
                                         checked={framing}
@@ -1565,17 +1581,18 @@ export default function CommissionForm() {
                         </motion.div>
 
                         <div className="space-y-2">
-                            <label className="text-xs uppercase tracking-widest text-neutral-500">Shipping Address</label>
-                            <textarea required name="address" rows={3} className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="Full address with pincode" />
+                            <label htmlFor="shipping_address" className="text-xs uppercase tracking-widest text-neutral-500">Shipping Address</label>
+                            <textarea id="shipping_address" required name="address" rows={3} autoComplete="street-address" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="Full address with pincode" />
                         </div>
 
                         <div className="space-y-3">
-                            <label className="text-xs uppercase tracking-widest text-neutral-500 flex items-center gap-2">
+                            <label htmlFor="reference_photos" className="text-xs uppercase tracking-widest text-neutral-500 flex items-center gap-2">
                                 Reference Photos
                                 <span className="text-red-400 font-bold">*</span>
                                 <span className="text-neutral-600">(Required · Max 20MB each · Max 6 photos)</span>
                             </label>
                             <input
+                                id="reference_photos"
                                 name="reference_images"
                                 type="file"
                                 accept="image/*"
@@ -1606,16 +1623,17 @@ export default function CommissionForm() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs uppercase tracking-widest text-neutral-500">Additional Notes</label>
-                            <textarea name="notes" rows={3} className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="Any specific requests, deadlines, or links to more reference photos..." />
+                            <label htmlFor="additional_notes" className="text-xs uppercase tracking-widest text-neutral-500">Additional Notes</label>
+                            <textarea id="additional_notes" name="notes" rows={3} autoComplete="off" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="Any specific requests, deadlines, or links to more reference photos..." />
                         </div>
 
                         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
                         {/* Consent Checkbox */}
                         <div className="pt-4 border-t border-foreground/10">
-                            <label className="flex items-start cursor-pointer group">
+                            <label htmlFor="consent_checkbox" className="flex items-start cursor-pointer group">
                                 <input
+                                    id="consent_checkbox"
                                     type="checkbox"
                                     className="hidden"
                                     checked={consent}
@@ -1633,32 +1651,19 @@ export default function CommissionForm() {
 
                         <div className="space-y-4">
                             <AnimatePresence>
-                                {showTurnstile && (
-                                    <motion.div
-                                        initial={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="flex justify-center items-center transition-all duration-500 overflow-hidden min-h-[70px]"
-                                        onMouseEnter={() => window.dispatchEvent(new Event('cursor-hide'))}
-                                        onMouseLeave={() => window.dispatchEvent(new Event('cursor-show'))}
-                                    >
-                                        <Turnstile
-                                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-                                            onSuccess={(token) => {
-                                                setTurnstileToken(token);
-                                                setTimeout(() => setShowTurnstile(false), 5000);
-                                            }}
-                                            options={{ theme: 'dark' }}
-                                        />
-                                    </motion.div>
-                                )}
+                            <div className="flex justify-center items-center overflow-hidden">
+                                <SafeTurnstile
+                                    ref={turnstileRef}
+                                    onSuccess={handleTurnstileSuccess}
+                                />
+                            </div>
                             </AnimatePresence>
 
                             <button
                                 type="submit"
                                 disabled={loading ||
                                     attachments.length === 0 ||
-                                    (!turnstileToken && showTurnstile) ||
-                                    (status === 'waitlist' && !razorpayLoaded)}
+                                    (!turnstileToken)}
                                 className="w-full bg-neutral-400 text-background font-black uppercase tracking-[0.2em] py-5 rounded-xl hover:bg-neutral-200 transition-all duration-300 disabled:opacity-30 disabled:hover:bg-neutral-400 shadow-xl flex items-center justify-center"
                             >
                                 {loading ? (
@@ -1722,10 +1727,6 @@ export default function CommissionForm() {
                 )}
             </AnimatePresence>
 
-            <Script
-                src="https://checkout.razorpay.com/v1/checkout.js"
-                onLoad={() => setRazorpayLoaded(true)}
-            />
         </section >
     );
 }

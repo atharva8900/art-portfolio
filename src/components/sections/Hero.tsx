@@ -64,7 +64,10 @@ export default function Hero() {
                 .to(lowerContentScrollRef.current, { filter: "blur(20px)", opacity: 0, y: 50, duration: 0.8 }, 0)
                 .to(scrollIndicatorRef.current, { filter: "blur(10px)", opacity: 0, y: 50, duration: 0.8 }, 0)
                 .to(bgContainerRef.current, { opacity: 0, scale: 1.1, duration: 0.8 }, 0.2)
-                .fromTo("#about", { filter: "blur(10px)" }, { filter: "blur(0px)", duration: 0.8 }, 0); // Pull About section into focus
+                const aboutEl = document.getElementById("about");
+                if (aboutEl) {
+                    scrollTl.fromTo(aboutEl, { filter: "blur(10px)" }, { filter: "blur(0px)", duration: 0.8 }, 0);
+                }
         });
 
         // Mobile fallback

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, CreditCard, ImageIcon, Package, Globe, ShieldCheck } from 'lucide-react';
+import { Users, CreditCard, ImageIcon, Package, Globe, ShieldCheck, Star, Crown } from 'lucide-react';
 
 interface PricingTierData {
     isEarlyAccess: boolean;
@@ -75,8 +75,8 @@ export default function Pricing() {
 
         return [
             { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
-            { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: '🌟 Most Popular' },
-            { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: pricingData.prices.A3 === '₹2000' ? futurePrices.A3 : '₹4000', subtitle: 'Maximum detail & group portraits', badge: '💎 Grand Portrait' }
+            { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: { icon: Star, text: 'Most Popular' } },
+            { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: pricingData.prices.A3 === '₹2000' ? futurePrices.A3 : '₹4000', subtitle: 'Maximum detail & group portraits', badge: { icon: Crown, text: 'Grand Portrait' } }
         ];
     }, [pricingData.prices]);
 
@@ -94,7 +94,7 @@ export default function Pricing() {
             <div className="max-w-6xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-4">Commission Details</h2>
-                    <p className="text-neutral-400 text-lg">Transparent pricing and clear policies for your custom portrait.</p>
+                    <p className="text-neutral-500 dark:text-neutral-400 text-lg">Transparent pricing and clear policies for your custom portrait.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
@@ -131,8 +131,9 @@ export default function Pricing() {
                                             }`}
                                     >
                                         {item.badge && (
-                                            <span className="absolute -top-3 left-6 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-accent text-background rounded-full">
-                                                {item.badge}
+                                            <span className="absolute -top-3 left-6 px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-accent text-background rounded-full flex items-center gap-1.5 shadow-lg shadow-accent/20">
+                                                <item.badge.icon size={12} className="shrink-0" />
+                                                {item.badge.text}
                                             </span>
                                         )}
                                         <div className="flex items-center justify-between">
