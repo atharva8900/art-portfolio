@@ -5,17 +5,15 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { LogOut, User as UserIcon, LayoutDashboard, Palette } from 'lucide-react';
+import { ADMIN_EMAILS } from '@/lib/config/constants';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const ALLOWED_EMAILS = [
-    'atharva8900@gmail.com',
-    'atharvasherlekarart@gmail.com',
-];
 
 export default function UserProfile() {
     const { data: session, status } = useSession();
     const [showMenu, setShowMenu] = useState(false);
     const [imageError, setImageError] = useState(false);
+
+    const ALLOWED_EMAILS = ADMIN_EMAILS;
 
     const handleSignOut = async () => {
         await signOut({ redirect: false });

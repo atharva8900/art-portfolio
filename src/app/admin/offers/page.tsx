@@ -5,6 +5,7 @@ import {
     Loader2, Copy, Users, Check, Lock, MousePointer2,
     QrCode, X, Plus, Percent, Trash2, Calendar, Clock
 } from 'lucide-react';
+import { ADMIN_EMAILS } from '@/lib/config/constants';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,7 +33,7 @@ interface OfferData {
     created_at: string;
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ADMIN_EMAILS;
 
 export default function AdminOffersPage() {
     const router = useRouter();

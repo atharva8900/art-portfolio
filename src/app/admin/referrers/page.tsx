@@ -5,6 +5,7 @@ import {
     Loader2, Copy, Users, Check, Lock, ExternalLink,
     Calendar, Trash2
 } from 'lucide-react';
+import { ADMIN_EMAILS } from '@/lib/config/constants';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,7 +23,7 @@ interface ReferrerData {
     used_by_emails: string[];
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ADMIN_EMAILS;
 
 export default function AdminReferrersPage() {
     const router = useRouter();

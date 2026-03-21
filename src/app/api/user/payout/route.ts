@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
         // Send Email to Admin via Gmail SMTP
         const { error: emailError } = await sendEmail({
-            to: 'atharvasherlekarart@gmail.com',
+            to: process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com',
             subject: `Payout Request from ${userEmail}`,
             html: `
                 <h1>Payout Request</h1>

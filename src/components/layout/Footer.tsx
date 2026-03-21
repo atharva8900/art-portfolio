@@ -1,18 +1,19 @@
 'use client';
 import Link from 'next/link';
 import { Instagram, Mail, Youtube } from 'lucide-react';
+import { ARTIST_EMAIL, ARTIST_INSTAGRAM } from '@/lib/config/constants';
 
 export default function Footer() {
     return (
         <footer className="py-12 border-t border-foreground/5 bg-background text-center">
             <div className="flex justify-center gap-8 mb-8 text-neutral-600 dark:text-neutral-400">
-                <a href={process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM?.startsWith('http') ? process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM : `https://www.instagram.com/${process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM || 'atharva_sherlekar_art'}/`} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                <a href={ARTIST_INSTAGRAM.startsWith('http') ? ARTIST_INSTAGRAM : `https://www.instagram.com/${ARTIST_INSTAGRAM}/`} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                     <Instagram size={24} />
                 </a>
                 <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                     <Youtube size={24} />
                 </a>
-                <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com'}`} className="hover:text-foreground transition-colors">
+                <a href={`mailto:${ARTIST_EMAIL}`} className="hover:text-foreground transition-colors">
                     <Mail size={24} />
                 </a>
             </div>

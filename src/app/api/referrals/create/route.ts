@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
         // Send Email to Artist via Gmail SMTP
         const { error: emailError } = await sendEmail({
-            to: 'atharvasherlekarart@gmail.com',
+            to: process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com',
             subject: 'New Referral Link Generated',
             html: `
                 <h1>New Referral Registrant</h1>

@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Lock, Unlock, Power, AlertCircle } from 'lucide-react';
+import { ADMIN_EMAILS } from '@/lib/config/constants';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AdminNav from '@/components/admin/AdminNav';
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ADMIN_EMAILS;
 
 export default function AdminAvailability() {
     const { data: session, status } = useSession();

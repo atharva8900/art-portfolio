@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ADMIN_EMAILS } from '@/lib/config/constants';
 import Image from 'next/image';
 import {
     Loader2, Trash2, Lock, RefreshCcw, Check, X, AlertTriangle, ChevronDown,
@@ -56,7 +57,7 @@ interface CommissionData {
     flag_reason?: string | null;
 }
 
-const ALLOWED_EMAILS = ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'];
+const ALLOWED_EMAILS = ADMIN_EMAILS;
 
 const STATUS_OPTIONS = [
     { value: 'pending', label: 'Pending Review', colorClass: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },

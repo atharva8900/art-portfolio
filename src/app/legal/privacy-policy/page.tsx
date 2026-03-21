@@ -3,6 +3,8 @@ export const metadata = {
     description: "Privacy Policy for Atharva Sherlekar Art regarding personal information and client reference photos.",
 };
 
+import { ARTIST_EMAIL } from '@/lib/config/constants';
+
 export default function PrivacyPolicy() {
     return (
         <article>
@@ -69,7 +71,7 @@ export default function PrivacyPolicy() {
                 <div>
                     <h2 className="text-2xl font-serif text-foreground mb-4">6. Contact Us</h2>
                     <p className="leading-relaxed">
-                        If you have any questions about this Privacy Policy, the practices of this site, or your dealings with this site, please contact us at <strong>atharvasherlekarart@gmail.com</strong>.
+                        If you have any questions about this Privacy Policy, the practices of this site, or your dealings with this site, please contact us at <strong>{ARTIST_EMAIL}</strong>.
                     </p>
                 </div>
             </section>

@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { CommissionData } from '@/lib/db/commissions';
+import { ARTIST_EMAIL, ARTIST_INSTAGRAM } from '@/lib/config/constants';
 
 export interface InvoiceCommissionData extends CommissionData {
     extras_list?: string[];
@@ -315,11 +316,11 @@ export const generateInvoice = (commission: InvoiceCommissionData) => {
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
 
-    const igText = 'IG: @atharva_sherlekar_art';
-    doc.textWithLink(igText, centerX - 30, iconY, { url: 'https://www.instagram.com/atharva_sherlekar_art?igsh=cXNkNnpybmQ5dnFm', align: 'center' });
+    const igText = `IG: @${ARTIST_INSTAGRAM}`;
+    doc.textWithLink(igText, centerX - 30, iconY, { url: `https://www.instagram.com/${ARTIST_INSTAGRAM}?igsh=cXNkNnpybmQ5dnFm`, align: 'center' });
 
-    const emailText = 'Email: atharvasherlekarart@gmail.com';
-    doc.textWithLink(emailText, centerX + 30, iconY, { url: 'mailto:atharvasherlekarart@gmail.com', align: 'center' });
+    const emailText = `Email: ${ARTIST_EMAIL}`;
+    doc.textWithLink(emailText, centerX + 30, iconY, { url: `mailto:${ARTIST_EMAIL}`, align: 'center' });
 
     doc.save(`Invoice_${commission.id}.pdf`);
 };

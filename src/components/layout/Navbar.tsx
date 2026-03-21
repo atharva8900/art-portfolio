@@ -8,6 +8,7 @@ import { Instagram, Mail, Youtube, Menu, X, Home, Palette, DollarSign, Send, Gri
 import Link from 'next/link';
 import UserProfile from '@/components/auth/UserProfile';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { ARTIST_EMAIL, ARTIST_INSTAGRAM } from '@/lib/config/constants';
 
 const navLinks = [
     { name: 'Home', href: '/', icon: Home },
@@ -123,13 +124,13 @@ export default function Navbar() {
                     </nav>
 
                     <div className="flex items-center gap-4">
-                        <a href={process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM?.startsWith('http') ? process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM : `https://www.instagram.com/${process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM || 'atharva_sherlekar_art'}/`} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+                        <a href={ARTIST_INSTAGRAM.startsWith('http') ? ARTIST_INSTAGRAM : `https://www.instagram.com/${ARTIST_INSTAGRAM}/`} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
                             <Instagram size={20} />
                         </a>
                         <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
                             <Youtube size={20} />
                         </a>
-                        <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com'}`} className="hover:text-accent transition-colors">
+                        <a href={`mailto:${ARTIST_EMAIL}`} className="hover:text-accent transition-colors">
                             <Mail size={20} />
                         </a>
                         <ThemeToggle />
@@ -190,13 +191,13 @@ export default function Navbar() {
                                 transition={{ delay: 0.5 }}
                                 className="mt-8 flex items-center gap-8 text-foreground/60"
                             >
-                                <a href={process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM?.startsWith('http') ? process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM : `https://www.instagram.com/${process.env.NEXT_PUBLIC_ARTIST_INSTAGRAM || 'atharva_sherlekar_art'}/`} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-2">
+                                <a href={ARTIST_INSTAGRAM.startsWith('http') ? ARTIST_INSTAGRAM : `https://www.instagram.com/${ARTIST_INSTAGRAM}/`} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-2">
                                     <Instagram size={24} />
                                 </a>
                                 <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-2">
                                     <Youtube size={24} />
                                 </a>
-                                <a href={`mailto:${process.env.NEXT_PUBLIC_ARTIST_EMAIL || 'atharvasherlekarart@gmail.com'}`} className="hover:text-accent transition-colors p-2">
+                                <a href={`mailto:${ARTIST_EMAIL}`} className="hover:text-accent transition-colors p-2">
                                     <Mail size={24} />
                                 </a>
                             </motion.div>
