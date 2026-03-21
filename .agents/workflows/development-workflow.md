@@ -15,3 +15,7 @@ After the code is complete, reload the localhost server and provide me with a cl
 
 Stage 4 — Deployment
 This stage is only triggered by my explicit command to proceed. When given, follow the existing deployment process — but always ask for confirmation before executing anything here, no exceptions.
+
+## Core Implementation Rules
+- **Theme Optimization**: Every new feature or fix must be well-optimized for both **Dark** and **Light** modes.
+- **Mobile Optimization**: Every new feature or fix must be fully responsive and well-optimized for **Mobile** devices.

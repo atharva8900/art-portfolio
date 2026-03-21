@@ -64,10 +64,10 @@ export default function Timeline() {
                 >
                     <Link
                         href="/commission-process"
-                        className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-foreground transition-colors group"
+                        className="inline-flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-neutral-200 hover:text-black transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95 duration-200 text-sm md:text-base group"
                     >
                         Read the full commission process
-                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </motion.div>
             </div>

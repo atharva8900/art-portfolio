@@ -135,12 +135,16 @@ const SafeTurnstile = forwardRef<SafeTurnstileHandle, SafeTurnstileProps>(
   }, []);
 
   const stableOnSuccess = useCallback((token: string) => {
-    if (autoRemoveOnSuccess) {
-      removeWidget();
-    }
     onSuccessRef.current(token);
     if (autoHide) {
-      setTimeout(() => setIsSolved(true), 5000);
+      setTimeout(() => {
+        setIsSolved(true);
+        if (autoRemoveOnSuccess) {
+          removeWidget();
+        }
+      }, 3000);
+    } else if (autoRemoveOnSuccess) {
+      removeWidget();
     }
   }, [autoHide, autoRemoveOnSuccess, removeWidget]);
 
@@ -204,6 +208,8 @@ const SafeTurnstile = forwardRef<SafeTurnstileHandle, SafeTurnstileProps>(
   return (
     <motion.div 
         ref={containerRef} 
+        onMouseEnter={() => window.dispatchEvent(new CustomEvent('cursor-hide'))}
+        onMouseLeave={() => window.dispatchEvent(new CustomEvent('cursor-show'))}
         className={`turnstile-lazy-wrapper flex items-center justify-center overflow-hidden ${className || ''}`}
         initial={false}
         animate={{
