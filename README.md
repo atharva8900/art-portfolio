@@ -172,6 +172,9 @@ cp .env.example .env.local
 
 | Variable | Description |
 |---|---|
+| `NEXT_PUBLIC_ADMIN_EMAILS` | Comma-separated list of admitted admin emails |
+| `NEXT_PUBLIC_ARTIST_EMAIL` | The primary contact email for the artist |
+| `NEXT_PUBLIC_ARTIST_INSTAGRAM` | The artist's Instagram handle (for UI links) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous (public) key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only) |
