@@ -20,7 +20,7 @@ export interface CommissionData {
         phone?: string;
         instagram?: string;
     } | null;
-    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled';
+    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned';
     submitted_at: string;
     updated_at?: string;
     admin_note?: string;
@@ -48,8 +48,11 @@ export interface CommissionData {
     promo_id?: string | null;
     promotion_code?: string | null;
     discount_percent?: number | null;
+    submitter_email?: string | null;
     // WIP Gallery
     wip_images?: string[];
+    // Device Tracking
+    fingerprint_hash?: string | null;
 }
 
 // Get all commissions
@@ -110,7 +113,7 @@ export async function getCommissionById(id: string): Promise<CommissionData | nu
 // Update commission status
 export async function updateCommissionStatus(
     id: string,
-    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled',
+    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned',
     adminNote?: string
 ): Promise<CommissionData | null> {
     const updateData: {

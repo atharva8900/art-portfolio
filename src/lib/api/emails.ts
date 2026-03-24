@@ -35,12 +35,23 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             break;
         case 'accepted':
             subject = 'Your Commission Slot is Ready! – Atharva Sherlekar Art';
+            const hasLink = !!commission.razorpay_payment_link_url;
             htmlContent = `
                 <h1>Good news—your slot is ready!</h1>
                 <p>Hi ${commission.client_name},</p>
                 <p>A slot has opened up for you!</p>
-                <p>To begin the artwork, please pay the <strong>remaining advance</strong> (to hit 50% total). Add-ons and delivery will be charged in the final invoice.</p>
-                <p>Atharva will reach out to you shortly via DM or Email with the payment link to officially start your commission.</p>
+                <p>To begin the artwork, please pay the <strong>50% advance deposit</strong>. Add-ons and delivery will be charged in the final invoice.</p>
+                
+                ${hasLink ? `
+                <div style="margin: 25px 0; padding: 25px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;">
+                    <p style="margin: 0 0 15px; font-weight: bold; color: #0f172a;">Complete your deposit to secure your slot:</p>
+                    <a href="${commission.razorpay_payment_link_url}" style="display: inline-block; background: #D4AF37; color: black; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">PAY DEPOSIT SECURELY →</a>
+                    <p style="margin: 15px 0 0; font-size: 12px; color: #64748b;">Link powered by Razorpay. Secure and encrypted.</p>
+                </div>
+                ` : `
+                <p>Atharva will reach out to you shortly via DM or Email with your custom payment link to officially start your commission.</p>
+                `}
+                
                 <br/>
                 <p>Check your order status anytime on the <a href="${baseUrl}/client/dashboard">Commission Page</a>.</p>
                 <p>Best regards,</p>
@@ -62,18 +73,29 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             break;
         case 'finished':
             subject = 'Your Artwork is Finished! Final Approval & Invoice – Atharva Sherlekar Art';
+            const hasFinalLink = !!commission.final_payment_link_url;
             htmlContent = `
                 <h1>Your Artwork is Ready!</h1>
                 <p>Hi ${commission.client_name},</p>
                 <p>Great news! The drawing is <strong>officially complete</strong>.</p>
                 <p>Atharva will be sending you a picture of the final sketch for your <strong>approval</strong> shortly. Please check your email or DM for the image.</p>
-                <p>Your <strong>final invoice</strong> is now ready on your dashboard. It includes:</p>
+                <p>Your <strong>final invoice</strong> is now ready. It includes:</p>
                 <ul>
                     <li>The remaining 50% of the portrait price</li>
                     <li>Any add-ons (Detailed background/Timelapse)</li>
                     <li>Actual Delivery/Shipping costs via DTDC</li>
                 </ul>
+                
+                ${hasFinalLink ? `
+                <div style="margin: 25px 0; padding: 25px; background: #fdf9f0; border: 1px solid #eee1c1; border-radius: 12px; text-align: center;">
+                    <p style="margin: 0 0 15px; font-weight: bold; color: #856404;">Complete your final payment to ship your artwork:</p>
+                    <a href="${commission.final_payment_link_url}" style="display: inline-block; background: #D4AF37; color: black; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">PAY FINAL BALANCE →</a>
+                    <p style="margin: 15px 0 0; font-size: 12px; color: #64748b;">Link powered by Razorpay. Secure and encrypted.</p>
+                </div>
+                ` : `
                 <p>You can view the invoice and pay the final balance securely via your <a href="${baseUrl}/client/dashboard">Client Dashboard</a>.</p>
+                `}
+                
                 <p>Once the final payment is cleared, I will ship your artwork immediately!</p>
                 <br/>
                 <p>Best regards,</p>

@@ -6,6 +6,7 @@ import { MessageCircle, X, Send, Loader2, Bot, User, Instagram } from 'lucide-re
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { usePathname } from 'next/navigation';
+import fpPromise from '@fingerprintjs/fingerprintjs';
 
 export default function ChatWidget() {
     const pathname = usePathname();
@@ -15,9 +16,23 @@ export default function ChatWidget() {
     const [inputValue, setInputValue] = useState('');
     const [cooldown, setCooldown] = useState(0);
     const [messageCount, setMessageCount] = useState(0);
+    const [fingerprint, setFingerprint] = useState<string>('unknown_device');
 
-    // Initialize/Check Daily Limit
+    // Initialize/Check Daily Limit & Fingerprint
     useEffect(() => {
+        // Init Fingerprint
+        const initFingerprint = async () => {
+            try {
+                const fp = await fpPromise.load();
+                const result = await fp.get();
+                setFingerprint(result.visitorId);
+            } catch (err) {
+                console.error("Failed to generate fingerprint:", err);
+            }
+        };
+        initFingerprint();
+
+        // Local Storage Fallback
         const savedData = localStorage.getItem('art_assistant_limit');
         if (savedData) {
             try {
@@ -52,7 +67,8 @@ export default function ChatWidget() {
         }
     }, [cooldown]);
 
-    const { messages, sendMessage, status, error } = useChat({
+    const { messages, append, status, error } = useChat({
+        api: `/api/chat?fingerprint=${fingerprint}`,
         onFinish: () => {
             const newCount = messageCount + 1;
             setMessageCount(newCount);
@@ -63,7 +79,8 @@ export default function ChatWidget() {
             }));
             setCooldown(15);
         }
-    });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any) as any;
 
     const isChatLoading = status === 'submitted' || status === 'streaming';
     const isLimitReached = messageCount >= 25;
@@ -85,7 +102,7 @@ export default function ChatWidget() {
 
         const text = inputValue;
         setInputValue('');
-        await sendMessage({ text });
+        await append({ role: 'user', content: text });
     };
 
     const getMessageText = (m: UIMessage) => {

@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X } from 'lucide-react';
+
 import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
 import { useSession } from 'next-auth/react';
 import { supabase } from '@/lib/supabase/client';
@@ -153,6 +154,9 @@ export default function CommissionForm() {
     const [isSelfReferral, setIsSelfReferral] = useState(false);
     const turnstileRef = useRef<SafeTurnstileHandle>(null);
     const [fingerprintHash, setFingerprintHash] = useState<string | null>(null);
+    const [banStatus, setBanStatus] = useState<'muted' | 'banned' | null>(null);
+    const [banExpiresAt, setBanExpiresAt] = useState<string | null>(null);
+    const [banCheckDone, setBanCheckDone] = useState(false);
 
     // Load FingerprintJS on mount and capture the visitor ID
     useEffect(() => {
@@ -164,8 +168,29 @@ export default function CommissionForm() {
             });
         }).catch(() => {
             // Non-fatal: fingerprinting is best-effort
+            setBanCheckDone(true); // unblock if fingerprint fails
         });
     }, []);
+
+    // After fingerprint loads, check ban/mute status
+    useEffect(() => {
+        if (!fingerprintHash) return;
+        const userEmail = session?.user?.email ?? null;
+        fetch('/api/commissions/check-ban', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fingerprint_hash: fingerprintHash, user_email: userEmail })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.restricted) {
+                    setBanStatus(data.status);
+                    setBanExpiresAt(data.expires_at ?? null);
+                }
+            })
+            .catch(() => { /* fail open */ })
+            .finally(() => setBanCheckDone(true));
+    }, [fingerprintHash, session?.user?.email]);
 
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
     const [originalTotalValue, setOriginalTotalValue] = useState<number>(0);
@@ -217,7 +242,11 @@ export default function CommissionForm() {
         setIsValidatingPromo(true);
         setOfferError('');
         try {
-            const res = await fetch(`/api/offers/validate?code=${code.toUpperCase()}`);
+            const res = await fetch(`/api/offers/validate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code.toUpperCase(), fingerprint: fingerprintHash })
+            });
             const data = await res.json();
             if (res.ok && data.valid) {
                 setOffer(data.offer);
@@ -232,7 +261,7 @@ export default function CommissionForm() {
         } finally {
             setIsValidatingPromo(false);
         }
-    }, [setOffer, setOfferError, setIsValidatingPromo, setOfferAppliedMessage, setPromoCode]);
+    }, [setOffer, setOfferError, setIsValidatingPromo, setOfferAppliedMessage, setPromoCode, fingerprintHash]);
 
     // Auto-validate from URL
     useEffect(() => {
@@ -798,6 +827,83 @@ export default function CommissionForm() {
         }
     }
 
+    // ── Restriction Gate ────────────────────────────────────────────────────
+    if (banCheckDone && banStatus) {
+        const isMuted = banStatus === 'muted';
+        return (
+            <section id="commission-form" className="py-32 px-6 md:px-12 bg-surface flex flex-col items-center justify-center text-center min-h-[600px] relative overflow-hidden">
+                {/* Background glow */}
+                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] ${isMuted ? 'bg-orange-500/5' : 'bg-red-500/5'} rounded-full blur-[100px] pointer-events-none`} />
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`relative z-10 p-10 md:p-14 border rounded-3xl max-w-md w-full shadow-2xl text-left ${
+                        isMuted
+                            ? 'bg-orange-500/5 border-orange-500/20'
+                            : 'bg-red-500/5 border-red-500/20'
+                    }`}
+                >
+                    {/* Title */}
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ${
+                        isMuted ? 'text-orange-400/60' : 'text-red-500/60'
+                    }`}>
+                        {isMuted ? 'Temporary Restriction' : 'Permanent Restriction'}
+                    </p>
+                    <h2 className="font-serif text-3xl text-foreground mb-4">
+                        {isMuted ? 'Your Account is Muted' : 'Your Account is Banned'}
+                    </h2>
+
+                    {/* Reason block */}
+                    <div className={`p-4 rounded-xl border mb-6 ${
+                        isMuted ? 'bg-orange-500/5 border-orange-500/10' : 'bg-red-500/5 border-red-500/10'
+                    }`}>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 mb-1">Reason</p>
+                        <p className="text-sm text-foreground/80">False form submission</p>
+                    </div>
+
+                    {/* Expiry (mute only) */}
+                    {isMuted && banExpiresAt && (
+                        <div className="flex items-center gap-3 mb-6 text-orange-400">
+                            <Clock size={16} className="shrink-0" />
+                            <p className="text-sm">
+                                Restriction lifts on:{' '}
+                                <strong>
+                                    {new Date(banExpiresAt).toLocaleDateString('en-GB', {
+                                        day: 'numeric', month: 'long', year: 'numeric',
+                                        hour: '2-digit', minute: '2-digit'
+                                    })}
+                                </strong>
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Divider */}
+                    <div className={`h-px mb-6 ${ isMuted ? 'bg-orange-500/10' : 'bg-red-500/10'}`} />
+
+                    {/* CTA */}
+                    <p className="text-sm text-neutral-400 mb-5">
+                        Think this is a mistake? Send us a{' '}
+                        <strong className="text-foreground">Direct Message on Instagram</strong> and we&apos;ll look into it.
+                    </p>
+                    <a
+                        href="https://instagram.com/atharva_sherlekar_art"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-3 px-6 py-3.5 rounded-xl font-bold text-sm transition-all ${
+                            isMuted
+                                ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20'
+                                : 'bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20'
+                        }`}
+                    >
+                        <Instagram size={16} />
+                        @atharva_sherlekar_art
+                    </a>
+                </motion.div>
+            </section>
+        );
+    }
+
     if (!availability && !hasActive && !authLoading) {
         return (
             <section id="commission-form" className="py-32 px-6 md:px-12 bg-surface flex flex-col items-center justify-center text-center min-h-[600px] relative overflow-hidden">
@@ -1118,8 +1224,31 @@ export default function CommissionForm() {
                                 <input required id="full_name" name="name" type="text" value={userName} onChange={(e) => setUserName(e.target.value)} autoComplete="name" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="John Doe" />
                             </div>
                             <div className="space-y-2">
-                                <label htmlFor="email" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Email Address</label>
-                                <input required id="email" name="email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} autoComplete="email" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="john@example.com" />
+                                <label htmlFor="email" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium flex items-center justify-between">
+                                    <span>Email Address</span>
+                                    {user && <span className="text-[9px] text-accent flex items-center gap-1"><Lock size={10} /> VERIFIED</span>}
+                                </label>
+                                <input 
+                                    required 
+                                    id="email" 
+                                    name="email" 
+                                    type="email" 
+                                    value={userEmail} 
+                                    onChange={(e) => !user && setUserEmail(e.target.value)} 
+                                    readOnly={!!user}
+                                    autoComplete="email" 
+                                    className={`w-full bg-surface border p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors ${
+                                        user 
+                                            ? 'border-accent/30 bg-accent/5 opacity-80 cursor-not-allowed text-neutral-400' 
+                                            : 'border-foreground/10 hover:border-foreground/30'
+                                    }`} 
+                                    placeholder="john@example.com" 
+                                />
+                                {user && (
+                                    <p className="text-[10px] text-neutral-500 uppercase tracking-wider">
+                                        Locked to your signed-in account
+                                    </p>
+                                )}
                             </div>
 
                             {/* Promo Code Input */}

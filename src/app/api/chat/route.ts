@@ -3,16 +3,34 @@ import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 import { getAllOffers, OfferData } from '@/lib/db/offers';
 import { getAvailability } from '@/lib/db/availability';
+import { checkAndUpdateChatLimit } from '@/lib/db/rate-limits';
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-    const { messages } = await req.json();
-    
-    // 1. SESSION LIMIT ENFORCEMENT (25 messages max)
+    const { messages, fingerprint } = await req.json();
+
+    // 1. SESSION / BROWSER LIMIT ENFORCEMENT (Fallback & UI consistency)
     if (messages.length > 25) {
         return NextResponse.json(
             { error: "Daily message limit reached. Please come back tomorrow!" },
+            { status: 429 }
+        );
+    }
+
+    // 2. DEVICE LIMIT ENFORCEMENT (Server-side tracking via Supabase)
+    if (!fingerprint) {
+        // Force the frontend to provide a fingerprint to use the chat
+        return NextResponse.json(
+            { error: "Security check failed. Please refresh the page and try again." },
+            { status: 400 }
+        );
+    }
+
+    const { allowed } = await checkAndUpdateChatLimit(fingerprint);
+    if (!allowed) {
+        return NextResponse.json(
+            { error: "Daily message limit reached for this device. Please come back tomorrow!" },
             { status: 429 }
         );
     }
@@ -170,6 +188,11 @@ export async function POST(req: Request) {
     - Relevance: Only mention payments if the user specifically asks about payment safety. If they only ask about login, focus on authentication security.
     - Reference Photos: Treated with 100% confidentiality. They are only used as drawing references and are permanently deleted after the portrait is delivered. They are never shared or posted publicly without explicit consent.
     - Chat History: Chats are for your convenience only. They are not stored permanently in a database, and Atharva cannot see your conversation history unless you choose to share it with him directly. 
+
+    ### MODERATION & RESTRICTIONS
+    - **Policy:** To ensure a fair and professional environment for serious clients, we enforce strict rules against spamming and multiple "false form submissions" (test or misleading requests). 
+    - **Consequences:** Violations result in account and device restrictions, including temporary mutes (24h to 1 month) or permanent bans.
+    - **Inquiries/Appeals:** If a user mentions being blocked, "muted," "banned," or unable to submit a form, politely explain the policy and tell them to send a **Direct Message (DM) to @atharva_sherlekar_art on Instagram** for assistance. Do NOT attempt to resolve the restriction yourself.
 
     ### GUIDELINES FOR YOUR RESPONSES
     - Tone: Helpful, artistic, premium, and polite.

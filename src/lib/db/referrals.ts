@@ -220,3 +220,23 @@ export async function validateNotSelfReferral(
 
     return true;
 }
+
+// Get the number of distinct accounts that have created a referral link using a specific device fingerprint
+export async function countActiveReferrersByFingerprint(fingerprintHash: string): Promise<number> {
+    if (!fingerprintHash) return 0;
+    
+    // Group by email/user id to find distinct accounts
+    const { data, error } = await supabaseAdmin
+        .from('referrals')
+        .select('referrer_email')
+        .eq('fingerprint_hash', fingerprintHash);
+
+    if (error) {
+        console.error('Error counting referrers by fingerprint:', error);
+        return 0; // Fail open to not block legitimate users on DB error
+    }
+    
+    // Extract unique emails
+    const uniqueEmails = new Set((data || []).map(r => normalizeEmail(r.referrer_email)));
+    return uniqueEmails.size;
+}

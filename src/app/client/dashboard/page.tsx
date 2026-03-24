@@ -24,7 +24,7 @@ interface ClientCommission {
     address?: string;
     number_of_people?: string;
     shipping_cost?: number;
-    status: 'pending' | 'waitlist' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'cancelled' | 'rejected';
+    status: 'pending' | 'waitlist' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'cancelled' | 'rejected' | 'muted' | 'banned';
     payment_status?: 'pending' | 'reservation_paid' | 'deposit_paid' | 'fully_paid';
     razorpay_order_id?: string;
     razorpay_payment_link_url?: string;
@@ -95,7 +95,7 @@ export default function ClientDashboardPage() {
         }
     };
 
-    const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'finished', 'on_delivery'];
+    const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'finished', 'on_delivery', 'muted', 'banned'];
     const HISTORY_STATUSES = ['completed', 'cancelled', 'rejected'];
 
     const activeCommissions = commissions.filter(c => ACTIVE_STATUSES.includes(c.status));
@@ -123,6 +123,8 @@ export default function ClientDashboardPage() {
             case 'completed': return { text: 'Artwork Delivered', color: 'text-purple-500 bg-purple-500/10' };
             case 'cancelled': return { text: 'Cancelled / Refunded', color: 'text-neutral-500 bg-neutral-500/10' };
             case 'rejected': return { text: 'Declined', color: 'text-red-500 bg-red-500/10' };
+            case 'muted': return { text: 'Account Restricted (Muted)', color: 'text-orange-500 bg-orange-500/10' };
+            case 'banned': return { text: 'Account Restricted (Banned)', color: 'text-red-500 bg-red-500/10' };
             default: return { text: 'Unknown', color: 'text-neutral-500 bg-neutral-500/10' };
         }
     };
@@ -236,6 +238,24 @@ export default function ClientDashboardPage() {
                             </p>
                         )}
                     </div>
+
+                    {/* Restriction Alert */}
+                    {commissions.some(c => c.status === 'muted' || c.status === 'banned') && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-8 p-4 md:p-6 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-4"
+                        >
+                            <Ban className="text-red-500 shrink-0 mt-1" size={24} />
+                            <div>
+                                <h3 className="text-red-500 font-bold mb-1 uppercase tracking-tight">Account Restricted</h3>
+                                <p className="text-sm text-neutral-400 leading-relaxed">
+                                    Your account or a recent request has been flagged for review. During this time, you cannot place new commissions.
+                                    If you believe this is a mistake, please reach out to me via DM to resolve this.
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
 
                     {/* Tab Navigation */}
                     <div className="flex gap-1 bg-foreground/5 border border-foreground/10 rounded-xl p-1 w-fit">

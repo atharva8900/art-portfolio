@@ -1,15 +1,33 @@
 import { NextResponse } from 'next/server';
 import { validateOffer, incrementOfferClick } from '@/lib/db/offers';
+import { checkAndUpdateOfferLimit } from '@/lib/db/rate-limits';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
     try {
-        const { searchParams } = new URL(req.url);
-        const code = searchParams.get('code');
+        const body = await req.json();
+        const code = body.code;
+        const fingerprint = body.fingerprint;
 
         if (!code) {
             return NextResponse.json({ error: 'Code is required' }, { status: 400 });
+        }
+
+        if (!fingerprint) {
+            return NextResponse.json(
+                { error: "Security check failed. Please refresh the page and try again." },
+                { status: 400 }
+            );
+        }
+
+        const { allowed } = await checkAndUpdateOfferLimit(fingerprint);
+        
+        if (!allowed) {
+            return NextResponse.json(
+                { valid: false, error: 'Too many invalid attempts. Please try again tomorrow.' },
+                { status: 429 } 
+            );
         }
 
         const result = await validateOffer(code);

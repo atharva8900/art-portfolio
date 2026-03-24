@@ -62,7 +62,19 @@ export default function TermsOfService() {
                 </div>
 
                 <div>
-                    <h2 className="text-2xl font-serif text-foreground mb-4">6. Revisions to Terms</h2>
+                    <h2 className="text-2xl font-serif text-foreground mb-4">6. User Conduct & Moderation</h2>
+                    <p className="leading-relaxed">
+                        To maintain the integrity of our commission process, we enforce strict rules regarding user conduct:
+                    </p>
+                    <ul className="list-disc pl-6 mt-4 space-y-2">
+                        <li><strong>Prohibited Activity:</strong> Submitting spam, test, or intentionally misleading commission requests is strictly prohibited. This includes providing false contact information or multiple &quot;false form submissions.&quot;</li>
+                        <li><strong>Moderation:</strong> Failure to comply with these rules may result in the temporary or permanent restriction of your account and device. Moderation actions include mutes (24 hours to 1 month) or permanent bans.</li>
+                        <li><strong>Appeals:</strong> If you believe a restriction has been placed in error, you must contact us via <strong>Instagram DM (@atharva_sherlekar_art)</strong>. Direct communication is required for all restriction-related appeals.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 className="text-2xl font-serif text-foreground mb-4">7. Revisions to Terms</h2>
                     <p className="leading-relaxed">
                         Atharva Sherlekar Art reserves the right, at our sole discretion, to modify or replace these Terms at any time. Significant changes will be communicated via top-level website announcements.
                     </p>

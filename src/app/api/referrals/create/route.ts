@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/api/email';
-import { getActiveReferralForUser, hashIP, saveReferral } from '@/lib/db/referrals';
+import { getActiveReferralForUser, hashIP, saveReferral, countActiveReferrersByFingerprint } from '@/lib/db/referrals';
 import { referralSchema } from '@/lib/utils/schemas';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth';
@@ -76,6 +76,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid CAPTCHA' }, { status: 403 });
         }
         // ------------------------------
+
+        // Check Device Fingerprint Quota (Max 3 accounts per device)
+        if (fingerprint_hash) {
+            const activeAccountsOnDevice = await countActiveReferrersByFingerprint(fingerprint_hash);
+            if (activeAccountsOnDevice >= 3) {
+                 return NextResponse.json({ 
+                     error: 'Device limit reached. You can only create referral links for up to 3 accounts per device.' 
+                 }, { status: 429 });
+            }
+        }
 
         // Check for existing active referral link
         const activeReferral = await getActiveReferralForUser(email);

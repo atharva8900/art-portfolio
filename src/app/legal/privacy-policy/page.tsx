@@ -69,9 +69,24 @@ export default function PrivacyPolicy() {
                 </div>
 
                 <div>
-                    <h2 className="text-2xl font-serif text-foreground mb-4">6. Contact Us</h2>
+                    <h2 className="text-2xl font-serif text-foreground mb-4">6. Device Identification & Anti-Fraud Measures</h2>
                     <p className="leading-relaxed">
-                        If you have any questions about this Privacy Policy, the practices of this site, or your dealings with this site, please contact us at <strong>{ARTIST_EMAIL}</strong>.
+                        To maintain a fair and secure platform for all users, we use <strong>device fingerprinting</strong> technology (provided by FingerprintJS). This helps us:
+                    </p>
+                    <ul className="list-disc pl-6 mt-4 space-y-2">
+                        <li><strong>Prevent Spam:</strong> Identify and block malicious automated bots from spamming our forms.</li>
+                        <li><strong>Enforce Rate Limits:</strong> Ensure fair usage of our free tools, such as the AI Chat Assistant and promo code validation.</li>
+                        <li><strong>Manage Restrictions:</strong> Enforce temporary mutes or permanent bans for users who repeatedly violate our submission policies.</li>
+                    </ul>
+                    <p className="leading-relaxed mt-4">
+                        This identification is based on technical attributes of your browser and device. We do not use this data for cross-site tracking or targeted advertising.
+                    </p>
+                </div>
+
+                <div>
+                    <h2 className="text-2xl font-serif text-foreground mb-4">7. Contact Us</h2>
+                    <p className="leading-relaxed">
+                        If you have any questions about this Privacy Policy, the practices of this site, or your dealings with this site, please contact us at <strong>{ARTIST_EMAIL}</strong> or reach out via Instagram DM (@atharva_sherlekar_art).
                     </p>
                 </div>
             </section>

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
     Loader2, Trash2, Lock, RefreshCcw, Check, X, AlertTriangle, ChevronDown,
     Phone, Instagram, MapPin, User, Package, Calendar, Copy, ExternalLink, ImagePlus,
-    Clock, CheckCircle
+    Clock, CheckCircle, MoreVertical, ShieldOff, Ban, ArrowRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,7 +32,7 @@ interface CommissionData {
         phone?: string;
         instagram?: string;
     } | null;
-    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist';
+    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned';
     payout_status?: 'unpaid' | 'requested' | 'paid';
     needed_by?: string;
     submitted_at: string;
@@ -55,6 +55,8 @@ interface CommissionData {
     discount_percent?: number | null;
     is_self_referral_flag?: boolean;
     flag_reason?: string | null;
+    fingerprint_hash?: string | null;
+    submitter_email?: string | null;
 }
 
 const ALLOWED_EMAILS = ADMIN_EMAILS;
@@ -69,6 +71,8 @@ const STATUS_OPTIONS = [
     { value: 'completed', label: 'Completed', colorClass: 'bg-green-500/20 text-green-400 border-green-500/30' },
     { value: 'rejected', label: 'Rejected', colorClass: 'bg-red-500/20 text-red-400 border-red-500/30' },
     { value: 'cancelled', label: 'Cancelled / Refunded', colorClass: 'bg-neutral-500/20 text-neutral-400 border-neutral-500/30' },
+    { value: 'muted', label: 'Muted', colorClass: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+    { value: 'banned', label: 'Banned', colorClass: 'bg-red-500/20 text-red-500 border-red-500/30' },
 ];
 
 const PAYMENT_STATUS_OPTIONS = [
@@ -84,8 +88,24 @@ export default function AdminCommissionsPage() {
     const { data: session, status } = useSession();
 
     const [commissions, setCommissions] = useState<CommissionData[]>([]);
-    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+    const [activeTab, setActiveTab] = useState<'active' | 'history' | 'bans'>('active');
     const [loading, setLoading] = useState(true);
+    
+    // Bans specific state
+    interface BanRecord {
+        id: string;
+        fingerprint_hash: string;
+        client_email?: string | null;
+        user_email?: string | null;
+        status: 'muted' | 'banned';
+        reason: string | null;
+        expires_at: string | null;
+        created_at: string;
+    }
+    const [bans, setBans] = useState<BanRecord[]>([]);
+    const [deletingHash, setDeletingHash] = useState<string | null>(null);
+    const [quickBanLoading, setQuickBanLoading] = useState<string | null>(null);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [error, setError] = useState('');
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -98,8 +118,20 @@ export default function AdminCommissionsPage() {
     const [wipDeleting, setWipDeleting] = useState<Record<string, boolean>>({});
     const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: string } | null>(null);
     const [paymentStatusToChange, setPaymentStatusToChange] = useState<{ id: string; status: string; clientName: string } | null>(null);
+    const [restrictionToConfirm, setRestrictionToConfirm] = useState<{
+        type: 'muted' | 'banned';
+        fingerprint: string;
+        email: string | null | undefined;
+        commissionId: string;
+        clientName: string;
+    } | null>(null);
+    const [muteDuration, setMuteDuration] = useState<number>(24 * 60 * 60 * 1000); // Default 24h
+    const [isBanConfirmed, setIsBanConfirmed] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [linkToGenerate, setLinkToGenerate] = useState<{ id: string; type: 'deposit' | 'final'; clientName: string } | null>(null);
+    const [liftRestrictionHash, setLiftRestrictionHash] = useState<string | null>(null);
+    const [liftRestrictionEmail, setLiftRestrictionEmail] = useState<string | null>(null);
+    const [liftRestrictionCommissionId, setLiftRestrictionCommissionId] = useState<string | null>(null);
 
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -118,17 +150,155 @@ export default function AdminCommissionsPage() {
     useEffect(() => {
         if (isAuthorized) {
             fetchCommissions();
+            if (activeTab === 'bans') {
+                fetchBans();
+            }
         } else if (status === 'unauthenticated') {
             setLoading(false);
         }
-    }, [isAuthorized, status]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthorized, status, activeTab]);
+
+    // Click away listener for quick-action menu
+    useEffect(() => {
+        const handleClickOutside = () => setOpenMenuId(null);
+        if (openMenuId) {
+            window.addEventListener('click', handleClickOutside);
+        }
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, [openMenuId]);
+
+    const fetchBans = async () => {
+        try {
+            const res = await fetch('/api/admin/bans');
+            if (!res.ok) throw new Error('Failed to fetch bans');
+            const data = await res.json();
+            setBans(data.bans || []);
+            cleanupExpiredMutes(data.bans || []);
+        } catch (err: unknown) {
+            console.error('Error fetching bans:', err);
+        }
+    };
+
+    const handleQuickBan = (fingerprintHash: string, userEmail: string | null | undefined, commissionId: string, status: 'muted' | 'banned', clientName: string) => {
+        if (!fingerprintHash) {
+            showNotification('No fingerprint found for this commission', 'error');
+            return;
+        }
+
+        setMuteDuration(24 * 60 * 60 * 1000);
+        setIsBanConfirmed(false);
+        setRestrictionToConfirm({
+            type: status,
+            fingerprint: fingerprintHash,
+            email: userEmail,
+            commissionId,
+            clientName
+        });
+    };
+
+    const confirmRestriction = async () => {
+        if (!restrictionToConfirm) return;
+        
+        const { type, fingerprint, email, commissionId } = restrictionToConfirm;
+
+        if (type === 'banned' && !isBanConfirmed) {
+            showNotification('Please confirm the permanent ban', 'error');
+            return;
+        }
+
+        setQuickBanLoading(commissionId);
+        setRestrictionToConfirm(null);
+
+        try {
+            const res = await fetch('/api/admin/bans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fingerprint_hash: fingerprint,
+                    user_email: email,
+                    status: type,
+                    reason: `Banned via commission ${commissionId}`,
+                    duration_ms: type === 'muted' ? muteDuration : null,
+                    commission_id: commissionId
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to apply restriction');
+            }
+
+            showNotification(`Device ${type === 'muted' ? 'muted' : 'banned'} successfully`, 'success');
+            fetchCommissions();
+            fetchBans();
+        } catch (err: unknown) {
+            showNotification((err as Error).message, 'error');
+        } finally {
+            setQuickBanLoading(null);
+            setOpenMenuId(null);
+        }
+    };
+
+    const cleanupExpiredMutes = async (activeBans: BanRecord[]) => {
+        const now = new Date();
+        const expired = activeBans.filter(b => b.status === 'muted' && b.expires_at && new Date(b.expires_at) < now);
+        
+        for (const ban of expired) {
+            try {
+                // The DELETE endpoint already handles commission status update and email notification
+                await fetch(`/api/admin/bans?hash=${ban.fingerprint_hash}`, { method: 'DELETE' });
+            } catch (err) {
+                console.error('Failed to cleanup expired mute:', err);
+            }
+        }
+        
+        if (expired.length > 0) {
+            fetchCommissions(); // Refresh to move them to history
+        }
+    };
+
+    const handleLiftRestriction = (hash: string, email?: string, commissionId?: string) => {
+        setLiftRestrictionHash(hash);
+        setLiftRestrictionEmail(email || null);
+        setLiftRestrictionCommissionId(commissionId || null);
+    };
+
+    const confirmLiftRestriction = async () => {
+        if (!liftRestrictionHash) return;
+        const hash = liftRestrictionHash;
+        const email = liftRestrictionEmail;
+        const commissionId = liftRestrictionCommissionId;
+        setLiftRestrictionHash(null);
+        setLiftRestrictionEmail(null);
+        setLiftRestrictionCommissionId(null);
+        setDeletingHash(hash || email || commissionId || 'unknown');
+        try {
+            const params = new URLSearchParams();
+            if (hash) params.append('hash', hash);
+            if (email) params.append('email', email);
+            if (commissionId) params.append('commissionId', commissionId);
+
+            const res = await fetch(`/api/admin/bans?${params.toString()}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) throw new Error('Failed to delete ban');
+            showNotification('Restriction lifted successfully', 'success');
+            fetchBans();
+            fetchCommissions();
+        } catch (err: unknown) {
+            showNotification((err as Error).message, 'error');
+        } finally {
+            setDeletingHash(null);
+        }
+    };
 
     const fetchCommissions = async () => {
         setLoading(true);
         setError('');
 
         try {
-            const res = await fetch('/api/admin/commissions');
+            const res = await fetch(`/api/admin/commissions?t=${Date.now()}`);
 
             if (!res.ok) {
                 if (res.status === 401) {
@@ -408,11 +578,17 @@ export default function AdminCommissionsPage() {
 
     const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'finished', 'on_delivery'];
     const HISTORY_STATUSES = ['completed', 'cancelled', 'rejected'];
+    const BANNED_STATUSES = ['muted', 'banned'];
 
     const activeCommissions = commissions.filter(c => ACTIVE_STATUSES.includes(c.status));
     const historyCommissions = commissions.filter(c => HISTORY_STATUSES.includes(c.status));
+    const bannedCommissions = commissions.filter(c => BANNED_STATUSES.includes(c.status));
 
-    const displayedCommissions = activeTab === 'active' ? activeCommissions : historyCommissions;
+    const displayedCommissions = activeTab === 'active' 
+        ? activeCommissions 
+        : activeTab === 'history' 
+            ? historyCommissions 
+            : bannedCommissions;
 
 
 
@@ -488,7 +664,7 @@ export default function AdminCommissionsPage() {
                         onClick={() => setActiveTab('active')}
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'active'
                             ? 'bg-foreground text-background shadow'
-                            : 'text-neutral-400 hover:text-foreground'
+                            : 'text-neutral-500 hover:text-foreground'
                             }`}
                     >
                         <Clock size={15} />
@@ -516,21 +692,42 @@ export default function AdminCommissionsPage() {
                             </span>
                         )}
                     </button>
+                    <button
+                        onClick={() => setActiveTab('bans')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'bans'
+                            ? 'bg-foreground text-background shadow'
+                            : 'text-neutral-400 hover:text-foreground'
+                            }`}
+                    >
+                        <ShieldOff size={15} />
+                        Bans
+                        {bans.length > 0 && (
+                            <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${activeTab === 'bans' ? 'bg-background/20 text-background' : 'bg-foreground/10 text-foreground/50'
+                                }`}>
+                                {bans.length}
+                            </span>
+                        )}
+                    </button>
                 </div>
 
-                {/* Loading State */}
-                {loading && commissions.length === 0 ? (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="animate-spin text-accent" size={32} />
+                {/* Empty State / Loading / Content */}
+                {!loading && !error && displayedCommissions.length === 0 && (
+                    <div className="text-center py-20 bg-foreground/5 rounded-2xl border border-dashed border-foreground/10">
+                        <AlertTriangle size={48} className="mx-auto mb-4 opacity-20" />
+                        <p className="text-neutral-500 font-medium tracking-wide">No {activeTab} commissions found.</p>
                     </div>
-                ) : displayedCommissions.length === 0 ? (
-                    <div className="text-center py-20 text-neutral-500">
-                        {activeTab === 'active' ? 'No active commissions' : 'No commission history'}
-                    </div>
-                ) : (
+                )}
+
+                {/* Commissions Content */}
+                <div className="relative">
+                        {loading && commissions.length === 0 ? (
+                            <div className="flex items-center justify-center py-20">
+                                <Loader2 className="animate-spin text-accent" size={32} />
+                            </div>
+                        ) : displayedCommissions.length > 0 ? (
                     <>
                         {/* Desktop Table View */}
-                        <div className="hidden md:block overflow-x-auto">
+                        <div className="hidden md:block overflow-x-visible">
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr className="border-b border-foreground/10">
@@ -554,7 +751,24 @@ export default function AdminCommissionsPage() {
                                                 <td className="py-4 px-4">
                                                     <div className="flex items-center gap-2">
                                                         <div>
-                                                            <div className="text-foreground">{commission.client_name}</div>
+                                                            <div className="text-foreground flex items-center gap-2">
+                                                                {commission.client_name}
+                                                                {commission.status === 'banned' && (
+                                                                    <span className="bg-red-500/10 text-red-500 border border-red-500/20 px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter flex items-center gap-1">
+                                                                        <Ban size={10} /> BANNED
+                                                                    </span>
+                                                                )}
+                                                                {commission.status === 'muted' && (
+                                                                    <span className="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter flex items-center gap-1">
+                                                                        <Clock size={10} /> MUTED
+                                                                        {bans.find(b => b.fingerprint_hash === commission.fingerprint_hash)?.expires_at && (
+                                                                            <span className="text-orange-400/60 font-medium lowercase">
+                                                                                (untill {new Date(bans.find(b => b.fingerprint_hash === commission.fingerprint_hash)!.expires_at!).toLocaleDateString('en-GB')})
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <div className="text-neutral-500 text-xs">{commission.client_email}</div>
                                                         </div>
                                                         <ChevronDown size={14} className={`text-neutral-500 ml-1 transition-transform duration-200 ${expandedId === commission.id ? 'rotate-180' : ''}`} />
@@ -596,18 +810,85 @@ export default function AdminCommissionsPage() {
                                                     {new Date(commission.submitted_at).toLocaleDateString('en-GB')}
                                                 </td>
                                                 <td className="py-4 px-4 text-right" onClick={e => e.stopPropagation()}>
-                                                    <button
-                                                        onClick={() => initiateDelete(commission.id)}
-                                                        disabled={deletingId === commission.id}
-                                                        className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
-                                                        title="Delete Commission"
-                                                    >
-                                                        {deletingId === commission.id ? (
-                                                            <Loader2 className="animate-spin" size={18} />
-                                                        ) : (
-                                                            <Trash2 size={18} />
-                                                        )}
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {/* Quick Mute/Ban Menu */}
+                                                        <div className="relative">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    e.preventDefault();
+                                                                    setOpenMenuId(openMenuId === commission.id ? null : commission.id);
+                                                                }}
+                                                                className="p-2 text-neutral-500 hover:text-foreground hover:bg-foreground/5 rounded transition-colors relative z-10"
+                                                                title="Quick Actions"
+                                                            >
+                                                                <MoreVertical size={18} />
+                                                            </button>
+                                                            
+                                                            <AnimatePresence>
+                                                                {openMenuId === commission.id && (
+                                                                    <motion.div
+                                                                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                                                        className="absolute right-0 mt-2 w-48 bg-surface border border-foreground/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                                                                    >
+                                                                        <div className="p-1.5 space-y-1">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (activeTab === 'bans') {
+                                                                                        const ban = bans.find(b => 
+                                                                                            (b.fingerprint_hash && b.fingerprint_hash === commission.fingerprint_hash) || 
+                                                                                            (b.user_email && (b.user_email === commission.submitter_email || b.user_email === commission.client_email))
+                                                                                        );
+                                                                                        handleLiftRestriction(ban?.fingerprint_hash || commission.fingerprint_hash || '', commission.submitter_email || commission.client_email, commission.id);
+                                                                                    } else {
+                                                                                        handleQuickBan(commission.fingerprint_hash || '', commission.submitter_email || commission.client_email, commission.id, 'muted', commission.client_name);
+                                                                                    }
+                                                                                    setOpenMenuId(null);
+                                                                                }}
+                                                                                disabled={quickBanLoading === commission.id || (activeTab === 'bans' && deletingHash === commission.fingerprint_hash)}
+                                                                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-orange-400 hover:bg-orange-500/10 rounded-lg transition-colors text-left"
+                                                                            >
+                                                                                {activeTab === 'bans' ? <Check size={14} /> : <Clock size={14} />}
+                                                                                {activeTab === 'bans' ? 'Lift Restriction' : 'Mute User'}
+                                                                            </button>
+                                                                            {activeTab !== 'bans' && (
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleQuickBan(commission.fingerprint_hash || '', commission.submitter_email || commission.client_email, commission.id, 'banned', commission.client_name);
+                                                                                        setOpenMenuId(null);
+                                                                                    }}
+                                                                                    disabled={quickBanLoading === commission.id}
+                                                                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-lg transition-colors font-bold text-left border-b border-foreground/5 pb-2"
+                                                                                >
+                                                                                    <Ban size={14} />
+                                                                                    Ban Device (Perm)
+                                                                                </button>
+                                                                            )}
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setOpenMenuId(null);
+                                                                                    initiateDelete(commission.id);
+                                                                                }}
+                                                                                disabled={deletingId === commission.id}
+                                                                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-lg transition-colors text-left pt-2"
+                                                                            >
+                                                                                 {deletingId === commission.id ? (
+                                                                                    <Loader2 className="animate-spin" size={14} />
+                                                                                ) : (
+                                                                                    <Trash2 size={14} />
+                                                                                )}
+                                                                                Delete Commission
+                                                                            </button>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
 
@@ -1020,7 +1301,7 @@ export default function AdminCommissionsPage() {
                         {/* Mobile Card View */}
                         <div className="md:hidden space-y-4">
                             {displayedCommissions.map((commission, index) => (
-                                <div key={commission.id} className="bg-background hover:bg-background/80 border border-foreground/10 rounded-lg overflow-hidden">
+                                <div key={commission.id} className="bg-background hover:bg-background/80 border border-foreground/10 rounded-lg overflow-visible">
                                     {/* Card Header - Clickable */}
                                     <div
                                         className="p-5 md:p-6 space-y-4 cursor-pointer"
@@ -1029,25 +1310,109 @@ export default function AdminCommissionsPage() {
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="bg-foreground/10 text-foreground font-mono text-xs px-2 py-0.5 rounded shrink-0">#{index + 1}</span>
-                                                <div className="text-foreground font-medium text-base md:text-lg min-w-0 truncate pr-2">{commission.client_name}</div>
-                                                <div className="flex items-center ml-auto shrink-0">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); initiateDelete(commission.id); }}
-                                                        disabled={deletingId === commission.id}
-                                                        className="p-1.5 md:p-2 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50 mr-1"
-                                                    >
-                                                        {deletingId === commission.id ? (
-                                                            <Loader2 className="animate-spin" size={16} />
-                                                        ) : (
-                                                            <Trash2 size={16} />
-                                                        )}
-                                                    </button>
-                                                    <div className="p-1">
-                                                        <ChevronDown size={16} className={`text-neutral-500 transition-transform duration-200 ${expandedId === commission.id ? 'rotate-180' : ''}`} />
-                                                    </div>
+                                                <div className="text-foreground font-medium text-base md:text-lg min-w-0 truncate pr-2 flex items-center gap-2">
+                                                    {commission.client_name}
+                                                    {commission.status === 'banned' && (
+                                                        <span className="bg-red-500/10 text-red-500 border border-red-500/20 px-1.5 py-0.5 rounded text-[9px] font-black uppercase">BAN</span>
+                                                    )}
+                                                    {commission.status === 'muted' && (
+                                                        <span className="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-1.5 py-0.5 rounded text-[9px] font-black uppercase">MUTE</span>
+                                                    )}
                                                 </div>
+                                                    <div className="flex items-center ml-auto shrink-0 gap-1">
+                                                        {/* Quick Action Three Dots for Mobile */}
+                                                        <div className="relative">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    e.preventDefault();
+                                                                    setOpenMenuId(openMenuId === commission.id ? null : commission.id);
+                                                                }}
+                                                                className="p-1.5 text-neutral-500 hover:text-foreground hover:bg-foreground/10 rounded-lg transition-colors relative z-10"
+                                                            >
+                                                                <MoreVertical size={16} />
+                                                            </button>
+                                                            
+                                                            <AnimatePresence>
+                                                                {openMenuId === commission.id && (
+                                                                    <motion.div
+                                                                        initial={{ opacity: 0, scale: 0.95, x: 20 }}
+                                                                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                                                                        exit={{ opacity: 0, scale: 0.95, x: 20 }}
+                                                                        className="absolute right-0 mt-2 w-48 bg-surface border border-foreground/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                                                                    >
+                                                                        <div className="p-1.5 space-y-1">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    if (activeTab === 'bans') {
+                                                                                        const ban = bans.find(b => 
+                                                                                            (b.fingerprint_hash && b.fingerprint_hash === commission.fingerprint_hash) || 
+                                                                                            (b.user_email && (b.user_email === commission.submitter_email || b.user_email === commission.client_email))
+                                                                                        );
+                                                                                        handleLiftRestriction(ban?.fingerprint_hash || commission.fingerprint_hash || '', commission.submitter_email || commission.client_email, commission.id);
+                                                                                    } else {
+                                                                                        handleQuickBan(commission.fingerprint_hash || '', commission.submitter_email || commission.client_email, commission.id, 'muted', commission.client_name);
+                                                                                    }
+                                                                                    setOpenMenuId(null);
+                                                                                }}
+                                                                                disabled={quickBanLoading === commission.id || (activeTab === 'bans' && deletingHash === commission.fingerprint_hash)}
+                                                                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-orange-400 hover:bg-orange-500/10 rounded-lg transition-colors"
+                                                                            >
+                                                                                {activeTab === 'bans' ? <Check size={14} /> : <Clock size={14} />}
+                                                                                {activeTab === 'bans' ? 'Lift Restriction' : 'Mute User'}
+                                                                            </button>
+                                                                            {activeTab !== 'bans' && (
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleQuickBan(commission.fingerprint_hash || '', commission.submitter_email || commission.client_email, commission.id, 'banned', commission.client_name);
+                                                                                        setOpenMenuId(null);
+                                                                                    }}
+                                                                                    disabled={quickBanLoading === commission.id}
+                                                                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-lg transition-colors font-bold border-b border-foreground/5 pb-2"
+                                                                                >
+                                                                                    <Ban size={14} />
+                                                                                    Ban User (Perm)
+                                                                                </button>
+                                                                            )}
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setOpenMenuId(null);
+                                                                                    initiateDelete(commission.id);
+                                                                                }}
+                                                                                disabled={deletingId === commission.id}
+                                                                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-lg transition-colors pt-2"
+                                                                            >
+                                                                                 {deletingId === commission.id ? (
+                                                                                    <Loader2 className="animate-spin" size={14} />
+                                                                                ) : (
+                                                                                    <Trash2 size={14} />
+                                                                                )}
+                                                                                Delete Commission
+                                                                            </button>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
+                                                        </div>
+
+                                                        <div className="p-1" onClick={(e) => { e.stopPropagation(); toggleExpand(commission.id); }}>
+                                                            <ChevronDown size={16} className={`text-neutral-500 transition-transform duration-200 ${expandedId === commission.id ? 'rotate-180' : ''}`} />
+                                                        </div>
+                                                    </div>
                                             </div>
-                                            <div className="text-neutral-400 text-sm truncate pr-16">{commission.client_email}</div>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="text-neutral-400 text-sm truncate pr-16">{commission.client_email}</div>
+                                                {commission.status === 'muted' && (
+                                                    <div className="text-[10px] text-orange-400/70 font-medium">
+                                                        Mute expires: {bans.find(b => b.fingerprint_hash === commission.fingerprint_hash)?.expires_at 
+                                                            ? new Date(bans.find(b => b.fingerprint_hash === commission.fingerprint_hash)!.expires_at!).toLocaleDateString('en-GB') 
+                                                            : 'indefinite'}
+                                                    </div>
+                                                )}
+                                            </div>
                                             {commission.is_self_referral_flag && (
                                                 <div className="space-y-1 mt-2">
                                                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded w-fit">
@@ -1324,8 +1689,9 @@ export default function AdminCommissionsPage() {
                                 </div>
                             ))}
                         </div>
-                    </>
-                )}
+                            </>
+                        ) : null}
+                </div>
             </div>
 
             {/* Custom Delete Confirmation Modal */}
@@ -1447,6 +1813,134 @@ export default function AdminCommissionsPage() {
                 title="Update Status?"
                 message={`Are you sure you want to change the status to "${STATUS_OPTIONS.find(o => o.value === pendingStatusChange?.status)?.label}"? This may trigger automated emails and notifications.`}
                 confirmText="Yes, Update Status"
+                cancelText="Cancel"
+                variant="primary"
+            />
+
+            {/* Custom Mute/Ban Confirmation Modal */}
+            <AnimatePresence>
+                {restrictionToConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md"
+                        onClick={() => setRestrictionToConfirm(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-surface border border-foreground/10 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden"
+                        >
+                            {/* Decorative background gradient */}
+                            <div className={`absolute -top-24 -right-24 w-48 h-48 ${restrictionToConfirm.type === 'muted' ? 'bg-orange-500/10' : 'bg-red-500/10'} rounded-full blur-3xl pointer-events-none`} />
+
+                            <div className="relative">
+                                <div className={`w-14 h-14 ${restrictionToConfirm.type === 'muted' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'} rounded-2xl flex items-center justify-center mb-6 border`}>
+                                    {restrictionToConfirm.type === 'muted' ? <Clock size={28} /> : <Ban size={28} />}
+                                </div>
+
+                                <h3 className="text-2xl font-serif text-foreground mb-2 flex items-center gap-2">
+                                    {restrictionToConfirm.type === 'muted' ? 'Mute' : 'Ban'} Restriction
+                                    <span className="text-xs font-sans font-normal text-neutral-500 bg-foreground/5 px-2 py-0.5 rounded-full border border-foreground/10">Admin Tool</span>
+                                </h3>
+                                <p className="text-neutral-400 text-sm leading-relaxed">
+                                    You are applying a <strong className="text-foreground capitalize">{restrictionToConfirm.type}</strong> restriction to <strong className="text-accent">{restrictionToConfirm.clientName}</strong>. 
+                                    This will {restrictionToConfirm.type === 'muted' ? 'temporarily' : 'permanently'} restrict access for their device and account.
+                                </p>
+                            </div>
+
+                            {restrictionToConfirm.type === 'muted' ? (
+                                <div className="space-y-3 relative">
+                                    <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase px-1">Select Duration</p>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {[
+                                            { label: '24 Hours', desc: '1 Day restriction', value: 24 * 60 * 60 * 1000 },
+                                            { label: '1 Week', desc: '7 Days restriction', value: 7 * 24 * 60 * 60 * 1000 },
+                                            { label: '1 Month', desc: '30 Days restriction', value: 30 * 24 * 60 * 60 * 1000 }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.value}
+                                                onClick={() => setMuteDuration(opt.value)}
+                                                className={`flex items-center justify-between p-3.5 rounded-xl border transition-all text-left ${
+                                                    muteDuration === opt.value 
+                                                        ? 'bg-orange-500/10 border-orange-500/40' 
+                                                        : 'bg-foreground/5 border-foreground/5 hover:border-foreground/10'
+                                                }`}
+                                            >
+                                                <div>
+                                                    <p className={`text-sm font-bold ${muteDuration === opt.value ? 'text-orange-400' : 'text-foreground'}`}>{opt.label}</p>
+                                                    <p className="text-[10px] text-neutral-500">{opt.desc}</p>
+                                                </div>
+                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${muteDuration === opt.value ? 'border-orange-500' : 'border-neutral-700'}`}>
+                                                    {muteDuration === opt.value && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-4">
+                                    <p className="text-xs text-red-100/90 leading-relaxed font-medium">
+                                        This is a <strong>Permanent Ban</strong>. The user will be unable to submit any future commissions from this device/account unless manually unbanned.
+                                    </p>
+                                    <label className="flex items-start gap-3 cursor-pointer group">
+                                        <div className="pt-0.5">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={isBanConfirmed} 
+                                                onChange={(e) => setIsBanConfirmed(e.target.checked)}
+                                                className="w-4 h-4 rounded border-red-500/30 bg-red-500/20 text-red-500 focus:ring-red-500/40"
+                                            />
+                                        </div>
+                                        <span className="text-xs text-neutral-400 group-hover:text-neutral-300 transition-colors">
+                                            I understand this is permanent and want to proceed with banning this device.
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
+
+                            <div className="flex flex-col-reverse md:flex-row gap-3 justify-end pt-2 relative">
+                                <button
+                                    onClick={() => setRestrictionToConfirm(null)}
+                                    className="px-6 py-3 rounded-xl font-bold text-xs text-neutral-400 hover:text-foreground hover:bg-foreground/5 transition-all md:w-auto w-full uppercase tracking-widest"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmRestriction}
+                                    disabled={quickBanLoading === restrictionToConfirm.commissionId || (restrictionToConfirm.type === 'banned' && !isBanConfirmed)}
+                                    className={`px-8 py-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 md:w-auto w-full uppercase tracking-tighter disabled:opacity-30 disabled:cursor-not-allowed ${
+                                        restrictionToConfirm.type === 'muted' 
+                                            ? 'bg-orange-500 text-foreground shadow-lg shadow-orange-500/20 hover:bg-orange-600' 
+                                            : 'bg-red-500 text-foreground shadow-lg shadow-red-500/20 hover:bg-red-600'
+                                    }`}
+                                >
+                                    {quickBanLoading === restrictionToConfirm.commissionId ? (
+                                        <Loader2 className="animate-spin" size={16} />
+                                    ) : (
+                                        <>
+                                            Confirm {restrictionToConfirm.type}
+                                            <ArrowRight size={16} />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Lift Restriction Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={!!liftRestrictionHash}
+                onClose={() => setLiftRestrictionHash(null)}
+                onConfirm={confirmLiftRestriction}
+                title="Lift Device Restriction?"
+                message="Are you sure you want to lift the restriction for this device and user? They will be allowed to submit new commission requests immediately."
+                confirmText="Yes, Lift Restriction"
                 cancelText="Cancel"
                 variant="primary"
             />

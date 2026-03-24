@@ -109,13 +109,16 @@ const SafeTurnstile = forwardRef<SafeTurnstileHandle, SafeTurnstileProps>(
   const isNear = useIsNearViewport(containerRef, rootMargin);
   const [renderGeneration, setRenderGeneration] = useState(0);
 
-  // Use test key in localhost if none provided
+  // Use test key in localhost ONLY if no environment variable provided
   const siteKey = useMemo(() => {
     if (propSiteKey) return propSiteKey;
+    const envKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    if (envKey) return envKey;
+    
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       return '1x00000000000000000000AA'; // Standard Turnstile testing key (Always passes)
     }
-    return process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+    return '';
   }, [propSiteKey]);
 
   // ── Callback refs for stability ───────────────────────────────────────────

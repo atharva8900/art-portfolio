@@ -9,7 +9,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e?style=for-the-badge&logo=supabase)](https://supabase.io/)
 [![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000?style=for-the-badge&logo=vercel)](https://vercel.com/)
 
-**[🌐 Live Site](https://atharvasherlekar.art)** · **[📸 Instagram](https://www.instagram.com/atharva_sherlekar_art/)**
+**[🌐 Live Site](https://atharva-sherlekar-art.vercel.app/)** *(Custom Domain Pending)* · **[📸 Instagram](https://www.instagram.com/atharva_sherlekar_art/)**
 
 </div>
 
@@ -66,11 +66,14 @@ A personal dashboard that appears after a user completes a commission, showing a
 - **Cloudflare Turnstile** (CAPTCHA) for all public-facing form submissions (commissions, referral generation).
 - **Supabase Row Level Security (RLS)** policies on all tables — no sensitive data is publicly readable.
 - **Server-side token validation** via the Turnstile secret key API.
-- **Browser Fingerprinting** to detect and block self-referral abuse.
+- **Advanced Device Fingerprinting** (`FingerprintJS`) & **Account Tracking** used across the application to prevent abuse:
+  - Blocks self-referral fraud via device and `localStorage` locks.
+  - Rate limits the AI Chat Assistant (25 messages/day per device).
+  - Rate limits promo code validations (5 tries/day per device).
+  - Restricts aggregate referral link generation (Max 3 links per device).
+  - **Comprehensive Ban System**: Enables temporary mutes or permanent bans for commission form submissions. Restrictions are applied via both **Device Fingerprint** and **Authenticated User Email**, preventing users from bypassing bans by simply switching devices or logging into different accounts.
 - All admin routes are protected by a custom admin authentication middleware.
 - All API routes validate inputs using **Zod** schemas.
-
-### 🎭 Premium UI & Animations
 - **Custom Pencil/Eraser Cursor**: Animated cursor that automatically hides on interactive form elements.
 - **Lenis Smooth Scroll**: Buttery-smooth scrolling throughout the entire site.
 - **Framer Motion**: Page transitions, scroll-reveal animations, and micro-interactions on every interactive element.
@@ -95,7 +98,7 @@ A personal dashboard that appears after a user completes a commission, showing a
 | **Animation** | Framer Motion, GSAP (`@gsap/react`) |
 | **3D / Graphics** | Three.js (for advanced visual effects) |
 | **Bot Protection** | Cloudflare Turnstile |
-| **Fingerprinting** | FingerprintJS |
+| **Fingerprinting** | FingerprintJS (Rate Limiting, Anti-Fraud, Device Bans) |
 | **Email** | Nodemailer (Gmail transport) |
 | **Notifications** | Discord Webhook |
 | **Analytics** | Vercel Analytics, Vercel Speed Insights, Google Analytics |
@@ -154,6 +157,14 @@ src/
 
 ## 🚀 Getting Started
 
+### Prerequisites
+
+Ensure you have the following installed before proceeding:
+- **Node.js**: v18.17 or higher
+- **npm**, **yarn**, or **pnpm**
+- **Git**
+- *Optional:* Supabase CLI (for local database development)
+
 ### 1. Clone the repository
 
 ```bash
@@ -169,6 +180,8 @@ Copy the example file and fill in your credentials:
 ```bash
 cp .env.example .env.local
 ```
+
+*Tip: You can obtain the necessary API keys from their respective developer dashboards: [Google Cloud Console](https://console.cloud.google.com/), [Razorpay Dashboard](https://dashboard.razorpay.com/), and [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile).*
 
 | Variable | Description |
 |---|---|
@@ -197,13 +210,63 @@ Run the SQL scripts in your Supabase SQL editor in the following order:
 1. `supabase/schema.sql` — Creates all tables and RLS policies.
 2. `supabase/migration.sql` — Applies subsequent schema updates.
 
-### 4. Run locally
+### 4. Admin Account Setup
+
+To gain access to the `/admin` dashboard:
+1. Ensure your email is listed in the `NEXT_PUBLIC_ADMIN_EMAILS` environment variable.
+2. Sign in via the frontend using that exact email (Google OAuth or Magic Link).
+3. The application will automatically recognize you as an admin based on the environment variable match.
+
+### 5. Run locally
 
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### 6. Essential Commands
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Run ESLint to find issues
+npm run lint
+```
+
+---
+
+## 📸 Screenshots
+> **Note to Developer:** Embed screenshots or GIFs here showing the dark-theme UI, Art Visualizer, and Admin dashboards to visually demonstrate the platform's premium aesthetic. 
+> Example: `![Homepage](/public/screenshots/home.png)`
+
+---
+
+## 🌐 Deployment
+
+The application is optimized for deployment on **Vercel**. 
+1. Connect your GitHub repository to Vercel.
+2. Add all the environment variables from `.env.local` into the Vercel project settings.
+3. Vercel will auto-detect Next.js and use the `next build` command.
+4. Deploy!
+
+---
+
+## 🛠️ Troubleshooting & Dev Tips
+
+- **NextAuth Secret Issue:** If authentication isn't working locally, ensure you have generated a strong `NEXTAUTH_SECRET`. You can generate one via `openssl rand -base64 32`.
+- **Razorpay Webhooks Location:** To test webhooks locally for payment confirmations, you will need to tunnel your localhost (using `ngrok` or similar) and configure the webhook URL in the Razorpay test dashboard.
+- **Turnstile in Dev:** Cloudflare provides "dummy" test keys for local testing to bypass CAPTCHA solving. Check their [developer docs](https://developers.cloudflare.com/turnstile/) if you want to use the test keys to speed up local development.
+
+---
+
+## 📞 Support & Contact
+
+For technical inquiries regarding the codebase or if you encounter issues during setup, please contact the repository owner or open an issue on the repository.
 
 ---
 

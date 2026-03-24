@@ -10,13 +10,14 @@ import {
     hasReachedCommissionCap,
     isReferralExpired
 } from '@/lib/db/referrals';
-import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount } from '@/lib/db/commissions';
+import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount, CommissionData } from '@/lib/db/commissions';
 import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth';
 import { sendDiscordNotification } from '@/lib/api/discord';
 import { getOfferById, incrementOfferUsage } from '@/lib/db/offers';
 import { commissionSchema } from '@/lib/utils/schemas';
+import { checkDeviceBanStatus } from '@/lib/db/rate-limits';
 
 
 
@@ -35,6 +36,9 @@ function getClientIP(request: NextRequest): string {
 
 export async function POST(request: NextRequest) {
     try {
+        const session = await getServerSession(authOptions);
+        const submitterEmail = session?.user?.email || null;
+
         const jsonBody = await request.json();
         const result = commissionSchema.safeParse(jsonBody);
 
@@ -122,10 +126,16 @@ export async function POST(request: NextRequest) {
         // const timelapseCost = timelapse_recording ? 500 : 0;
         // const extrasTotal = backgroundCost + timelapseCost; // Unused here, calculated later for saving
 
-        // ... validation logic ...
-
-
         // Required fields are now handled by Zod
+
+        // --- Mute / Ban Check ---
+        const banStatus = await checkDeviceBanStatus(fingerprint_hash || '', submitterEmail);
+        if (banStatus.isBlocked) {
+            return NextResponse.json({
+                error: banStatus.reason || 'Your device or account is restricted from submitting commissions.'
+            }, { status: 403 });
+        }
+        // ------------------------
 
         if (await hasActiveCommission(email)) {
             return NextResponse.json({
@@ -530,9 +540,14 @@ export async function POST(request: NextRequest) {
 
                     <p><strong>Next Steps:</strong></p>
                     <ul>
-                        <li><strong>Advance Payment:</strong> ₹${Math.round(totalAmount * 0.5)} (50% Deposit to book your slot)</li>
-                        <li><strong>Photo Review:</strong> I have received your reference photo(s). I will review the quality and get back to you shortly to confirm and discuss the timeline!</li>
+                        <li><strong>Photo Review:</strong> I have received your reference photo(s). I will review the quality and discussion the timeline shortly!</li>
+                        <li><strong>Acceptance & Payment:</strong> Once accepted, a <strong>50% deposit payment link</strong> (₹${Math.round(totalAmount * 0.5)}) will be generated for you.</li>
+                        <li><strong>Notification:</strong> You will receive an email with the payment link once your request is approved. It will also be available on your dashboard below.</li>
                     </ul>
+                    <div style="margin-top: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border: 1px solid #c2e0ff; text-align: center;">
+                        <p style="margin: 0 0 10px; font-size: 14px; color: #0052cc;"><strong>TRACK YOUR ORDER ANYTIME</strong></p>
+                        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://atharva8900.art'}/client/dashboard" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: bold;">GO TO CLIENT DASHBOARD →</a>
+                    </div>
                     <br />
                     <p>Best regards,</p>
                     <p><strong>Atharva Sherlekar</strong></p>
@@ -619,7 +634,7 @@ export async function POST(request: NextRequest) {
             const commissionableAmount = totalBasePrice + backgroundCost;
             const referrersShare = commissionEligible ? (commissionableAmount * 0.20) : 0;
 
-            await saveCommission({
+            const commissionData: CommissionData = {
                 id: commissionId,
                 client_name: name,
                 client_email: email,
@@ -652,7 +667,13 @@ export async function POST(request: NextRequest) {
                 razorpay_payment_id: razorpay_payment_id || undefined,
                 payment_status: isWaitlist ? 'reservation_paid' : 'pending',
                 is_self_referral_flag: isSelfReferralFlag,
-                flag_reason: flagReason
+                flag_reason: flagReason,
+            };
+
+            await saveCommission({
+                ...commissionData,
+                fingerprint_hash: fingerprint_hash || null,
+                submitter_email: submitterEmail
             });
 
             // LAYER 6: Post-Save Referral Tracking
