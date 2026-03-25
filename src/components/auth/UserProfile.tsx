@@ -57,7 +57,7 @@ export default function UserProfile() {
                         unoptimized
                     />
                 ) : (
-                    <div className="w-8 h-8 rounded-full bg-accent text-zinc-950 flex items-center justify-center font-bold text-xs uppercase">
+                    <div className="w-8 h-8 rounded-full bg-foreground text-background border border-foreground/20 flex items-center justify-center font-bold text-xs uppercase">
                         {(user.name || user.email || '?').charAt(0)}
                     </div>
                 )}

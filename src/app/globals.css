@@ -12,20 +12,17 @@
 
 .light {
   --background: 242 242 242;
-  /* sleek light grey background */
   --foreground: 30 30 30;
-  /* dark grey text */
   --surface: 255 255 255;
-  /* pure white surface / cards */
   --accent: 120 120 120;
-  /* mid-grey accent */
   --border: 215 215 215;
-  /* softer grey border */
 }
 
 @layer base {
-  html {
+  html,
+  body {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
@@ -38,7 +35,6 @@ body:has(iframe:hover) .custom-cursor-element {
   transition: opacity 0.2s ease;
 }
 
-/* Custom Scrollbar for ArtVisualizer Drawer */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--foreground), 0.5) transparent;
@@ -50,29 +46,32 @@ body:has(iframe:hover) .custom-cursor-element {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(var(--foreground), 0.05);
-  border-radius: 10px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--foreground), 0.6);
-  border-radius: 10px;
+  background-color: rgba(var(--foreground), 0.2);
+  border-radius: 20px;
   border: 3px solid transparent;
   background-clip: content-box;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(var(--foreground), 0.8);
-}
-
-/* Hide scrollbar for elements with no-scrollbar */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
 .no-scrollbar {
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply backdrop-blur-md border border-white/10 dark:border-white/5;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(var(--foreground), 0.3);
+  }
 }

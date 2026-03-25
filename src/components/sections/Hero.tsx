@@ -118,8 +118,8 @@ export default function Hero() {
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
-                <div className="space-y-2">
-                    <h1 className="font-serif text-6xl md:text-8xl lg:text-9xl tracking-tight text-foreground leading-[0.8] mb-2 flex flex-col items-center">
+                <div className="space-y-4">
+                    <h1 className="font-serif text-5xl md:text-7xl lg:text-9xl tracking-tight text-foreground leading-[0.9] md:leading-[0.8] mb-2 flex flex-col items-center">
                         <span className="block overflow-hidden pb-4">
                             {/* Scroll Wrapper */}
                             <span ref={beyondScrollRef} className="block origin-bottom-right">

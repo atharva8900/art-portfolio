@@ -107,7 +107,7 @@ export default function ReferralGenerator() {
     };
 
     return (
-        <section id="referrals" className="py-24 px-6 md:px-12 bg-background">
+        <section id="referrals" className="pt-32 pb-24 px-6 md:px-12 bg-background">
             <div className="max-w-xl mx-auto text-center space-y-8">
                 <div>
                     <h2 className="font-serif text-2xl md:text-3xl text-foreground mb-2">Earn 20% Commission Per Referral</h2>
@@ -153,154 +153,158 @@ export default function ReferralGenerator() {
                                 </div>
                             </div>
                         ) : !referralLink ? (
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="space-y-4">
-                                    <input
-                                        required
-                                        name="name"
-                                        type="text"
-                                        defaultValue={user.name || ''}
-                                        placeholder="Your Name"
-                                        className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
-                                    />
-                                    <input
-                                        required
-                                        name="email"
-                                        type="email"
-                                        defaultValue={user.email || ''}
-                                        placeholder="Your Email"
-                                        readOnly
-                                        className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors opacity-75"
-                                    />
-                                    <input
-                                        required
-                                        name="phone"
-                                        type="tel"
-                                        placeholder="Your Phone (for verification)"
-                                        className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
-                                    />
-                                    <input
-                                        name="instagram"
-                                        type="text"
-                                        placeholder="Your Instagram (optional)"
-                                        className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
-                                    />
-                                </div>
+                            <div className="bg-surface border border-foreground/10 px-4 py-8 md:p-8 rounded-lg">
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div className="space-y-4">
+                                        <input
+                                            required
+                                            name="name"
+                                            type="text"
+                                            defaultValue={user.name || ''}
+                                            placeholder="Your Name"
+                                            className="w-full bg-background/50 border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
+                                        />
+                                        <input
+                                            required
+                                            name="email"
+                                            type="email"
+                                            defaultValue={user.email || ''}
+                                            placeholder="Your Email"
+                                            readOnly
+                                            className="w-full bg-background/50 border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors opacity-75"
+                                        />
+                                        <input
+                                            required
+                                            name="phone"
+                                            type="tel"
+                                            placeholder="Your Phone (for verification)"
+                                            className="w-full bg-background/50 border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
+                                        />
+                                        <input
+                                            name="instagram"
+                                            type="text"
+                                            placeholder="Your Instagram (optional)"
+                                            className="w-full bg-background/50 border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
+                                        />
+                                    </div>
 
-                                {error && <p className="text-red-400 text-sm">{error}</p>}
+                                    {error && <p className="text-red-400 text-sm">{error}</p>}
 
-                                <div className="flex justify-center items-center overflow-hidden">
-                                    <SafeTurnstile
-                                        onSuccess={handleTurnstileSuccess}
-                                    />
-                                </div>
+                                    <div className="flex justify-center items-center overflow-hidden">
+                                        <SafeTurnstile
+                                            onSuccess={handleTurnstileSuccess}
+                                        />
+                                    </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading || (!turnstileToken)}
-                                    className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-neutral-200 hover:text-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    {loading ? <Loader2 className="animate-spin" /> : 'Generate Link'}
-                                </button>
-                            </form>
+                                    <button
+                                        type="submit"
+                                        disabled={loading || (!turnstileToken)}
+                                        className="w-full bg-foreground text-background font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-neutral-200 hover:text-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {loading ? <Loader2 className="animate-spin" /> : 'Generate Link'}
+                                    </button>
+                                </form>
+                            </div>
                         ) : (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-surface p-6 border border-accent/20 rounded-lg space-y-4"
-                            >
-                                <p className={`${infoMessage ? 'text-amber-400' : 'text-emerald-400'} font-medium`}>
-                                    {infoMessage ? 'Existing Active Link Retrieved' : 'Link Generated Successfully!'}
-                                </p>
-
-                                {infoMessage && (
-                                    <p className="text-neutral-400 text-sm bg-amber-400/10 border border-amber-400/20 p-2 rounded">
-                                        {infoMessage}
+                            <div className="bg-surface border border-foreground/10 px-4 py-8 md:p-8 rounded-lg">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="space-y-4"
+                                >
+                                    <p className={`${infoMessage ? 'text-amber-400' : 'text-emerald-400'} font-medium`}>
+                                        {infoMessage ? 'Existing Active Link Retrieved' : 'Link Generated Successfully!'}
                                     </p>
-                                )}
 
-                                <div className="flex items-center gap-2 bg-background/50 p-3 rounded-md border border-foreground/10">
-                                    <code className="text-neutral-300 text-sm flex-1 truncate text-left">{referralLink}</code>
-                                    <button
-                                        onClick={copyToClipboard}
-                                        className="text-neutral-400 hover:text-foreground transition-colors p-1"
-                                        title="Copy Link"
-                                    >
-                                        {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
-                                    </button>
-                                    <button
-                                        onClick={() => setShowQR(true)}
-                                        className="text-neutral-400 hover:text-foreground transition-colors p-1"
-                                        title="Show QR Code"
-                                    >
-                                        <QrCode size={18} />
-                                    </button>
-                                </div>
-
-                                <p className="text-xs text-neutral-500">
-                                    Share this link. You will earn 20% for every confirmed commission.
-                                </p>
-
-                                {!infoMessage && (
-                                    <button
-                                        onClick={() => setReferralLink('')}
-                                        className="text-xs text-neutral-400 hover:text-foreground underline mt-2"
-                                    >
-                                        Generate another
-                                    </button>
-                                )}
-                                {infoMessage && (
-                                    <p className="text-xs text-neutral-500 mt-2">
-                                        Note: You can generate a new link only after this one expires (3 commissions).
-                                    </p>
-                                )}
-
-                                {/* QR Code Modal */}
-                                <AnimatePresence>
-                                    {showQR && (
-                                        <motion.div
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="fixed inset-0 z-[6000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-                                            onClick={() => setShowQR(false)}
-                                        >
-                                            <motion.div
-                                                initial={{ scale: 0.9, opacity: 0 }}
-                                                animate={{ scale: 1, opacity: 1 }}
-                                                exit={{ scale: 0.9, opacity: 0 }}
-                                                className="bg-background border border-foreground/10 p-8 rounded-3xl max-w-sm w-full text-center space-y-6 shadow-2xl relative"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <button
-                                                    onClick={() => setShowQR(false)}
-                                                    className="absolute top-4 right-4 p-2 text-neutral-500 hover:text-foreground hover:bg-foreground/10 rounded-full transition-colors"
-                                                >
-                                                    <X size={20} />
-                                                </button>
-
-                                                <div className="space-y-2">
-                                                    <h3 className="font-serif text-xl text-foreground mt-2">Your Referral QR</h3>
-                                                    <p className="text-xs text-neutral-400">Scan to visit the portfolio with your referral applied</p>
-                                                </div>
-
-                                                <div className="bg-white p-4 rounded-2xl mx-auto inline-block border-4 border-accent/20">
-                                                    <QRCodeSVG
-                                                        value={referralLink}
-                                                        size={220}
-                                                        level="H"
-                                                        includeMargin={false}
-                                                    />
-                                                </div>
-
-                                                <div className="pt-2">
-                                                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Scan to open link</p>
-                                                </div>
-                                            </motion.div>
-                                        </motion.div>
+                                    {infoMessage && (
+                                        <p className="text-neutral-400 text-sm bg-amber-400/10 border border-amber-400/20 p-2 rounded">
+                                            {infoMessage}
+                                        </p>
                                     )}
-                                </AnimatePresence>
-                            </motion.div>
+
+                                    <div className="flex items-center gap-2 bg-background/30 p-3 rounded-md border border-foreground/10">
+                                        <code className="text-neutral-300 text-sm flex-1 truncate text-left">{referralLink}</code>
+                                        <button
+                                            onClick={copyToClipboard}
+                                            className="text-neutral-400 hover:text-foreground transition-colors p-1"
+                                            title="Copy Link"
+                                        >
+                                            {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
+                                        </button>
+                                        <button
+                                            onClick={() => setShowQR(true)}
+                                            className="text-neutral-400 hover:text-foreground transition-colors p-1"
+                                            title="Show QR Code"
+                                        >
+                                            <QrCode size={18} />
+                                        </button>
+                                    </div>
+
+                                    <p className="text-xs text-neutral-500">
+                                        Share this link. You will earn 20% for every confirmed commission.
+                                    </p>
+
+                                    {!infoMessage && (
+                                        <button
+                                            onClick={() => setReferralLink('')}
+                                            className="text-xs text-neutral-400 hover:text-foreground underline mt-2"
+                                        >
+                                            Generate another
+                                        </button>
+                                    )}
+                                    {infoMessage && (
+                                        <p className="text-xs text-neutral-500 mt-2">
+                                            Note: You can generate a new link only after this one expires (3 commissions).
+                                        </p>
+                                    )}
+
+                                    {/* QR Code Modal moved outside or kept relative to glass - QR should ideally be pure background */}
+                                    <AnimatePresence>
+                                        {showQR && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-[6000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+                                                onClick={() => setShowQR(false)}
+                                            >
+                                                <motion.div
+                                                    initial={{ scale: 0.9, opacity: 0 }}
+                                                    animate={{ scale: 1, opacity: 1 }}
+                                                    exit={{ scale: 0.9, opacity: 0 }}
+                                                    className="bg-background border border-foreground/10 p-8 rounded-3xl max-w-sm w-full text-center space-y-6 shadow-2xl relative"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <button
+                                                        onClick={() => setShowQR(false)}
+                                                        className="absolute top-4 right-4 p-2 text-neutral-500 hover:text-foreground hover:bg-foreground/10 rounded-full transition-colors"
+                                                    >
+                                                        <X size={20} />
+                                                    </button>
+
+                                                    <div className="space-y-2">
+                                                        <h3 className="font-serif text-xl text-foreground mt-2">Your Referral QR</h3>
+                                                        <p className="text-xs text-neutral-400">Scan to visit the portfolio with your referral applied</p>
+                                                    </div>
+
+                                                    <div className="bg-white p-4 rounded-2xl mx-auto inline-block border-4 border-accent/20">
+                                                        <QRCodeSVG
+                                                            value={referralLink}
+                                                            size={220}
+                                                            level="H"
+                                                            includeMargin={false}
+                                                        />
+                                                    </div>
+
+                                                    <div className="pt-2">
+                                                        <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Scan to open link</p>
+                                                    </div>
+                                                </motion.div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+                            </div>
                         )}
                     </>
                 )}

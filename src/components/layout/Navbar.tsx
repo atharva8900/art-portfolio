@@ -109,7 +109,7 @@ export default function Navbar() {
                 </Link>
 
                 {/* Desktop Navigation & Socials */}
-                <div className="hidden md:flex items-center gap-2 text-foreground/80">
+                <div className="hidden lg:flex items-center gap-2 text-foreground/80">
                     <nav className="flex items-center gap-2 mr-4">
                         {navLinks.filter(l => l.name !== 'Home').map(link => (
                             <MagneticLink
@@ -139,7 +139,7 @@ export default function Navbar() {
                 </div>
 
                 {/* Mobile Menu Toggle */}
-                <div className="flex md:hidden items-center gap-2 sm:gap-4 shrink-0 z-50 relative">
+                <div className="flex lg:hidden items-center gap-2 sm:gap-4 shrink-0 z-50 relative">
                     <ThemeToggle />
                     <UserProfile />
                     <button

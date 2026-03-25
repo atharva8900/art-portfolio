@@ -107,7 +107,11 @@ export default function CustomCursor() {
     const isVisibleRef = useRef(true);
 
     useEffect(() => {
-        if (typeof window !== "undefined" && window.innerWidth < 768) return;
+        if (typeof window === "undefined") return;
+
+        // Hide on touch devices or small screens
+        const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+        if (!isFinePointer || window.innerWidth < 1024) return;
 
         // Initialize points in center
         const startX = window.innerWidth / 2;
