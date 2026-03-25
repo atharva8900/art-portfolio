@@ -148,7 +148,7 @@ export default function ReferralGenerator() {
                             <div className="space-y-6">
                                 <div className="bg-surface border border-foreground/10 p-8 rounded-lg">
                                     <AuthOptions
-                                        description="Sign in with Google to create your referral link, or use your email for a secure login link."
+                                        description="Sign in with Google to create your referral link, or use your email to receive a passwordless secure login link."
                                     />
                                 </div>
                             </div>

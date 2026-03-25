@@ -192,16 +192,24 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous (public) key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only) |
 | `NEXTAUTH_URL` | Your site URL (e.g., `http://localhost:3000`) |
+| `NEXT_PUBLIC_BASE_URL` | Your base URL (same as NEXTAUTH_URL in dev) |
 | `NEXTAUTH_SECRET` | A random 32+ char secret string |
 | `GOOGLE_CLIENT_ID` | Google OAuth App Client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth App Client Secret |
-| `RAZORPAY_KEY_ID` | Razorpay API Key ID |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Razorpay API Key ID (client-side) |
+| `RAZORPAY_KEY_ID` | Razorpay API Key ID (server-side) |
 | `RAZORPAY_KEY_SECRET` | Razorpay API Key Secret |
+| `RAZORPAY_WEBHOOK_SECRET` | (Optional) Razorpay Webhook Secret for auto-confirming payments |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile Site Key |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile Secret Key |
 | `DISCORD_WEBHOOK_URL` | Discord webhook for order notifications |
-| `GMAIL_USER` | Gmail address for transactional emails |
-| `GMAIL_PASS` | Gmail App-Specific Password |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Google Gemini API Key for chatbot |
+| `NEXT_PUBLIC_ENABLE_CHATBOT` | Boolean toggle for the AI assistant |
+| `EMAIL_SERVER_HOST` | SMTP server host (e.g., smtp.gmail.com) |
+| `EMAIL_SERVER_PORT` | SMTP server port (e.g., 587) |
+| `EMAIL_SERVER_USER` | SMTP server username (email address) |
+| `EMAIL_SERVER_PASSWORD` | SMTP server password (or app password) |
+| `EMAIL_FROM` | The "from" email address for outgoing mail |
 
 ### 3. Set up Supabase
 

@@ -1151,7 +1151,7 @@ export default function CommissionForm() {
                     <div className="bg-surface border border-foreground/10 p-8 rounded-lg text-center">
                         <h3 className="text-xl text-foreground mb-4">Sign in to request a commission</h3>
                         <AuthOptions
-                            description="To ensure high-quality communication and tracking, please sign in with Google or use your email for a secure login link."
+                            description="To ensure high-quality communication and tracking, please sign in with Google or use your email to receive a passwordless secure login link."
                         />
                     </div>
                 ) : hasActive ? (
