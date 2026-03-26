@@ -101,7 +101,8 @@ export default function GrainOverlay() {
     if (!canvas) return;
 
     // ── Renderer ─────────────────────────────────────────────────────────
-    const dpr = Math.min(window.devicePixelRatio, 1.0); // cap at 1× on mobile
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const dpr = isTouchDevice ? 0.75 : Math.min(window.devicePixelRatio, 1.5); // drop DPR on touch devices
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
     renderer.setPixelRatio(dpr);
     renderer.setClearColor(0x000000, 0);
@@ -164,6 +165,12 @@ export default function GrainOverlay() {
     // ── Render loop (Throttled by RAF but only draws if flag is set) ─────
     let raf: number;
     let visible = true;
+    let isMenuOpen = false;
+
+    const onMenuToggle = (e: Event) => {
+      isMenuOpen = (e as CustomEvent).detail.isOpen;
+    };
+    window.addEventListener("navbar-menu-toggle", onMenuToggle);
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
@@ -174,7 +181,7 @@ export default function GrainOverlay() {
         requestRender();
       }
 
-      if (!visible || !needsRender) return;
+      if (!visible || !needsRender || isMenuOpen) return;
       
       renderer.render(scene, camera);
       needsRender = false;
@@ -195,6 +202,7 @@ export default function GrainOverlay() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("mousemove", onMouse);
       window.removeEventListener("touchmove", onTouch);
+      window.removeEventListener("navbar-menu-toggle", onMenuToggle);
       renderer.dispose();
       geometry.dispose();
       material.dispose();

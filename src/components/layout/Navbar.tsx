@@ -21,6 +21,7 @@ const navLinks = [
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
+    const [showBlur, setShowBlur] = useState(false);
     const [activeSection, setActiveSection] = useState('Home');
     const [isMounted, setIsMounted] = useState(false);
 
@@ -28,13 +29,23 @@ export default function Navbar() {
         setIsMounted(true);
     }, []);
 
-    // Lock body scroll when menu is open
+    // Lock body scroll and sync with GrainOverlay
     useEffect(() => {
-        if (!document?.body) return; // Safety check
+        if (!document?.body) return;
+        
+        // Notify GrainOverlay to pause/resume
+        window.dispatchEvent(new CustomEvent('navbar-menu-toggle', { 
+            detail: { isOpen } 
+        }));
+
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            // Defer blur effect to prevent GPU crash during initial animation
+            const timer = setTimeout(() => setShowBlur(true), 250);
+            return () => clearTimeout(timer);
         } else {
             document.body.style.overflow = 'unset';
+            setShowBlur(false);
         }
         return () => { 
             if (document?.body) document.body.style.overflow = 'unset'; 
@@ -155,25 +166,17 @@ export default function Navbar() {
                     </div>
                 )}
 
-                {isMounted && (
-                    <div className="hidden lg:flex items-center gap-6">
-                        <UserProfile />
-                        <ThemeToggle />
-                    </div>
-                )}
-
-                {/* Mobile Menu Toggle */}
-                <div className="flex lg:hidden items-center gap-2 sm:gap-4 shrink-0 z-50 relative">
+                <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 z-50 relative">
                     {isMounted && (
-                        <>
+                        <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
                             <ThemeToggle />
                             <UserProfile />
-                        </>
+                        </div>
                     )}
                     <button
-                            onClick={() => setIsOpen(!isOpen)}
+                        onClick={() => setIsOpen(!isOpen)}
                         disabled={!isMounted}
-                        className="text-foreground hover:text-accent transition-colors p-1 disabled:opacity-50"
+                        className="lg:hidden text-foreground hover:text-accent transition-colors p-1 disabled:opacity-50"
                         aria-label="Toggle menu"
                     >
                         {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -189,13 +192,13 @@ export default function Navbar() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed inset-0 z-40 bg-background/95 backdrop-blur-xl overflow-y-auto overscroll-contain"
+                        className={`fixed inset-0 z-40 bg-background/95 overflow-y-auto overscroll-contain transition-all duration-300 ${showBlur ? 'backdrop-blur-xl' : ''}`}
                     >
                         <div className="min-h-full w-full flex flex-col items-center justify-start pt-28 pb-12 px-6">
                             <nav className="flex flex-col items-center gap-4 w-full max-w-sm">
                                 {navLinks.map((link, idx) => (
                                     <motion.a
-                                        key={link.name}
+                                        key={`mobile-${link.name}`}
                                         href={link.href}
                                         onClick={(e) => scrollToSection(e, link.href)}
                                         initial={{ opacity: 0, y: 20 }}

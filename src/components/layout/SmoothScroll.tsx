@@ -16,8 +16,8 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         // Disable Lenis on mobile/touch devices for better performance/INP
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        if (window.innerWidth < 768 || isTouchDevice) return;
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (isTouchDevice) return;
 
         const lenis = new Lenis({
             // Optional: tune Lenis settings here for weight/feel

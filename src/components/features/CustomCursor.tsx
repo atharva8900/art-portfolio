@@ -110,9 +110,9 @@ export default function CustomCursor() {
         if (typeof window === "undefined") return;
 
         // Hide on touch devices or small screens
-        const isFinePointer = window.matchMedia('(pointer: fine)').matches;
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        if (!isFinePointer || isTouchDevice || window.innerWidth < 1024) return;
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (isTouchDevice) return;
+        if (window.innerWidth < 1024) return;
 
         // Initialize points in center
         const startX = window.innerWidth / 2;
