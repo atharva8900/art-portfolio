@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,6 +12,11 @@ export default function UserProfile() {
     const { data: session, status } = useSession();
     const [showMenu, setShowMenu] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const ALLOWED_EMAILS = ADMIN_EMAILS;
 
@@ -27,7 +32,7 @@ export default function UserProfile() {
 
     const user = session?.user;
 
-    if (!user) {
+    if (!isMounted || !user) {
         return (
             <Link
                 href="/login"

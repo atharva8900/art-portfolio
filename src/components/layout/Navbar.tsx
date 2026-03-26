@@ -22,6 +22,11 @@ const navLinks = [
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [activeSection, setActiveSection] = useState('Home');
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Lock body scroll when menu is open
     useEffect(() => {
@@ -104,49 +109,71 @@ export default function Navbar() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
+                suppressHydrationWarning
                 className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 md:py-6 md:px-12 bg-gradient-to-b from-background/90 to-transparent backdrop-blur-[2px]"
             >
                 <Link href="/" className="font-serif text-sm leading-tight md:text-xl tracking-wider md:tracking-widest text-foreground hover:text-accent transition-colors duration-300 z-50 relative pr-2">
                     ATHARVA SHERLEKAR ART
                 </Link>
 
-                {/* Desktop Navigation & Socials */}
-                <div className="hidden lg:flex items-center gap-2 text-foreground/80">
-                    <nav className="flex items-center gap-2 mr-4">
-                        {navLinks.filter(l => l.name !== 'Home').map(link => (
-                            <MagneticLink
-                                key={link.name}
-                                href={link.href}
-                                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => scrollToSection(e, link.href)}
-                                active={activeSection === link.name}
-                            >
-                                {link.name}
-                            </MagneticLink>
-                        ))}
-                    </nav>
-
-                    <div className="flex items-center gap-4">
-                        <a href={ARTIST_INSTAGRAM.startsWith('http') ? ARTIST_INSTAGRAM : `https://www.instagram.com/${ARTIST_INSTAGRAM}/`} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
-                            <Instagram size={20} />
-                        </a>
-                        <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
-                            <Youtube size={20} />
-                        </a>
-                        <a href={`mailto:${ARTIST_EMAIL}`} className="hover:text-accent transition-colors">
-                            <Mail size={20} />
-                        </a>
-                        <ThemeToggle />
-                        <UserProfile />
+                {isMounted && (
+                    <div className="hidden lg:flex items-center gap-2 text-foreground/80">
+                        <nav className="flex items-center gap-2 mr-4">
+                            {navLinks.filter(l => l.name !== 'Home').map(link => (
+                                <MagneticLink
+                                    key={link.name}
+                                    href={link.href}
+                                    onClick={(e: React.MouseEvent<HTMLAnchorElement>) => scrollToSection(e, link.href)}
+                                    className={`text-sm uppercase tracking-[0.3em] font-medium transition-all duration-300 relative py-2 px-4 rounded-full
+                                        ${activeSection === link.name 
+                                            ? 'text-accent font-bold' 
+                                            : 'hover:text-foreground'
+                                        }`}
+                                >
+                                    {link.name}
+                                    {activeSection === link.name && (
+                                        <motion.div
+                                            layoutId="activeTab"
+                                            className="absolute inset-0 bg-accent/10 border border-accent/20 rounded-full -z-10"
+                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        />
+                                    )}
+                                </MagneticLink>
+                            ))}
+                        </nav>
+                        <div className="flex items-center gap-4">
+                            <a href={ARTIST_INSTAGRAM.startsWith('http') ? ARTIST_INSTAGRAM : `https://www.instagram.com/${ARTIST_INSTAGRAM}/`} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+                                <Instagram size={20} />
+                            </a>
+                            <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+                                <Youtube size={20} />
+                            </a>
+                            <a href={`mailto:${ARTIST_EMAIL}`} className="hover:text-accent transition-colors">
+                                <Mail size={20} />
+                            </a>
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {isMounted && (
+                    <div className="hidden lg:flex items-center gap-6">
+                        <UserProfile />
+                        <ThemeToggle />
+                    </div>
+                )}
 
                 {/* Mobile Menu Toggle */}
                 <div className="flex lg:hidden items-center gap-2 sm:gap-4 shrink-0 z-50 relative">
-                    <ThemeToggle />
-                    <UserProfile />
+                    {isMounted && (
+                        <>
+                            <ThemeToggle />
+                            <UserProfile />
+                        </>
+                    )}
                     <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="text-foreground hover:text-accent transition-colors p-1"
+                            onClick={() => setIsOpen(!isOpen)}
+                        disabled={!isMounted}
+                        className="text-foreground hover:text-accent transition-colors p-1 disabled:opacity-50"
                         aria-label="Toggle menu"
                     >
                         {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -156,7 +183,7 @@ export default function Navbar() {
 
             {/* Mobile Full-Screen Menu */}
             <AnimatePresence>
-                {isOpen && (
+                {isMounted && isOpen && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
