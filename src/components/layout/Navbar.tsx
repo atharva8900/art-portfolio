@@ -25,12 +25,15 @@ export default function Navbar() {
 
     // Lock body scroll when menu is open
     useEffect(() => {
+        if (!document?.body) return; // Safety check
         if (isOpen) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
         }
-        return () => { document.body.style.overflow = 'unset'; };
+        return () => { 
+            if (document?.body) document.body.style.overflow = 'unset'; 
+        };
     }, [isOpen]);
 
     // Active section scroll spy
@@ -40,13 +43,12 @@ export default function Navbar() {
             // The point we are "looking at" is 30% down the screen
             const checkPoint = viewportHeight * 0.3;
 
-            const sections = navLinks.map(link => {
-                if (link.name === 'Home') return 'hero';
-                return link.href.replace('/#', '');
-            });
-
-            // Iterate sections to find which one contains the checkPoint
-            for (const id of sections) {
+            // Iterate navLinks to find which section contains the checkPoint
+            // Using a traditional for loop to allow early exit
+            for (const link of navLinks) {
+                const id = link.name === 'Home' ? 'hero' : link.href.replace('/#', '');
+                
+                // Safety check for element existence
                 const element = document.getElementById(id);
                 if (element) {
                     const rect = element.getBoundingClientRect();
