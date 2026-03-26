@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { GoogleAnalytics } from '@next/third-parties/google';
 import dynamic from 'next/dynamic';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 const SmoothScroll = dynamic(() => import('@/components/layout/SmoothScroll'), { ssr: false });
 const CustomCursor = dynamic(() => import('@/components/features/CustomCursor'), { ssr: false });
@@ -66,17 +67,19 @@ export default function RootLayout({
       <body className={`${inter.variable} ${cinzel.variable} font-sans bg-background text-foreground antialiased selection:bg-accent selection:text-background`}>
 
         <ThemeProvider attribute="class" defaultTheme="dark">
-          <AuthProvider>
-            <CustomCursor />
-            <SmoothScroll>
-              {children}
-            </SmoothScroll>
-            <Analytics />
-            <SpeedInsights />
-            <GoogleAnalytics gaId="G-00470JC3GM" />
-            {process.env.NEXT_PUBLIC_ENABLE_CHATBOT === 'true' && <ChatWidget />}
-            <TurnstileScript />
-          </AuthProvider>
+          <ErrorBoundary>
+            <AuthProvider>
+              <CustomCursor />
+              <SmoothScroll>
+                {children}
+              </SmoothScroll>
+              <Analytics />
+              <SpeedInsights />
+              <GoogleAnalytics gaId="G-00470JC3GM" />
+              {process.env.NEXT_PUBLIC_ENABLE_CHATBOT === 'true' && <ChatWidget />}
+              <TurnstileScript />
+            </AuthProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>
