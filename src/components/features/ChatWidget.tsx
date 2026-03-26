@@ -68,7 +68,7 @@ export default function ChatWidget() {
         }
     }, [cooldown]);
 
-    const { messages, sendMessage, status, error, regenerate, setMessages } = useChat({
+    const { messages, sendMessage, status, error } = useChat({
         api: '/api/chat',
         onResponse: (response: Response) => {
             if (!response.ok) {
