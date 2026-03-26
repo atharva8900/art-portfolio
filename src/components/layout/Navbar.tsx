@@ -135,21 +135,11 @@ export default function Navbar() {
                                 <MagneticLink
                                     key={link.name}
                                     href={link.href}
+                                    active={activeSection === link.name}
                                     onClick={(e: React.MouseEvent<HTMLAnchorElement>) => scrollToSection(e, link.href)}
-                                    className={`text-sm uppercase tracking-[0.3em] font-medium transition-all duration-300 relative py-2 px-4 rounded-full
-                                        ${activeSection === link.name 
-                                            ? 'text-accent font-bold' 
-                                            : 'hover:text-foreground'
-                                        }`}
+                                    className="text-sm uppercase tracking-[0.3em] font-medium transition-all duration-300 relative"
                                 >
                                     {link.name}
-                                    {activeSection === link.name && (
-                                        <motion.div
-                                            layoutId="activeTab"
-                                            className="absolute inset-0 bg-accent/10 border border-accent/20 rounded-full -z-10"
-                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                        />
-                                    )}
                                 </MagneticLink>
                             ))}
                         </nav>
