@@ -17,6 +17,7 @@ export default function ChatWidget() {
     const [cooldown, setCooldown] = useState(0);
     const [messageCount, setMessageCount] = useState(0);
     const [fingerprint, setFingerprint] = useState<string>('unknown_device');
+    const [localError, setLocalError] = useState<string | null>(null);
 
     // Initialize/Check Daily Limit & Fingerprint
     useEffect(() => {
@@ -67,9 +68,15 @@ export default function ChatWidget() {
         }
     }, [cooldown]);
 
-    const { messages, append, status, error } = useChat({
-        api: `/api/chat?fingerprint=${fingerprint}`,
+    const { messages, sendMessage, status, error, regenerate, setMessages } = useChat({
+        api: '/api/chat',
+        onResponse: (response: Response) => {
+            if (!response.ok) {
+                console.error('Chat response error:', response.statusText);
+            }
+        },
         onFinish: () => {
+            setLocalError(null);
             const newCount = messageCount + 1;
             setMessageCount(newCount);
             const savedData = JSON.parse(localStorage.getItem('art_assistant_limit') || '{}');
@@ -78,11 +85,14 @@ export default function ChatWidget() {
                 timestamp: savedData.timestamp || Date.now()
             }));
             setCooldown(15);
+        },
+        onError: (err: Error) => {
+            console.error('Chat hook experienced an error:', err);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any) as any;
+    } as any);
 
-    const isChatLoading = status === 'submitted' || status === 'streaming';
+    const isChatLoading = status !== 'ready' && status !== 'error';
     const isLimitReached = messageCount >= 25;
 
     // Auto-scroll to bottom
@@ -98,18 +108,46 @@ export default function ChatWidget() {
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (cooldown > 0 || isLimitReached || !inputValue.trim() || isChatLoading) return;
+        
+        if (cooldown > 0 || isLimitReached || !inputValue.trim() || isChatLoading) {
+            console.warn("Submit aborted.");
+            return;
+        }
 
         const text = inputValue;
-        setInputValue('');
-        await append({ role: 'user', content: text });
+        setInputValue(''); // Optimistically clear
+        
+        try {
+            setLocalError(null);
+            if (typeof sendMessage === 'function') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (sendMessage as any)({ text }, { body: { fingerprint } });
+            } else {
+                setLocalError("The chat helper (sendMessage) is not available.");
+                console.error("sendMessage is not a function!", sendMessage);
+            }
+        } catch (err: unknown) {
+            const error = err as Error;
+            console.error("Chat Append Error:", error);
+            setLocalError(error?.message || "Something went wrong while sending.");
+            // Restore input if it failed immediately
+            setInputValue(text);
+        }
     };
 
     const getMessageText = (m: UIMessage) => {
-        return m.parts
-            ?.filter(p => p.type === 'text')
-            .map(p => (p as { type: 'text'; text: string }).text)
-            .join('') || '';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (m.parts && (m.parts as any[]).length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (m.parts as any[])
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ?.filter((p: any) => p.type === 'text')
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .map((p: any) => p.text)
+                .join('') || '';
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (m as any).message || (m as any).content || '';
     };
 
     if (pathname?.startsWith('/admin') || pathname?.startsWith('/client')) {
@@ -231,11 +269,16 @@ export default function ChatWidget() {
                                 </div>
                             )}
 
-                            {error && (
+                            {(error || localError) && (
                                 <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center space-y-3">
                                     <div className="space-y-1">
-                                        <p className="font-bold">I&apos;m having trouble connecting right now.</p>
-                                        <p className="opacity-80">This usually happens if I&apos;ve answered too many questions recently. Please try again in 30-60 seconds or clear the chat.</p>
+                                        <p className="font-bold">I&apos;m having trouble connecting.</p>
+                                        <div className="px-2 py-1 bg-red-500/20 rounded font-mono text-[10px] break-words">
+                                            {localError || (typeof error === 'string' 
+                                                ? error 
+                                                : (error as Error)?.message || JSON.stringify(error))}
+                                        </div>
+                                        <p className="opacity-80 pt-1">This could be a network issue or a temporary limit. Please try again soon.</p>
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <button

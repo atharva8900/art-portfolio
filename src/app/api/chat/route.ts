@@ -4,11 +4,16 @@ import { NextResponse } from 'next/server';
 import { getAllOffers, OfferData } from '@/lib/db/offers';
 import { getAvailability } from '@/lib/db/availability';
 import { checkAndUpdateChatLimit } from '@/lib/db/rate-limits';
+
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-    const { messages, fingerprint } = await req.json();
+    const { messages, fingerprint: bodyFingerprint } = await req.json();
+    const { searchParams } = new URL(req.url);
+    const queryFingerprint = searchParams.get('fingerprint');
+    
+    const fingerprint = bodyFingerprint || queryFingerprint;
 
     // 1. SESSION / BROWSER LIMIT ENFORCEMENT (Fallback & UI consistency)
     if (messages.length > 25) {
@@ -96,8 +101,9 @@ export async function POST(req: Request) {
             : '- No active promotional offers at this exact moment.';
 
         const result = await streamText({
-            model: google('gemini-3.1-flash-lite-preview'),
+            model: google('gemini-2.5-flash-lite'),
             messages: coreMessages,
+            maxRetries: 0, // Disable internal retries to prevent "High Demand" spam and correct rate-limit counting
             system: `You are the helpful AI assistant for Atharva Sherlekar Art, a hyper - realistic graphite portrait artist. 
     Your goal is to answer questions about commissions, pricing, process, and policies in a warm, professional, and helpful tone.
     
@@ -207,11 +213,22 @@ export async function POST(req: Request) {
 
         return result.toUIMessageStreamResponse();
     } catch (error: unknown) {
-        console.error('Chat API Error:', error);
-        const err = error as { message?: string };
+        console.error('--- CHAT API CRITICAL ERROR ---');
+        console.error('Error Object:', error);
+        
+        const err = error as { message?: string, status?: number, code?: string };
+        const errorMessage = err.message || 'Error processing your request';
+        
+        console.error('Message:', errorMessage);
+        console.error('-------------------------------');
+
         return NextResponse.json(
-            { error: err.message || 'Error processing your request' },
-            { status: 500 }
+            { 
+                error: errorMessage,
+                code: err.code || 'UNKNOWN_ERROR',
+                details: "Check server logs for full stack trace"
+            },
+            { status: err.status || 500 }
         );
     }
 }
