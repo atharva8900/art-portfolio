@@ -3,6 +3,7 @@
 import MagneticLink from '@/components/shared/MagneticLink';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Instagram, Mail, Youtube, Menu, X, Home, Palette, DollarSign, Send, Grid, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -184,59 +185,62 @@ export default function Navbar() {
                 </div>
             </motion.header>
 
-            {/* Mobile Full-Screen Menu */}
-            <AnimatePresence>
-                {isMounted && isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className={`fixed inset-0 z-40 bg-background/95 overflow-y-auto overscroll-contain transition-all duration-300 ${showBlur ? 'backdrop-blur-xl' : ''}`}
-                    >
-                        <div className="min-h-full w-full flex flex-col items-center justify-start pt-28 pb-12 px-6">
-                            <nav className="flex flex-col items-center gap-4 w-full max-w-sm">
-                                {navLinks.map((link, idx) => (
-                                    <motion.a
-                                        key={`mobile-${link.name}`}
-                                        href={link.href}
-                                        onClick={(e) => scrollToSection(e, link.href)}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 10 }}
-                                        transition={{ delay: 0.1 + idx * 0.1, duration: 0.3 }}
-                                        className={`w-full border rounded-xl p-3 flex items-center justify-center gap-3 text-lg font-serif tracking-widest transition-all active:scale-95
-                                            ${activeSection === link.name
-                                                ? 'bg-accent text-background border-accent font-bold'
-                                                : 'bg-surface/50 border-foreground/10 text-foreground hover:bg-surface/80 hover:border-accent/30'
-                                            }`}
-                                    >
-                                        <link.icon size={18} className="text-accent" />
-                                        <span>{link.name}</span>
-                                    </motion.a>
-                                ))}
-                            </nav>
-
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                                className="mt-8 flex items-center gap-8 text-foreground/60"
-                            >
-                                <a href={ARTIST_INSTAGRAM.startsWith('http') ? ARTIST_INSTAGRAM : `https://www.instagram.com/${ARTIST_INSTAGRAM}/`} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-2">
-                                    <Instagram size={24} />
-                                </a>
-                                <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-2">
-                                    <Youtube size={24} />
-                                </a>
-                                <a href={`mailto:${ARTIST_EMAIL}`} className="hover:text-accent transition-colors p-2">
-                                    <Mail size={24} />
-                                </a>
-                            </motion.div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Mobile Full-Screen Menu (Portaled to Body for DOM stability) */}
+            {isMounted && typeof document !== 'undefined' && createPortal(
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className={`fixed inset-0 z-[100] bg-background/95 overflow-y-auto overscroll-contain transition-all duration-300 ${showBlur ? 'backdrop-blur-xl' : ''}`}
+                        >
+                            <div className="min-h-full w-full flex flex-col items-center justify-start pt-28 pb-12 px-6">
+                                <nav className="flex flex-col items-center gap-4 w-full max-w-sm">
+                                    {navLinks.map((link, idx) => (
+                                        <motion.a
+                                            key={`mobile-${link.name}`}
+                                            href={link.href}
+                                            onClick={(e) => scrollToSection(e, link.href)}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            transition={{ delay: 0.1 + idx * 0.1, duration: 0.3 }}
+                                            className={`w-full border rounded-xl p-3 flex items-center justify-center gap-3 text-lg font-serif tracking-widest transition-all active:scale-95
+                                                ${activeSection === link.name
+                                                    ? 'bg-accent text-background border-accent font-bold'
+                                                    : 'bg-surface/50 border-foreground/10 text-foreground hover:bg-surface/80 hover:border-accent/30'
+                                                }`}
+                                        >
+                                            <link.icon size={18} className="text-accent" />
+                                            <span>{link.name}</span>
+                                        </motion.a>
+                                    ))}
+                                </nav>
+ 
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                    className="mt-8 flex items-center gap-8 text-foreground/60"
+                                >
+                                    <a href={ARTIST_INSTAGRAM.startsWith('http') ? ARTIST_INSTAGRAM : `https://www.instagram.com/${ARTIST_INSTAGRAM}/`} target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-2">
+                                        <Instagram size={24} />
+                                    </a>
+                                    <a href="https://www.youtube.com/@atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-2">
+                                        <Youtube size={24} />
+                                    </a>
+                                    <a href={`mailto:${ARTIST_EMAIL}`} className="hover:text-accent transition-colors p-2">
+                                        <Mail size={24} />
+                                    </a>
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </>
     );
 }
