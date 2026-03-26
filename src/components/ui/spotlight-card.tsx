@@ -44,6 +44,19 @@ export const GlowCard = ({
     });
   };
 
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!containerRef.current || !e.touches[0]) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.touches[0].clientX - rect.left;
+    const y = e.touches[0].clientY - rect.top;
+    setMousePosition({
+      x,
+      y,
+      xp: x / rect.width,
+      yp: y / rect.height,
+    });
+  };
+
   const { base, spread } = colorMap[glowColor];
   const currentHue = base + (mousePosition.xp * spread);
   
@@ -65,6 +78,9 @@ export const GlowCard = ({
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={() => setIsHovered(false)}
       className={`relative overflow-hidden rounded-2xl p-[1px] transition-all duration-500 group ${className}`}
       style={{
         background: isHovered 
