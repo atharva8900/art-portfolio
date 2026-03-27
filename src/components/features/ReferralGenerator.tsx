@@ -41,6 +41,37 @@ export default function ReferralGenerator() {
         }).catch(() => {
             // Non-fatal: fingerprinting is best-effort
         });
+
+        // 1. Referral Click Tracking
+        const params = new URLSearchParams(window.location.search);
+        const refCode = params.get('ref');
+        
+        if (refCode) {
+            // Use sessionStorage to ensure we only count one click per code per session
+            const trackedKey = `ref_tracked_${refCode}`;
+            if (!sessionStorage.getItem(trackedKey)) {
+                fetch('/api/referrals/click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: refCode })
+                }).then(res => {
+                    if (res.ok) {
+                        sessionStorage.setItem(trackedKey, 'true');
+                    }
+                }).catch(err => console.error('Failed to track referral click:', err));
+            }
+        }
+
+        // 2. Navigation Fix: Ensure scroll to #referrals works reliably
+        if (window.location.hash === '#referrals') {
+            // Short delay to allow GSAP and hydration to settle
+            setTimeout(() => {
+                const element = document.getElementById('referrals');
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 800);
+        }
     }, []);
 
     const user = session?.user;

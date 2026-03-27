@@ -15,6 +15,7 @@ interface AnalyticsData {
     active_referral: {
         code: string;
         successful_referrals_count: number;
+        click_count?: number;
     } | null;
     stats: {
         total_earnings: number;

@@ -11,6 +11,7 @@ export interface ReferralData {
     created_at: string;
     ip_hash: string;
     successful_referrals_count: number;
+    click_count?: number;
     used_by_emails: string[];
     ip_submissions: Array<{ ip_hash: string; timestamp: string }>;
     fingerprint_hash?: string;
@@ -140,6 +141,32 @@ export async function incrementReferralCount(code: string, clientEmail: string, 
     if (error) {
         console.error('Error incrementing referral count in Supabase:', error);
         throw new Error('Failed to update referral');
+    }
+}
+
+// Increment click count for a referral code
+export async function incrementClickCount(code: string): Promise<void> {
+    const { data: referral, error: fetchError } = await supabaseAdmin
+        .from('referrals')
+        .select('click_count')
+        .eq('code', code)
+        .maybeSingle();
+
+    if (fetchError || !referral) {
+        console.error('Error fetching referral for click increment:', fetchError);
+        return;
+    }
+
+    const newClickCount = (referral.click_count || 0) + 1;
+
+    const { error: updateError } = await supabaseAdmin
+        .from('referrals')
+        .update({ click_count: newClickCount })
+        .eq('code', code);
+
+    if (updateError) {
+        console.error('Error incrementing click count in Supabase:', updateError);
+        // Don't throw here, failing to track a click shouldn't break the user experience
     }
 }
 
