@@ -68,6 +68,13 @@ export default function Hero() {
                 if (aboutEl) {
                     scrollTl.fromTo(aboutEl, { filter: "blur(10px)" }, { filter: "blur(0px)", duration: 0.8 }, 0);
                 }
+
+                // Interaction Fix: Completely disable Hero section after transition
+                scrollTl.to(sectionRef.current, { 
+                    autoAlpha: 0, 
+                    pointerEvents: "none", 
+                    duration: 0.1 
+                }, ">-0.1");
         });
 
         // Mobile fallback
@@ -84,7 +91,8 @@ export default function Hero() {
                 .to(realismScrollRef.current, { filter: "blur(10px)", opacity: 0, scale: 0.95, duration: 0.8 }, 0)
                 .to(lowerContentScrollRef.current, { filter: "blur(10px)", opacity: 0, y: 30, duration: 0.8 }, 0)
                 .to(scrollIndicatorRef.current, { opacity: 0, y: 20, duration: 0.5 }, 0)
-                .to(bgContainerRef.current, { opacity: 0, scale: 1.05, duration: 0.8 }, 0.2);
+                .to(bgContainerRef.current, { opacity: 0, scale: 1.05, duration: 0.8 }, 0.2)
+                .to(sectionRef.current, { autoAlpha: 0, pointerEvents: "none", duration: 0.1 }, ">-0.1");
         });
 
         return () => mm.revert();
