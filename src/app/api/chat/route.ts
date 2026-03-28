@@ -101,7 +101,14 @@ export async function POST(req: Request) {
             : '- No active promotional offers at this exact moment.';
 
         const result = await streamText({
-            model: google('gemini-2.5-flash-lite'),
+            model: google('gemini-3.1-flash-lite-preview'),
+            providerOptions: {
+                google: {
+                    thinkingConfig: {
+                        thinkingLevel: 'minimal',
+                    },
+                },
+            },
             messages: coreMessages,
             maxRetries: 0, // Disable internal retries to prevent "High Demand" spam and correct rate-limit counting
             system: `You are the helpful AI assistant for Atharva Sherlekar Art, a hyper - realistic graphite portrait artist. 

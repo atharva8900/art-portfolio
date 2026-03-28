@@ -11,7 +11,7 @@ Stage 2 — Execution Phase
 Before writing any code, ask me to confirm execution. Once I approve, carry out the implementation plan exactly as discussed.
 
 Stage 3 — Testing
-After the code is complete, reload the localhost server and provide me with a clear, step-by-step guide to test the newly added feature. Wait for my feedback — I'll either flag changes or confirm everything looks good.
+After the code is complete, run localhost server and provide me with a clear, step-by-step guide to test the newly added feature. Wait for my feedback — I'll either flag changes or confirm everything looks good.
 
 Stage 4 — Deployment
 This stage is only triggered by my explicit command to proceed. When given, follow the existing deployment process — but always ask for confirmation before executing anything here, no exceptions.
