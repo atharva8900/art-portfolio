@@ -74,6 +74,8 @@ A personal dashboard that appears after a user completes a commission, showing a
   - **Comprehensive Ban System**: Enables temporary mutes or permanent bans for commission form submissions. Restrictions are applied via both **Device Fingerprint** and **Authenticated User Email**, preventing users from bypassing bans by simply switching devices or logging into different accounts.
 - All admin routes are protected by a custom admin authentication middleware.
 - All API routes validate inputs using **Zod** schemas.
+
+### 💎 Premium UI/UX
 - **Custom Pencil/Eraser Cursor**: Animated cursor that automatically hides on interactive form elements.
 - **Lenis Smooth Scroll**: Buttery-smooth scrolling throughout the entire site.
 - **Framer Motion**: Page transitions, scroll-reveal animations, and micro-interactions on every interactive element.

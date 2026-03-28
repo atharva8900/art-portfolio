@@ -10,12 +10,20 @@ import AdminNav from '@/components/admin/AdminNav';
 
 const ALLOWED_EMAILS = ADMIN_EMAILS;
 
+const PREDEFINED_REASONS = [
+    "Busy with current orders",
+    "Personal break",
+    "Unavailable at this moment",
+    "Taking a short break"
+];
+
 export default function AdminAvailability() {
     const { data: session, status } = useSession();
     const [statusLoading, setStatusLoading] = useState(false);
     const [error, setError] = useState('');
     const [isOpen, setIsOpen] = useState<boolean | null>(null);
     const [reason, setReason] = useState('');
+    const [isCustom, setIsCustom] = useState(false);
     const [reopenDate, setReopenDate] = useState('');
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
@@ -27,7 +35,12 @@ export default function AdminAvailability() {
             const res = await fetch('/api/availability');
             const data = await res.json();
             setIsOpen(data.is_accepting_commissions);
-            setReason(data.closure_reason || '');
+            
+            const loadedReason = data.closure_reason || '';
+            setReason(loadedReason);
+            // If the reason isn't in our predefined list, it's a custom one
+            setIsCustom(loadedReason !== '' && !PREDEFINED_REASONS.includes(loadedReason));
+            
             setReopenDate(data.reopen_date ? new Date(data.reopen_date).toISOString().split('T')[0] : '');
             setLastUpdated(data.last_updated);
         } catch {
@@ -174,20 +187,29 @@ export default function AdminAvailability() {
                                 <div className="space-y-2 text-left">
                                     <label className="text-xs uppercase tracking-widest text-neutral-500 font-bold">Closure Reason</label>
                                     <select 
-                                        value={reason}
-                                        onChange={(e) => setReason(e.target.value)}
+                                        value={isCustom ? 'CUSTOM' : reason}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === 'CUSTOM') {
+                                                setIsCustom(true);
+                                                // Don't clear the reason immediately as they might have been typing
+                                            } else {
+                                                setIsCustom(false);
+                                                setReason(val);
+                                            }
+                                        }}
                                         className="w-full bg-background/50 border border-foreground/10 p-3 rounded-lg text-foreground outline-none focus:border-red-500/50 appearance-none cursor-pointer hover:bg-background/80 transition-colors"
                                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(255,255,255,0.3)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.5em' }}
                                     >
-                                        <option value="Busy with current orders" className="bg-neutral-900">Busy with current orders</option>
-                                        <option value="Personal break" className="bg-neutral-900">Personal break</option>
-                                        <option value="Unavailable at this moment" className="bg-neutral-900">Unavailable at this moment</option>
-                                        <option value="Taking a short break" className="bg-neutral-900">Taking a short break</option>
+                                        {PREDEFINED_REASONS.map(r => (
+                                            <option key={r} value={r} className="bg-neutral-900">{r}</option>
+                                        ))}
                                         <option value="CUSTOM" className="bg-neutral-900">Custom Reason...</option>
                                     </select>
-                                    {reason === 'CUSTOM' && (
+                                    {isCustom && (
                                         <input 
                                             type="text"
+                                            value={reason}
                                             placeholder="Enter custom reason..."
                                             className="w-full bg-background/50 border border-foreground/10 p-3 rounded-lg text-foreground outline-none focus:border-red-500/50 mt-2"
                                             onChange={(e) => setReason(e.target.value)}
