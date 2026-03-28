@@ -18,6 +18,8 @@ import { sendDiscordNotification } from '@/lib/api/discord';
 import { getOfferById, incrementOfferUsage } from '@/lib/db/offers';
 import { commissionSchema } from '@/lib/utils/schemas';
 import { checkDeviceBanStatus } from '@/lib/db/rate-limits';
+import { getBaseUrl } from '@/lib/utils/utils';
+
 
 
 
@@ -546,7 +548,7 @@ export async function POST(request: NextRequest) {
                     </ul>
                     <div style="margin-top: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border: 1px solid #c2e0ff; text-align: center;">
                         <p style="margin: 0 0 10px; font-size: 14px; color: #0052cc;"><strong>TRACK YOUR ORDER ANYTIME</strong></p>
-                        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://atharva8900.art'}/client/dashboard" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: bold;">GO TO CLIENT DASHBOARD →</a>
+                        <a href="${getBaseUrl()}/client/dashboard" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: bold;">GO TO CLIENT DASHBOARD →</a>
                     </div>
                     <br />
                     <p>Best regards,</p>

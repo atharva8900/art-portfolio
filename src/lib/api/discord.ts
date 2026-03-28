@@ -1,5 +1,8 @@
+import { getBaseUrl } from '@/lib/utils/utils';
+
 export interface DiscordMessage {
     content?: string;
+
     embeds?: {
         title?: string;
         description?: string;
@@ -25,7 +28,7 @@ export async function sendDiscordNotification(message: DiscordMessage) {
             body: JSON.stringify({
                 ...message,
                 username: 'Commission Alert Bot',
-                avatar_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://atharvasherlekar.com'}/logo.png`, // Fallback to logo
+                avatar_url: `${getBaseUrl()}/logo.png`,
             }),
         });
 

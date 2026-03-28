@@ -2,6 +2,7 @@ import { sendEmail } from '@/lib/api/email';
 import { CommissionData } from '@/lib/db/commissions';
 import { sendDiscordNotification } from '@/lib/api/discord';
 import { escapeHtml, stripHtmlTags } from '@/lib/utils/security';
+import { getBaseUrl } from '@/lib/utils/utils';
 
 
 
@@ -13,8 +14,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
     let subject = '';
     let htmlContent = '';
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
-        (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:3000');
+    const baseUrl = getBaseUrl();
 
     switch (status) {
         case 'pending':
