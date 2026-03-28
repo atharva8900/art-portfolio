@@ -1,15 +1,12 @@
 import { sendEmail } from '@/lib/api/email';
 import { CommissionData } from '@/lib/db/commissions';
 import { sendDiscordNotification } from '@/lib/api/discord';
+import { escapeHtml, stripHtmlTags } from '@/lib/utils/security';
 
 
 
 function stripHtml(html: string): string {
-    return html
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+    return stripHtmlTags(html);
 }
 
 export async function sendCommissionStatusEmail(commission: CommissionData, status: string) {
@@ -137,7 +134,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 ${commission.admin_note ? `
                 <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0;">
                     <p style="margin: 0; color: #991b1b; font-weight: bold;">Note from the Artist:</p>
-                    <p style="margin: 5px 0 0; color: #b91c1c;">${commission.admin_note}</p>
+                    <p style="margin: 5px 0 0; color: #b91c1c;">${escapeHtml(commission.admin_note)}</p>
                 </div>
                 ` : ''}
 
@@ -182,7 +179,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
         const noteHtml = `
             <div style="background-color: #f8fafc; border-left: 4px solid #64748b; padding: 15px; margin: 20px 0;">
                 <p style="margin: 0; color: #334155; font-weight: bold;">Note from the Artist:</p>
-                <p style="margin: 5px 0 0; color: #475569;">${commission.admin_note}</p>
+                <p style="margin: 5px 0 0; color: #475569;">${escapeHtml(commission.admin_note)}</p>
             </div>
         `;
         // Insert before "Best regards"

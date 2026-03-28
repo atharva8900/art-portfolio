@@ -8,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 
 import { getServerSession } from "next-auth/next";
 import { authOptions } from '@/lib/auth/auth';
+import { escapeHtml } from '@/lib/utils/security';
 
 export async function POST(request: NextRequest) {
     try {
@@ -77,9 +78,9 @@ export async function POST(request: NextRequest) {
             subject: `Payout Request from ${userEmail}`,
             html: `
                 <h1>Payout Request</h1>
-                <p><strong>Referrer:</strong> ${userEmail}</p>
+                <p><strong>Referrer:</strong> ${escapeHtml(userEmail)}</p>
                 <p><strong>Amount:</strong> ₹${totalAmount}</p>
-                <p><strong>Payment Details:</strong> ${paymentDetails || 'Not provided'}</p>
+                <p><strong>Payment Details:</strong> ${escapeHtml(paymentDetails || 'Not provided')}</p>
                 
                 <h2>Commissions</h2>
                 <ul>
