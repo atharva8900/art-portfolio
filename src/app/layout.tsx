@@ -13,8 +13,12 @@ const CustomCursor = dynamic(() => import('@/components/features/CustomCursor'),
 const ChatWidget = dynamic(() => import('@/components/features/ChatWidget'), { ssr: false });
 const TurnstileScript = dynamic(() => import('@/components/shared/TurnstileScript'), { ssr: false });
 
+import { getBaseUrl } from '@/lib/utils/utils';
+
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap', preload: true });
 const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel", display: 'swap', preload: true });
+
+const baseUrl = getBaseUrl();
 
 export const metadata: Metadata = {
   title: {
@@ -22,7 +26,7 @@ export const metadata: Metadata = {
     default: 'Atharva Sherlekar Art - Realistic Graphite Portrait Artist',
   },
   description: "Turn your photos into hyper-realistic hand-drawn graphite portraits. Custom artwork commissions by Atharva Sherlekar Art.",
-  metadataBase: new URL('https://atharva-sherlekar-art.vercel.app'),
+  metadataBase: new URL(baseUrl),
   alternates: {
     canonical: '/',
   },
@@ -35,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://atharvasherlekar.art",
+    url: baseUrl,
     siteName: "Atharva Sherlekar Art",
     title: "Atharva Sherlekar Art - Realistic Graphite Portrait Artist",
     description: "Turn your photos into hyper-realistic hand-drawn graphite portraits.",

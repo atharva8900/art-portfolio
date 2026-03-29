@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next';
+import { getBaseUrl } from '@/lib/utils/utils';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://atharva-sherlekar-art.vercel.app';
+  const baseUrl = getBaseUrl();
 
   return {
     rules: {

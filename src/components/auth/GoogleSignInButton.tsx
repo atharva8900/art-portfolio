@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { getBaseUrl } from '@/lib/utils/utils';
 
 interface GoogleSignInButtonProps {
     onSuccess?: () => void;
@@ -19,13 +20,13 @@ export default function GoogleSignInButton({ onSuccess, callbackUrl = '/', turns
             setLoading(true);
             setError('');
 
-            const productionUrl = 'https://atharva-sherlekar-art.vercel.app';
+            const productionUrl = getBaseUrl();
             const currentOrigin = window.location.origin;
 
             // If we are on a preview URL, redirect to the production login page
             // to avoid Google OAuth domain limit issues.
             if (currentOrigin.includes('vercel.app') &&
-                !currentOrigin.includes('atharva-sherlekar-art.vercel.app') &&
+                !currentOrigin.includes(productionUrl.replace('https://', '')) &&
                 !currentOrigin.includes('-vert.')) {
                 console.log('On preview URL, redirecting to production for sign-in...');
                 window.location.href = `${productionUrl}/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
