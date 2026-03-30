@@ -529,7 +529,7 @@ export async function POST(request: NextRequest) {
                     <p>I estimate I will be able to begin working on your piece next month. I will contact you to collect the remaining 25% advance when it's your turn!</p>
                     <br />
                     <p>Best regards,</p>
-                    <p><strong>Atharva Sherlekar</strong></p>
+                    <p><strong>Atharva Sherlekar Art</strong></p>
                 </div>
             ` : `
                 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.5;">
@@ -552,7 +552,7 @@ export async function POST(request: NextRequest) {
                     </div>
                     <br />
                     <p>Best regards,</p>
-                    <p><strong>Atharva Sherlekar</strong></p>
+                    <p><strong>Atharva Sherlekar Art</strong></p>
                 </div>
             `;
 
@@ -591,7 +591,7 @@ export async function POST(request: NextRequest) {
                                 <br />
                                 <p>Thank you for helping spread the word!</p>
                                 <p>Best regards,</p>
-                                <p><strong>Atharva Sherlekar</strong></p>
+                                <p><strong>Atharva Sherlekar Art</strong></p>
                             </div>
                         `,
                     });
@@ -616,7 +616,7 @@ export async function POST(request: NextRequest) {
                                 <br />
                                 <p>Thank you for helping spread the word!</p>
                                 <p>Best regards,</p>
-                                <p><strong>Atharva Sherlekar</strong></p>
+                                <p><strong>Atharva Sherlekar Art</strong></p>
                             </div>
                         `,
                     });

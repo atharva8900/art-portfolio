@@ -124,7 +124,7 @@ export default function CommissionForm() {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
     const [availability, setAvailability] = useState(true);
-    const [status, setStatus] = useState<'open' | 'waitlist' | 'closed'>('open');
+    const [status, setStatus] = useState<'open' | 'waitlist' | 'closed' | 'loading' | null>(null);
     const [immediateSlotsRemaining, setImmediateSlotsRemaining] = useState<number | null>(null);
     const [waitlistSlotsRemaining, setWaitlistSlotsRemaining] = useState<number | null>(null);
     const [closureReason, setClosureReason] = useState<string | null>(null);
@@ -196,7 +196,7 @@ export default function CommissionForm() {
     const [originalTotalValue, setOriginalTotalValue] = useState<number>(0);
     const [totalSavings, setTotalSavings] = useState<number>(0);
     const [promoCode, setPromoCode] = useState('');
-    const [offer, setOffer] = useState<{ id?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, usage_count?: number, usage_limit?: number } | null>(null);
+    const [offer, setOffer] = useState<{ id?: string, code?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, usage_count?: number, usage_limit?: number } | null>(null);
     const [offerError, setOfferError] = useState('');
     const [isValidatingPromo, setIsValidatingPromo] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -204,6 +204,8 @@ export default function CommissionForm() {
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const [offerAppliedMessage, setOfferAppliedMessage] = useState('');
     const originalBodyOverflow = useRef('');
+    const publicOfferFetched = useRef(false);
+
 
 
     const handleTurnstileSuccess = useCallback((token: string) => {
@@ -263,7 +265,7 @@ export default function CommissionForm() {
         }
     }, [setOffer, setOfferError, setIsValidatingPromo, setOfferAppliedMessage, setPromoCode, fingerprintHash]);
 
-    // Auto-validate from URL
+    // Auto-validate from URL promo (runs once on mount)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const promo = params.get('promo');
@@ -271,7 +273,58 @@ export default function CommissionForm() {
             setPromoCode(promo);
             validatePromo(promo);
         }
-    }, [validatePromo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Fetch public offer when commissions are verified as 'open'
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const promo = params.get('promo');
+        
+        console.log('[OFFER DEBUG] Effect triggered. Status:', status, 'Promo from URL:', promo, 'Already Fetched:', publicOfferFetched.current);
+
+        if (status !== 'open') {
+            if (status === null) console.log('[OFFER DEBUG] Status is still null, waiting for availability check...');
+            else console.log('[OFFER DEBUG] Status is not open (currently:', status + '), skipping public offer fetch.');
+            return;
+        }
+
+        if (promo) {
+            console.log('[OFFER DEBUG] Skipping public fetch because specific promo exists in URL:', promo);
+            return;
+        }
+
+        if (publicOfferFetched.current) {
+            console.log('[OFFER DEBUG] Public offer already fetched or fetch initiated.');
+            return;
+        }
+
+        publicOfferFetched.current = true;
+        console.log('[OFFER DEBUG] Initiating public offer fetch from API...');
+
+        fetch(`/api/offers/public?t=${Date.now()}`)
+            .then(res => {
+                console.log('[OFFER DEBUG] API Response Status:', res.status);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                console.log('[OFFER DEBUG] Received data:', data);
+                if (data.offer) {
+                    console.log('[OFFER DEBUG] Applying public offer:', data.offer.code);
+                    setOffer(data.offer);
+                    setPromoCode(data.offer.code);
+                    setOfferAppliedMessage(`Limited Time Offer: ${data.offer.name}`);
+                } else {
+                    console.log('[OFFER DEBUG] No valid public offer returned by server.');
+                }
+            })
+            .catch(err => {
+                console.error('[OFFER DEBUG] Fetch failed:', err);
+                publicOfferFetched.current = false; // allow retry on network failure
+            });
+    }, [status]);
+
 
     // Countdown Timer Logic
     useEffect(() => {
@@ -499,6 +552,7 @@ export default function CommissionForm() {
                 if (res.ok) {
                     const data = await res.json();
                     setAvailability(data.is_accepting_commissions);
+                    console.log('[OFFER DEBUG] Availability status confirmed:', data.status);
                     setStatus(data.status);
                     setImmediateSlotsRemaining(data.immediate_slots_remaining);
                     setWaitlistSlotsRemaining(data.waitlist_slots_remaining);
@@ -1060,7 +1114,7 @@ export default function CommissionForm() {
 
                     {/* Offer Urgency & Countdown */}
                     <AnimatePresence>
-                        {offer && (
+                        {offer && status === 'open' && (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -1080,11 +1134,13 @@ export default function CommissionForm() {
                                         Limited Time Offer Applied
                                     </div>
 
-                                    <div className="text-center space-y-1">
-                                        <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-bold opacity-80">Campaign</p>
+                                    <div className="text-center space-y-2">
                                         <h3 className="text-3xl font-serif text-white">
                                             {offer.name}
                                         </h3>
+                                        <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-bold opacity-80">
+                                            OFFER CODE : {offer.code || 'OFFER CODE'}
+                                        </p>
                                     </div>
 
                                     <div className="flex items-center gap-12 py-6 px-10 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 w-full justify-center relative overflow-hidden group/benefit">
@@ -1106,11 +1162,11 @@ export default function CommissionForm() {
                                         <div className="text-center relative z-10">
                                             <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold mb-2">Availability</p>
                                             <div className="flex items-baseline justify-center gap-1">
-                                                <span className="text-4xl font-cinzel text-white">{(offer.usage_limit ?? 0) - (offer.usage_count ?? 0)}</span>
+                                                <span className="text-4xl font-cinzel text-white">{offer.usage_count ?? 0}</span>
                                                 <span className="text-lg font-cinzel text-neutral-500">/</span>
                                                 <span className="text-lg font-cinzel text-neutral-500">{offer.usage_limit ?? 0}</span>
                                             </div>
-                                            <p className="text-[9px] uppercase font-black tracking-widest text-neutral-600 mt-1">Spots Left</p>
+                                            <p className="text-[9px] uppercase font-black tracking-widest text-neutral-600 mt-1">Spots Claimed</p>
                                         </div>
                                     </div>
 

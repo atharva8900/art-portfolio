@@ -149,7 +149,7 @@ export async function PATCH(request: NextRequest) {
                             const clientName = updatedCommission.client_name;
                             const commissionAmount = updatedCommission.commission_amount;
 
-                            const referrerEmailDraft = `Hi ${referrerName},\n\nCongratulations! The commission request you referred for ${clientName} is now complete.\n\nYou have successfully earned ₹${commissionAmount} for this referral.\n\nPlease log into your referral dashboard and click "Request Payout" so I can send you your funds!\n\nThank you again for supporting my art!\n\nBest regards,\nAtharva Sherlekar`;
+                            const referrerEmailDraft = `Hi ${referrerName},\n\nCongratulations! The commission request you referred for ${clientName} is now complete.\n\nYou have successfully earned ₹${commissionAmount} for this referral.\n\nPlease log into your referral dashboard and click "Request Payout" so I can send you your funds!\n\nThank you again for supporting my art!\n\nBest regards,\nAtharva Sherlekar Art`;
 
                             // Send Discord Notification to Admin
                             try {
@@ -185,7 +185,7 @@ export async function PATCH(request: NextRequest) {
                                         <br/>
                                         <p>Thank you again for supporting my art!</p>
                                         <p>Best regards,</p>
-                                        <p><strong>Atharva Sherlekar</strong></p>
+                                        <p><strong>Atharva Sherlekar Art</strong></p>
                                     `,
                                 });
                             } catch (err) {

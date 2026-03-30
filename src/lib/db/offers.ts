@@ -145,3 +145,29 @@ export async function decrementOfferUsage(id: string): Promise<boolean> {
     }
     return true;
 }
+
+export async function getPublicOffer(): Promise<OfferData | null> {
+    const { data, error } = await supabaseAdmin
+        .from('offers')
+        .select('*')
+        .eq('is_active', true)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(5); // Fetch top 5 active/public to ensure we find a valid one
+
+    if (error) {
+        console.error('Error getting public offer:', error);
+        return null;
+    }
+
+    if (data && data.length > 0) {
+        const now = new Date();
+        return (data as OfferData[]).find(offer => {
+            const expired = offer.expires_at && new Date(offer.expires_at) < now;
+            const limitReached = offer.usage_count >= offer.usage_limit;
+            return !expired && !limitReached;
+        }) || null;
+    }
+
+    return null;
+}
