@@ -936,9 +936,17 @@ export default function CommissionForm() {
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="mb-8 p-4 bg-accent/10 border border-accent/20 rounded-lg text-accent text-sm font-bold uppercase tracking-widest"
+                            className="mb-8 p-4 bg-accent/10 border border-accent/20 rounded-lg text-accent text-sm font-bold uppercase tracking-widest flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                         >
-                            Estimated Reopening: {new Date(reopenDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                            <span>Estimated Reopening:</span>
+                            <div className="flex items-center gap-2">
+                                <span>{new Date(reopenDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                <span className="opacity-40 hidden md:block">|</span>
+                                <span className="text-white/90 bg-white/10 px-2 py-0.5 rounded flex items-center gap-1.5">
+                                    <Clock size={12} className="shrink-0" />
+                                    {new Date(reopenDate).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
                         </motion.div>
                     )}
 
