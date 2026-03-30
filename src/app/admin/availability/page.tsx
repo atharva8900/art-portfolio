@@ -41,7 +41,14 @@ export default function AdminAvailability() {
             // If the reason isn't in our predefined list, it's a custom one
             setIsCustom(loadedReason !== '' && !PREDEFINED_REASONS.includes(loadedReason));
             
-            setReopenDate(data.reopen_date ? new Date(data.reopen_date).toISOString().split('T')[0] : '');
+            if (data.reopen_date) {
+                const date = new Date(data.reopen_date);
+                const tzoffset = date.getTimezoneOffset() * 60000;
+                const localISOTime = new Date(date.getTime() - tzoffset).toISOString().slice(0, 16);
+                setReopenDate(localISOTime);
+            } else {
+                setReopenDate('');
+            }
             setLastUpdated(data.last_updated);
         } catch {
             console.error('Failed to fetch status');
@@ -68,7 +75,7 @@ export default function AdminAvailability() {
                 body: JSON.stringify({ 
                     isOpen: targetStatus,
                     reason: targetStatus ? '' : reason,
-                    reopenDate: targetStatus ? null : reopenDate
+                    reopenDate: targetStatus ? null : (reopenDate ? new Date(reopenDate).toISOString() : null)
                 }),
             });
 
@@ -220,13 +227,13 @@ export default function AdminAvailability() {
                                 <div className="space-y-2 text-left">
                                     <label className="text-xs uppercase tracking-widest text-neutral-500 font-bold">Expected Reopen Date (Optional)</label>
                                     <input 
-                                        type="date"
+                                        type="datetime-local"
                                         value={reopenDate}
                                         onChange={(e) => setReopenDate(e.target.value)}
-                                        className="w-full bg-background/50 border border-foreground/10 p-3 rounded-lg text-foreground outline-none focus:border-red-500/50"
+                                        className="w-full bg-background/50 border border-foreground/10 p-3 rounded-lg text-foreground outline-none focus:border-red-500/50 appearance-none min-h-[50px]"
                                     />
                                     <p className="text-[10px] text-neutral-500 italic">
-                                        The site will automatically reopen on this date.
+                                        The site will automatically reopen at this exact date and time.
                                     </p>
                                 </div>
 

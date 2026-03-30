@@ -77,7 +77,9 @@ export async function POST(req: Request) {
         const availability = await getAvailability();
         let availabilityString = '';
         if (availability.status === 'closed') {
-            availabilityString = 'Commissions are currently **CLOSED**. This is because Atharva has reached his maximum monthly capacity of 4 high-detail commissions (2 active + 2 waitlist). Safety rule: Do not promise anyone a slot if it is closed.';
+            const reasonStr = availability.closure_reason ? `Reason: ${availability.closure_reason}.` : 'This is because Atharva has reached his maximum monthly capacity of 4 high-detail commissions (2 active + 2 waitlist).';
+            const dateStr = availability.reopen_date ? ` Expected to reopen on: ${new Date(availability.reopen_date).toLocaleString()}.` : '';
+            availabilityString = `Commissions are currently **CLOSED**. ${reasonStr}${dateStr} Safety rule: Do not promise anyone a slot if it is closed.`;
         } else if (availability.status === 'waitlist') {
             if (availability.waitlist_slots_remaining === 1) {
                 availabilityString = `**URGENCY MODE:** There is only **ONE** waitlist spot left! You must mention this with excitement and light urgency. Example: "I see there's only one waitlist spot left. I'm not saying you should panic, but someone else is probably looking at that same spot right now. Just saying..."`;
