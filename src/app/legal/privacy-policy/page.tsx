@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
                     </p>
                     <ul className="list-disc pl-6 mt-4 space-y-2">
                         <li><strong>Commission Details:</strong> When you fill out our order forms, we collect and use your <strong>Name, Email Address, and Phone Number</strong> to manage your request.</li>
-                        <li><strong>Secure Authentication:</strong> We use safe, industry-standard methods for login. For Google Sign-In, we use <strong>NextAuth</strong> which securely authenticates you. For <strong>Magic Link</strong> sign-ins, we use <strong>Supabase</strong> to verify your email and provide access.</li>
+                        <li><strong>Secure Authentication:</strong> We use safe, industry-standard methods for login. For Google Sign-In, we use <strong>NextAuth</strong> which securely authenticates you. For <strong>Magic Link</strong> sign-ins, we use <strong>Resend</strong> to deliver a secure, one-time verification link to your email, and <strong>Supabase</strong> to verify your identity.</li>
                         <li><strong>Shipping Details:</strong> Postal address provided by you for delivering the physical artwork.</li>
                         <li><strong>Reference Materials:</strong> Photographs provided by you to be used as drawing references.</li>
                         <li><strong>Payout Details:</strong> For the referral program, we may collect your payout information, which securely handles your UPI ID, Indian Bank Account details, or Wise Email address, depending on your location and selected payout method.</li>
@@ -55,7 +55,7 @@ export default function PrivacyPolicy() {
                     </p>
                     <ul className="list-disc pl-6 mt-4 space-y-2">
                         <li><strong>Payment Gateways (Razorpay):</strong> To process your payments securely. We do not store your financial data on our servers.</li>
-                        <li><strong>Authentication Providers (NextAuth/Google & Supabase):</strong> To manage secure login sessions and protect your access.</li>
+                        <li><strong>Authentication Providers (NextAuth/Google, Supabase & Resend):</strong> To manage secure login sessions, deliver verification emails, and protect your access.</li>
                         <li><strong>Shipping Couriers:</strong> To deliver the physical artwork to your address.</li>
                         <li><strong>Payout Processors (Wise):</strong> To securely process international referral commission payouts.</li>
                     </ul>

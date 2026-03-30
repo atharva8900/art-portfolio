@@ -23,3 +23,4 @@ This stage is only triggered by my explicit command to proceed. When given, foll
 ## Core Implementation Rules
 - **Theme Optimization**: Every new feature or fix must be well-optimized for both **Dark** and **Light** modes.
 - **Mobile Optimization**: Every new feature or fix must be fully responsive and well-optimized for **Mobile** devices.
+- **Documentation & Legal Guardrail**: The AI must explicitly ask for user confirmation before modifying the `README.md`, any files in `src/app/legal/`, or the AI Chatbot's system prompt (`src/app/api/chat/route.ts`).

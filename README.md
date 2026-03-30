@@ -9,7 +9,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e?style=for-the-badge&logo=supabase)](https://supabase.io/)
 [![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000?style=for-the-badge&logo=vercel)](https://vercel.com/)
 
-**[🌐 Live Site](https://atharva-sherlekar-art.vercel.app/)** *(Custom Domain Pending)* · **[📸 Instagram](https://www.instagram.com/atharva_sherlekar_art/)**
+**[🌐 Live Site](https://atharvasart.in/)** · **[📸 Instagram](https://www.instagram.com/atharva_sherlekar_art/)**
 
 </div>
 
@@ -94,14 +94,14 @@ A personal dashboard that appears after a user completes a commission, showing a
 | **Language** | TypeScript 5 |
 | **Styling** | Tailwind CSS 3, CSS Variables (Dark/Light theme tokens) |
 | **Database** | Supabase (PostgreSQL with RLS) |
-| **Authentication** | NextAuth.js v4 (Google OAuth + Magic Link Email) |
+| **Authentication** | NextAuth.js v4 (Google OAuth + Magic Link Email via **Resend**) |
 | **Payments** | Razorpay (Orders, Webhooks, Refunds, Payment Links) |
 | **AI** | Google Gemini via AI SDK (`@ai-sdk/google`) |
 | **Animation** | Framer Motion, GSAP (`@gsap/react`) |
 | **3D / Graphics** | Three.js (for advanced visual effects) |
 | **Bot Protection** | Cloudflare Turnstile |
 | **Fingerprinting** | FingerprintJS (Rate Limiting, Anti-Fraud, Device Bans) |
-| **Email** | Nodemailer (Gmail transport) |
+| **Email** | Nodemailer (Gmail SMTP for Business) & **Resend** (Magic Link Auth only) |
 | **Notifications** | Discord Webhook |
 | **Analytics** | Vercel Analytics, Vercel Speed Insights, Google Analytics |
 | **Deployment** | Vercel |

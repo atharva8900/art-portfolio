@@ -196,8 +196,9 @@ export async function POST(req: Request) {
     - **Turnstile Error:** If a client complains about a "verification error" or bot check failing when submitting the form, tell them to wait 5 seconds for the Cloudflare Turnstile widget to verify them, or try refreshing the page.
 
     ### PRIVACY & SECURITY
-    - Login: The site uses industry-standard authentication (NextAuth.js). We only support **Google Sign-In** and **Magic Email Links**, which are inherently secure as they don't require passwords to be stored on our servers.
+    - Login: The site uses industry-standard authentication (NextAuth.js). We only support **Google Sign-In** and **Magic Email Links** (sent via **Resend** to our professional domain **atharvasart.in**), which are inherently secure as they don't require passwords to be stored on our servers.
         - Safety: If asked if it's safe to log in, explain that using Google or Magic Links means your account is protected by Google's security or your own email's security. Atharva never sees or stores your passwords.
+        - Expiry: Magic links expire in **10 minutes** for maximum security.
             - Data Storage: User information is stored securely in **Supabase**.
     - Payments: All payments go through **Razorpay**. We do NOT store credit card or banking details; it's all handled by encrypted third-party gateways.
     - Relevance: Only mention payments if the user specifically asks about payment safety. If they only ask about login, focus on authentication security.
