@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Loader2, Lock, Unlock, Power, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, Lock, Unlock, Power, AlertCircle, Clock, Calendar } from 'lucide-react';
 import { ADMIN_EMAILS } from '@/lib/config/constants';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AdminNav from '@/components/admin/AdminNav';
+import ClockTimePicker from '@/components/admin/ClockTimePicker';
 
 const ALLOWED_EMAILS = ADMIN_EMAILS;
 
@@ -24,7 +25,9 @@ export default function AdminAvailability() {
     const [isOpen, setIsOpen] = useState<boolean | null>(null);
     const [reason, setReason] = useState('');
     const [isCustom, setIsCustom] = useState(false);
-    const [reopenDate, setReopenDate] = useState('');
+    const [showClockPicker, setShowClockPicker] = useState(false);
+    const [datePart, setDatePart] = useState('');
+    const [timePart, setTimePart] = useState('');
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
     const router = useRouter();
@@ -44,10 +47,13 @@ export default function AdminAvailability() {
             if (data.reopen_date) {
                 const date = new Date(data.reopen_date);
                 const tzoffset = date.getTimezoneOffset() * 60000;
-                const localISOTime = new Date(date.getTime() - tzoffset).toISOString().slice(0, 16);
-                setReopenDate(localISOTime);
+                const localDate = new Date(date.getTime() - tzoffset);
+                
+                setDatePart(localDate.toISOString().split('T')[0]);
+                setTimePart(localDate.toISOString().split('T')[1].slice(0, 5));
             } else {
-                setReopenDate('');
+                setDatePart('');
+                setTimePart('');
             }
             setLastUpdated(data.last_updated);
         } catch {
@@ -75,7 +81,7 @@ export default function AdminAvailability() {
                 body: JSON.stringify({ 
                     isOpen: targetStatus,
                     reason: targetStatus ? '' : reason,
-                    reopenDate: targetStatus ? null : (reopenDate ? new Date(reopenDate).toISOString() : null)
+                    reopenDate: targetStatus ? null : (datePart && timePart ? new Date(`${datePart}T${timePart}`).toISOString() : null)
                 }),
             });
 
@@ -224,15 +230,57 @@ export default function AdminAvailability() {
                                     )}
                                 </div>
 
-                                <div className="space-y-2 text-left">
-                                    <label className="text-xs uppercase tracking-widest text-neutral-500 font-bold">Expected Reopen Date (Optional)</label>
-                                    <input 
-                                        type="datetime-local"
-                                        value={reopenDate}
-                                        onChange={(e) => setReopenDate(e.target.value)}
-                                        className="w-full bg-background/50 border border-foreground/10 p-3 rounded-lg text-foreground outline-none focus:border-red-500/50 appearance-none min-h-[50px]"
-                                    />
-                                    <p className="text-[10px] text-neutral-500 italic">
+                                <div className="space-y-4 text-left">
+                                    <label className="text-xs uppercase tracking-widest text-neutral-500 font-bold block mb-1">Expected Reopen Schedule (Optional)</label>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {/* Date Picker */}
+                                        <div className="relative group/input">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within/input:text-red-500 transition-colors pointer-events-none">
+                                                <Calendar size={18} />
+                                            </div>
+                                            <input 
+                                                type="date"
+                                                value={datePart}
+                                                onChange={(e) => setDatePart(e.target.value)}
+                                                className="w-full bg-black/40 border border-foreground/10 pl-11 pr-4 py-3 rounded-xl text-foreground outline-none focus:border-red-500/50 transition-all hover:bg-black/60 cursor-pointer"
+                                            />
+                                        </div>
+
+                                        {/* Clock/Time Picker */}
+                                        <div className="relative group/input">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within/input:text-red-500 transition-colors pointer-events-none">
+                                                <Clock size={18} />
+                                            </div>
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    console.log('Opening clock picker');
+                                                    setShowClockPicker(true);
+                                                }}
+                                                className="w-full text-left bg-black/40 border border-foreground/10 pl-11 pr-4 py-3 rounded-xl text-foreground outline-none focus:border-red-500/50 transition-all hover:bg-black/60 cursor-pointer h-[50px] flex items-center"
+                                            >
+                                                {timePart || '--:--'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Custom Clock Overlay */}
+                                    <AnimatePresence>
+                                        {showClockPicker && (
+                                            <ClockTimePicker 
+                                                value={timePart || '05:30'}
+                                                onClose={() => setShowClockPicker(false)}
+                                                onConfirm={(t) => {
+                                                    console.log('Time selected:', t);
+                                                    setTimePart(t);
+                                                    setShowClockPicker(false);
+                                                }}
+                                            />
+                                        )}
+                                    </AnimatePresence>
+                                    
+                                    <p className="text-[10px] text-neutral-500 italic px-1">
                                         The site will automatically reopen at this exact date and time.
                                     </p>
                                 </div>
