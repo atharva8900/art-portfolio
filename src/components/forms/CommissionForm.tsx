@@ -196,7 +196,7 @@ export default function CommissionForm() {
     const [originalTotalValue, setOriginalTotalValue] = useState<number>(0);
     const [totalSavings, setTotalSavings] = useState<number>(0);
     const [promoCode, setPromoCode] = useState('');
-    const [offer, setOffer] = useState<{ id?: string, code?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, usage_count?: number, usage_limit?: number } | null>(null);
+    const [offer, setOffer] = useState<{ id?: string, code?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, usage_count?: number, usage_limit?: number, delivery_restricted?: boolean, only_india_delivery?: boolean } | null>(null);
     const [offerError, setOfferError] = useState('');
     const [isValidatingPromo, setIsValidatingPromo] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -243,8 +243,10 @@ export default function CommissionForm() {
         }
         setIsValidatingPromo(true);
         setOfferError('');
+        const country = new URLSearchParams(window.location.search).get('country');
+        const query = country ? `?country=${country}` : '';
         try {
-            const res = await fetch(`/api/offers/validate`, {
+            const res = await fetch(`/api/offers/validate${query}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: code.toUpperCase(), fingerprint: fingerprintHash })
@@ -299,10 +301,9 @@ export default function CommissionForm() {
             return;
         }
 
-        publicOfferFetched.current = true;
-        console.log('[OFFER DEBUG] Initiating public offer fetch from API...');
-
-        fetch(`/api/offers/public?t=${Date.now()}`)
+        const country = new URLSearchParams(window.location.search).get('country');
+        const countryQuery = country ? `&country=${country}` : '';
+        fetch(`/api/offers/public?t=${Date.now()}${countryQuery}`)
             .then(res => {
                 console.log('[OFFER DEBUG] API Response Status:', res.status);
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -667,7 +668,9 @@ export default function CommissionForm() {
             }
 
             // Send Commission Submission Data
-            const res = await fetch('/api/commissions', {
+            const country = new URLSearchParams(window.location.search).get('country');
+            const countryQuery = country ? `?country=${country}` : '';
+            const res = await fetch(`/api/commissions${countryQuery}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -816,7 +819,9 @@ export default function CommissionForm() {
                         }
                     }
 
-                    const res = await fetch('/api/commissions', {
+                    const country = new URLSearchParams(window.location.search).get('country');
+                    const countryQuery = country ? `?country=${country}` : '';
+                    const res = await fetch(`/api/commissions${countryQuery}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1196,7 +1201,9 @@ export default function CommissionForm() {
                                             {Object.entries(offer.free_extras).map(([key, val]) => val && (
                                                 <div key={key} className="flex items-center gap-2 bg-accent/10 px-4 py-1.5 rounded-full border border-accent/20">
                                                     <Check size={12} className="text-accent" />
-                                                    <span className="text-[10px] uppercase font-bold tracking-widest text-accent">Free {key}</span>
+                                                    <span className="text-[10px] uppercase font-bold tracking-widest text-accent">
+                                                        Free {key} {(key === 'delivery' && (offer.only_india_delivery || offer.delivery_restricted)) && '(India Only)'}
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -1701,11 +1708,32 @@ export default function CommissionForm() {
                                 )}
                                 {offer?.free_extras?.delivery && (
                                     <div className="flex justify-between">
-                                        <span className="text-neutral-400">+ Delivery (Shipping)</span>
-                                        <span className="font-mono text-accent font-bold">FREE</span>
+                                        <span className="text-neutral-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis mr-2">+ Delivery (Shipping)</span>
+                                        <span className="font-mono text-accent font-bold whitespace-nowrap shrink-0">
+                                            FREE {(offer?.only_india_delivery || offer?.delivery_restricted) && '(INDIA ONLY)'}
+                                        </span>
                                     </div>
                                 )}
                             </div>
+
+                            {/* Regional Delivery Restriction Notice */}
+                            {offer?.delivery_restricted && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="mx-6 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-3 mb-2"
+                                >
+                                    <div className="p-1.5 rounded-lg bg-amber-500/20 shrink-0">
+                                        <Truck size={14} className="text-amber-500" />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">Regional Advantage Locked</p>
+                                        <p className="text-[10px] text-neutral-400 leading-relaxed">
+                                            Free Delivery on this offer is restricted to <span className="text-neutral-200 font-bold">India only</span>. Your region will be billed standard shipping.
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            )}
 
                             {/* Subtotal */}
                             <div className="mx-6 mt-3 pt-3 border-t border-foreground/10 flex justify-between items-baseline">

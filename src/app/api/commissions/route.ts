@@ -317,6 +317,17 @@ export async function POST(request: NextRequest) {
         if (promo_id) {
             appliedOffer = await getOfferById(promo_id);
             if (appliedOffer && (appliedOffer.usage_limit - appliedOffer.usage_count) > 0) {
+                const { searchParams } = new URL(request.url);
+                const countryParam = searchParams.get('country');
+                const country = countryParam || request.headers.get('x-vercel-ip-country') || 'IN'; // priority: param > header > default
+                
+                // Regional Restriction Logic
+                if (country !== 'IN' && appliedOffer.only_india_delivery) {
+                    if (appliedOffer.free_extras) {
+                        appliedOffer.free_extras.delivery = false;
+                    }
+                }
+
                 // Apply discount to base price
                 if (appliedOffer.discount_percent) {
                     totalBasePrice = totalBasePriceOriginal * (1 - appliedOffer.discount_percent / 100);

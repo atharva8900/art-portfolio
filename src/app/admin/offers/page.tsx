@@ -457,6 +457,7 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
             background: false,
             framing: false
         },
+        only_india_delivery: false,
         is_public: true
     });
 
@@ -474,6 +475,7 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
                     discount_percent: formData.discount_percent,
                     usage_limit: formData.usage_limit,
                     free_extras: formData.free_extras,
+                    only_india_delivery: formData.only_india_delivery,
                     is_public: formData.is_public,
                     is_active: true,
                     // Append +05:30 so the time is always treated as IST before converting to UTC
@@ -634,24 +636,45 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
                             <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 px-2">Free Add-ons</label>
                             <div className="grid grid-cols-2 gap-3">
                                 {Object.keys(formData.free_extras).map((key) => (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        onClick={() => setFormData({
-                                            ...formData,
-                                            free_extras: {
-                                                ...formData.free_extras,
-                                                [key]: !formData.free_extras[key as keyof typeof formData.free_extras]
-                                            }
-                                        })}
-                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${formData.free_extras[key as keyof typeof formData.free_extras]
-                                            ? 'bg-accent/10 border-accent/40 text-foreground'
-                                            : 'bg-foreground/5 border-foreground/10 text-neutral-500'
-                                            }`}
-                                    >
-                                        <span className="text-xs uppercase font-bold tracking-widest">{key}</span>
-                                        {formData.free_extras[key as keyof typeof formData.free_extras] ? <Check size={14} /> : <Plus size={14} opacity={0.2} />}
-                                    </button>
+                                    <div key={key} className="space-y-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({
+                                                ...formData,
+                                                free_extras: {
+                                                    ...formData.free_extras,
+                                                    [key]: !formData.free_extras[key as keyof typeof formData.free_extras]
+                                                }
+                                            })}
+                                            className={`flex items-center justify-between p-4 rounded-2xl border transition-all w-full ${formData.free_extras[key as keyof typeof formData.free_extras]
+                                                ? 'bg-accent/10 border-accent/40 text-foreground'
+                                                : 'bg-foreground/5 border-foreground/10 text-neutral-500'
+                                                }`}
+                                        >
+                                            <span className="text-xs font-bold uppercase tracking-widest">{key}</span>
+                                            {formData.free_extras[key as keyof typeof formData.free_extras] ? <Check size={14} /> : <Plus size={14} opacity={0.2} />}
+                                        </button>
+
+                                        {/* Delivery Region Switcher */}
+                                        {key === 'delivery' && formData.free_extras.delivery && (
+                                            <div className="flex bg-foreground/5 p-1 rounded-xl border border-foreground/10">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, only_india_delivery: true })}
+                                                    className={`flex-1 py-2 text-[10px] uppercase font-bold tracking-widest rounded-lg transition-all ${formData.only_india_delivery ? 'bg-accent text-white' : 'text-neutral-500 hover:text-foreground'}`}
+                                                >
+                                                    India Only
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, only_india_delivery: false })}
+                                                    className={`flex-1 py-2 text-[10px] uppercase font-bold tracking-widest rounded-lg transition-all ${!formData.only_india_delivery ? 'bg-accent text-white' : 'text-neutral-500 hover:text-foreground'}`}
+                                                >
+                                                    Global
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>

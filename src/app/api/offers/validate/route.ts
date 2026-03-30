@@ -33,9 +33,26 @@ export async function POST(req: Request) {
         const result = await validateOffer(code);
 
         if (result.valid && result.offer) {
+            const { searchParams } = new URL(req.url);
+            const countryParam = searchParams.get('country');
+            const country = countryParam || req.headers.get('x-vercel-ip-country') || 'IN'; // priority: param > header > default
+            let offer = result.offer;
+            
+            if (country !== 'IN' && offer.only_india_delivery) {
+                // Apply restriction: copy and update
+                offer = {
+                    ...offer,
+                    free_extras: {
+                        ...offer.free_extras,
+                        delivery: false
+                    },
+                    delivery_restricted: true
+                };
+            }
+
             // Track click successfully validated
-            await incrementOfferClick(result.offer.id);
-            return NextResponse.json({ valid: true, offer: result.offer });
+            await incrementOfferClick(offer.id);
+            return NextResponse.json({ valid: true, offer });
         } else {
             return NextResponse.json({ valid: false, error: result.error }, { status: 200 });
         }

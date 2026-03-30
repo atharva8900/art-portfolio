@@ -17,6 +17,8 @@ export interface OfferData {
     };
     is_active: boolean;
     is_public: boolean;
+    only_india_delivery: boolean;
+    delivery_restricted?: boolean; // UI flag for geolocation restriction
     created_at: string;
     updated_at: string;
 }
