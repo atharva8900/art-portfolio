@@ -212,6 +212,8 @@ cp .env.example .env.local
 | `EMAIL_SERVER_USER` | SMTP server username (email address) |
 | `EMAIL_SERVER_PASSWORD` | SMTP server password (or app password) |
 | `EMAIL_FROM` | The "from" email address for outgoing mail |
+| `RESEND_API_KEY` | Your Resend API Key (specifically for secure Magic Link Auth) |
+| `AUTH_EMAIL_FROM` | The professional sender address (e.g., `"Atharva Sherlekar Art" <auth@atharvasart.in>`) |
 
 ### 3. Set up Supabase
 
