@@ -1747,31 +1747,44 @@ export default function CommissionForm() {
                             {/* Deposit & Balance */}
                             <div className="mx-6 mt-4 pt-3 border-t border-foreground/10 space-y-2 text-sm">
                                 {status === 'waitlist' ? (
-                                    <>
-                                        <div className="flex justify-between">
-                                            <span className="text-accent font-medium">Slot Reservation Fee (25%)</span>
-                                            <span className="font-mono text-accent font-bold">₹{Math.round(estimatedTotal * 0.25).toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-400">Remaining Advance (25%, due when work begins)</span>
-                                            <span className="font-mono text-neutral-400">₹{Math.round(estimatedTotal * 0.25).toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-400">Balance Due (on completion)</span>
-                                            <span className="font-mono text-neutral-400">₹{Math.round(estimatedTotal * 0.5).toLocaleString()} {offer?.free_extras?.delivery ? '(incl. Shipping)' : '+ Shipping'}</span>
-                                        </div>
-                                    </>
+                                    (() => {
+                                        const resFee = Math.round(estimatedTotal * 0.25);
+                                        const advFee = Math.round(estimatedTotal * 0.25);
+                                        const balDue = estimatedTotal - resFee - advFee;
+                                        return (
+                                            <>
+                                                <div className="flex justify-between">
+                                                    <span className="text-accent font-medium">Slot Reservation Fee (25%)</span>
+                                                    <span className="font-mono text-accent font-bold">₹{resFee.toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-400">Remaining Advance (25%, due when work begins)</span>
+                                                    <span className="font-mono text-neutral-400">₹{advFee.toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-400">Balance Due (on completion)</span>
+                                                    <span className="font-mono text-neutral-400">₹{balDue.toLocaleString()} {offer?.free_extras?.delivery ? '(incl. Shipping)' : '+ Shipping'}</span>
+                                                </div>
+                                            </>
+                                        );
+                                    })()
                                 ) : (
-                                    <>
-                                        <div className="flex justify-between">
-                                            <span className="text-accent font-medium">Booking Deposit (50%)</span>
-                                            <span className="font-mono text-accent font-bold">₹{Math.round(estimatedTotal / 2).toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-400">Balance Due</span>
-                                            <span className="font-mono text-neutral-400">₹{Math.round(estimatedTotal / 2).toLocaleString()} {offer?.free_extras?.delivery ? '(incl. Shipping)' : '+ Shipping'}</span>
-                                        </div>
-                                    </>
+                                    (() => {
+                                        const deposit = Math.round(estimatedTotal / 2);
+                                        const balance = estimatedTotal - deposit;
+                                        return (
+                                            <>
+                                                <div className="flex justify-between">
+                                                    <span className="text-accent font-medium">Booking Deposit (50%)</span>
+                                                    <span className="font-mono text-accent font-bold">₹{deposit.toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-400">Balance Due</span>
+                                                    <span className="font-mono text-neutral-400">₹{balance.toLocaleString()} {offer?.free_extras?.delivery ? '(incl. Shipping)' : '+ Shipping'}</span>
+                                                </div>
+                                            </>
+                                        );
+                                    })()
                                 )}
                             </div>
 
@@ -1875,7 +1888,7 @@ export default function CommissionForm() {
                                 {loading ? (
                                     <Loader2 className="animate-spin" />
                                 ) : status === 'waitlist' ? (
-                                    <>Pay ₹{Math.round(estimatedTotal * 0.25)} & Join Waitlist</>
+                                    <>Pay ₹{Math.round(estimatedTotal * 0.25).toLocaleString()} & Join Waitlist</>
                                 ) : (
                                     'Submit Request'
                                 )}
