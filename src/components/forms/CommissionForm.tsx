@@ -1277,7 +1277,7 @@ export default function CommissionForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label htmlFor="full_name" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Full Name</label>
-                                <input required id="full_name" name="name" type="text" value={userName} onChange={(e) => setUserName(e.target.value)} autoComplete="name" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="John Doe" />
+                                <input required id="full_name" name="name" type="text" value={userName} onChange={(e) => setUserName(e.target.value)} autoComplete="name" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="Your Full Name" />
                             </div>
                             <div className="space-y-2">
                                 <label htmlFor="email" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium flex items-center justify-between">
