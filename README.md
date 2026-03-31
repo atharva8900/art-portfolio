@@ -47,16 +47,21 @@ A multi-step commission form that:
 - Accepts image reference attachments (uploaded to Supabase Storage).
 - Supports promo/offer codes with configurable discounts.
 - Integrates the Cloudflare Turnstile CAPTCHA widget for bot protection.
+- Runs a **ban check** (device fingerprint + email) before allowing submission, blocking flagged users.
+- Enforces **geo-targeted offer restrictions** — e.g., Free Delivery is available to India-based customers only.
 
 ### 🛡️ Admin Dashboard
 A full-featured, password-protected management interface for the artist:
 - View all commission orders with full client details and payment status.
 - Manage commission status (`pending` → `accepted` → `completed`).
 - Send payment links (final 75%) directly to clients via Razorpay.
+- Share **WIP (Work-In-Progress) images** with clients directly from the dashboard.
 - Process refunds on cancelled orders.
 - Approve/reject referral payout requests.
 - Manage the live commission availability toggle (open, waitlist, closed), including slot counts and closure reasons.
 - View and manage Promo/Offer codes.
+- **Manage Bans**: Issue temporary or permanent bans by device fingerprint or email address.
+- **Analytics Dashboard**: View commission stats, revenue charts, and per-user analytics.
 - Export commission reports as PDF.
 
 ### 👤 Client Dashboard
@@ -114,20 +119,34 @@ A personal dashboard that appears after a user completes a commission, showing a
 src/
 ├── app/
 │   ├── api/              # All server-side API routes
-│   │   ├── admin/        # Admin CRUD, payment links, refunds, payout approval
+│   │   ├── admin/        # Admin CRUD, payment links, refunds, bans, analytics, WIP
+│   │   ├── artworks/     # Portfolio content API
 │   │   ├── auth/         # NextAuth handler
-│   │   ├── commissions/  # Commission form submission
-│   │   ├── offers/       # Promo code validation
-│   │   ├── razorpay/     # Order creation & payment webhook
-│   │   └── referrals/    # Referral link creation & validation
+│   │   ├── chat/         # AI chatbot API (Gemini)
+│   │   ├── client/       # Client-facing commission & refund APIs
+│   │   ├── commissions/  # Commission form submission & ban check
+│   │   ├── offers/       # Promo code creation, validation & public listing
+│   │   ├── pricing-tier/ # Dynamic pricing tier API
+│   │   ├── razorpay/     # Order creation, verification & payment webhook
+│   │   ├── referrals/    # Referral link creation, click tracking & validation
+│   │   └── user/         # Per-user analytics & payout requests
 │   ├── admin/            # Admin dashboard pages
+│   │   ├── availability/ # Commission slot management
+│   │   ├── bans/         # Device & email ban management
+│   │   ├── commissions/  # Order management
+│   │   ├── offers/       # Promo code management
+│   │   ├── payouts/      # Referral payout approval
+│   │   └── referrers/    # Referrer management
 │   ├── client/           # Client dashboard pages
 │   ├── commission-process/ # Detailed commission guide page
+│   ├── dashboard/        # Referral & earnings dashboard
+│   ├── legal/            # Privacy policy & legal pages
+│   ├── login/            # Authentication page
 │   ├── layout.tsx        # Root layout with all providers
 │   └── page.tsx          # Homepage
 │
 ├── components/
-│   ├── admin/            # Admin UI components (tables, modals)
+│   ├── admin/            # Admin UI: DashboardCharts, StatsOverview, EarningsHistory
 │   ├── auth/             # Auth forms and provider wrapper
 │   ├── features/         # Major interactive features
 │   │   ├── ArtVisualizer.tsx    # Interactive frame & art preview tool
@@ -139,16 +158,16 @@ src/
 │   ├── forms/
 │   │   └── CommissionForm.tsx   # Full commission + payment form
 │   ├── layout/           # Navbar, Footer, SmoothScroll
-│   ├── sections/         # Homepage sections (Hero, Portfolio, Pricing, etc.)
+│   ├── sections/         # Homepage sections (Hero, Portfolio, Pricing, Testimonials, etc.)
 │   ├── shared/           # Reusable: SafeTurnstile, ThemeProvider, CTA
 │   └── ui/               # Primitives: ColorPicker, ConfirmationModal
 │
 ├── lib/
-│   ├── api/              # Server-side helpers (Discord, Email)
+│   ├── api/              # Server-side helpers (Discord, Email, Resend)
 │   ├── auth/             # NextAuth config and adapter
 │   ├── db/               # Supabase database query functions
 │   ├── supabase/         # Client, server, and admin Supabase instances
-│   └── utils/            # Pricing calculator, general utilities
+│   └── utils/            # Pricing calculator, schemas, general utilities
 │
 └── supabase/
     ├── schema.sql         # Initial database schema & RLS policies
@@ -195,7 +214,7 @@ cp .env.example .env.local
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only) |
 | `NEXTAUTH_URL` | Your site URL (e.g., `http://localhost:3000`) |
 | `NEXT_PUBLIC_BASE_URL` | Your base URL (same as NEXTAUTH_URL in dev) |
-| `NEXTAUTH_SECRET` | A random 32+ char secret string |
+| `NEXTAUTH_SECRET` | **Required.** A random 32+ char secret for signing JWTs. Generate via: `openssl rand -base64 32` |
 | `GOOGLE_CLIENT_ID` | Google OAuth App Client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth App Client Secret |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Razorpay API Key ID (client-side) |
