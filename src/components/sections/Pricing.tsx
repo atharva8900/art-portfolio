@@ -42,7 +42,7 @@ export default function Pricing() {
     const [pricingData, setPricingData] = useState<PricingTierData>({
         isEarlyAccess: true,
         commissionCount: 0,
-        prices: { A5: '₹500', A4: '₹1000', A3: '₹2000' },
+        prices: { A5: '₹499', A4: '₹999', A3: '₹1999' },
         progress: { current: 0, total: 10, remaining: 10 },
     });
 
@@ -69,21 +69,21 @@ export default function Pricing() {
     const pricingItems = useMemo(() => {
         const futurePrices = {
             A5: '₹750',
-            A4: '₹1500',
-            A3: '₹3000',
+            A4: '₹1499',
+            A3: '₹2999',
         };
 
         return [
             { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
             { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: { icon: Star, text: 'Most Popular' } },
-            { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: pricingData.prices.A3 === '₹2000' ? futurePrices.A3 : '₹4000', subtitle: 'Maximum detail & group portraits', badge: { icon: Crown, text: 'Grand Portrait' } }
+            { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: pricingData.prices.A3 === '₹1999' ? futurePrices.A3 : '₹3999', subtitle: 'Maximum detail & group portraits', badge: { icon: Crown, text: 'Grand Portrait' } }
         ];
     }, [pricingData.prices]);
 
     const policyItems = useMemo(() => [
         { icon: Users, text: "Group Portraits: A4 & A3 get 50% off for every additional face. A5 charged at base price per person." },
         { icon: CreditCard, text: "50% advance to confirm. Waitlist reservations: 25% to hold your spot" },
-        { icon: ImageIcon, text: "Detailed background: +₹500" },
+        { icon: ImageIcon, text: "Detailed background: +₹499" },
         { icon: Package, text: "Framing & delivery charges apply" },
         { icon: ShieldCheck, text: "All artworks are packed & shipped with care" },
         { icon: Globe, text: "Available all over India & worldwide" }

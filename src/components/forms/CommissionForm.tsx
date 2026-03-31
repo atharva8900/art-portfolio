@@ -140,7 +140,7 @@ export default function CommissionForm() {
     const [showBackgroundInfo, setShowBackgroundInfo] = useState(false);
     const [showTimelapseInfo, setShowTimelapseInfo] = useState(false);
     const [showFramingInfo, setShowFramingInfo] = useState(false);
-    const [currentPrices, setCurrentPrices] = useState({ A5: '₹500', A4: '₹1000', A3: '₹2000' });
+    const [currentPrices, setCurrentPrices] = useState({ A5: '₹499', A4: '₹999', A3: '₹1999' });
     const [selectedSize, setSelectedSize] = useState<string>('A5');
     const [peopleCount, setPeopleCount] = useState<number>(1);
     const [userName, setUserName] = useState('');
@@ -434,8 +434,8 @@ export default function CommissionForm() {
             baseTotal = baseTotal * (1 - offer.discount_percent / 100);
         }
 
-        const backgroundCost = (detailedBackground && !offer?.free_extras?.background) ? 500 : 0;
-        const timelapseCost = (timelapse && !offer?.free_extras?.timelapse) ? 500 : 0;
+        const backgroundCost = (detailedBackground && !offer?.free_extras?.background) ? 499 : 0;
+        const timelapseCost = (timelapse && !offer?.free_extras?.timelapse) ? 499 : 0;
         const framingCost = (framing && !offer?.free_extras?.framing) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3'] : 0;
 
         // Note: Delivery is usually handled in shipping, but if free_extras.delivery is true, that's a bonus
@@ -443,8 +443,8 @@ export default function CommissionForm() {
 
         // Calculate original total (without any discounts)
         const originalBaseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3');
-        const originalBackgroundCost = detailedBackground ? 500 : 0;
-        const originalTimelapseCost = timelapse ? 500 : 0;
+        const originalBackgroundCost = detailedBackground ? 499 : 0;
+        const originalTimelapseCost = timelapse ? 499 : 0;
         const originalFramingCost = framing ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3'] : 0;
         const originalTotal = originalBaseTotal + originalBackgroundCost + originalTimelapseCost + originalFramingCost;
 

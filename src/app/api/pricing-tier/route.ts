@@ -28,9 +28,9 @@ export async function GET() {
             isEarlyAccess: true,
             commissionCount: 0,
             prices: {
-                A5: '₹500',
-                A4: '₹1000',
-                A3: '₹2000',
+                A5: '₹499',
+                A4: '₹999',
+                A3: '₹1999',
             },
             progress: {
                 current: 0,

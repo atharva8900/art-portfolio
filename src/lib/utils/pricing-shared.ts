@@ -1,14 +1,14 @@
 // Pricing Tiers
 export const EARLY_ACCESS_PRICES = {
-    A5: '₹500',
-    A4: '₹1000',
-    A3: '₹2000',
+    A5: '₹499',
+    A4: '₹999',
+    A3: '₹1999',
 };
 
 export const REGULAR_PRICES = {
     A5: '₹750',
-    A4: '₹1500',
-    A3: '₹3000',
+    A4: '₹1499',
+    A3: '₹2999',
 };
 
 // Framing Prices based on size
@@ -39,7 +39,10 @@ export function calculatePortraitPrice(basePrice: number, peopleCount: number, s
     const additionalPeople = peopleCount - 1;
     // A4/A3 get 50% discount on extra people, A5 (or unspecified) charges full price
     const discountRate = (size === 'A4' || size === 'A3') ? 0.5 : 1.0;
-    const additionalCost = basePrice * discountRate * additionalPeople;
+    
+    // Round up the additional cost to maintain whole numbers and X99 format
+    // Example: A4 (₹999) + 1 face (₹999 * 0.5 = 499.5) becomes 499.5 rounded up to 500. Total = 1499.
+    const additionalCost = Math.ceil(basePrice * discountRate * additionalPeople);
 
     return basePrice + additionalCost;
 }
