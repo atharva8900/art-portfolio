@@ -258,6 +258,8 @@ npm run lint
 
 ---
 
+---
+
 ## 🌐 Deployment
 
 The application is optimized for deployment on **Vercel**. 
@@ -265,6 +267,27 @@ The application is optimized for deployment on **Vercel**.
 2. Add all the environment variables from `.env.local` into the Vercel project settings.
 3. Vercel will auto-detect Next.js and use the `next build` command.
 4. Deploy!
+
+---
+
+## 🔄 Domain Migration Checklist
+
+If you change the primary domain of the application (e.g., from `.vercel.app` to a custom domain), you **MUST** update the following external services to prevent broken authentication or payment failures:
+
+### 1. Razorpay Dashboard
+- **Business Website**: Update in `Account & Settings > Business Website details`.
+- **Webhooks**: Update your webhook URL in `Settings > Webhooks` (e.g., `https://newdomain.com/api/razorpay/webhook`).
+
+### 2. Google Cloud Console (OAuth & Branding)
+- **Branding**: Update the "Application home page" and "Authorized domains" in the `APIs & Services > OAuth consent screen` tab.
+- **Client IDs**: Update the "Authorized redirect URIs" in `APIs & Services > Credentials` (e.g., `https://newdomain.com/api/auth/callback/google`).
+
+### 3. Cloudflare Turnstile
+- **Site Settings**: Add the new domain to the "Domain Whitelist" in the Turnstile dashboard to ensure the CAPTCHA widget still loads.
+
+### 4. Vercel Environment Variables
+- **`NEXTAUTH_URL`**: Update to the full new URL (e.g., `https://newdomain.com`).
+- **`NEXT_PUBLIC_BASE_URL`**: Update to match `NEXTAUTH_URL`.
 
 ---
 
