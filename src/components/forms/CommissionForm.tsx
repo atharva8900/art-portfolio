@@ -622,13 +622,6 @@ export default function CommissionForm() {
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
 
-        // Validate that either phone or instagram_id is provided
-        if (!data.phone && !data.instagram_id) {
-            setError('Please provide either a Phone Number or an Instagram ID so I can contact you about your commission.');
-            setLoading(false);
-            return;
-        }
-
         try {
             // Auto-attach referral code from sessionStorage
             const referralCodeStored = sessionStorage.getItem('referrer_code');
@@ -746,17 +739,9 @@ export default function CommissionForm() {
             return;
         }
 
-        const formData = new FormData(formElement);
-        const data = Object.fromEntries(formData.entries());
-
-        // Validate that either phone or instagram_id is provided
-        if (!data.phone && !data.instagram_id) {
-            setError('Please provide either a Phone Number or an Instagram ID so I can contact you about your commission.');
-            setLoading(false);
-            return;
-        }
 
         const reservationAmount = Math.round(estimatedTotal * 0.25);
+
 
         try {
             // 1. Create Order
@@ -1353,11 +1338,11 @@ export default function CommissionForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label htmlFor="phone" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Phone</label>
-                                <input id="phone" name="phone" type="tel" autoComplete="tel" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="+91 ... (optional if Instagram provided)" />
+                                <input required id="phone" name="phone" type="tel" autoComplete="tel" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="+91 ... (Required for delivery)" />
                             </div>
                             <div className="space-y-2">
                                 <label htmlFor="instagram_id" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Instagram ID</label>
-                                <input id="instagram_id" name="instagram_id" type="text" autoComplete="off" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="@username (optional if Phone provided)" />
+                                <input id="instagram_id" name="instagram_id" type="text" autoComplete="off" className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors" placeholder="@username (Optional)" />
                             </div>
                         </div>
 

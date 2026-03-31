@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const commissionSchema = z.object({
   name: z.string().min(2, "Name is too short").max(100, "Name is too long").trim(),
   email: z.string().email("Invalid email address").trim().toLowerCase(),
-  phone: z.string().min(10, "Phone number is too short").max(20, "Phone number is too long").trim(),
+  phone: z.string().min(10, "Phone number is required for delivery and updates").max(20, "Phone number is too long").trim(),
   instagram_id: z.string().max(50, "Instagram ID is too long").optional().nullable(),
   size: z.enum(['A5', 'A4', 'A3']),
   number_of_people: z.union([z.string(), z.number()]).transform(val => String(val)),
