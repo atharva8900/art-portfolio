@@ -80,6 +80,18 @@ export default function RootLayout({
             <GoogleAnalytics gaId="G-00470JC3GM" />
             {process.env.NEXT_PUBLIC_ENABLE_CHATBOT === 'true' && <ChatWidget />}
             <TurnstileScript />
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  "@context": "https://schema.org",
+                  "@type": "WebSite",
+                  "name": "Atharva Sherlekar Art",
+                  "alternateName": ["Atharva Sherlekar", "Atharva's Art"],
+                  "url": baseUrl,
+                }),
+              }}
+            />
           </AuthProvider>
         </ThemeProvider>
       </body>
