@@ -113,6 +113,20 @@ A personal dashboard that appears after a user completes a commission, showing a
 
 ---
 
+## 🤖 AI Development & Attribution
+
+This project was built with a heavy focus on AI-assisted development and agentic workflows, leveraging a variety of state-of-the-art models for architecture, implementation, and security auditing.
+
+### 🛠️ AI Assistants Used
+- **Antigravity (Primary Agentic Interface)**: Utilized for core development, multi-file refactoring, and feature implementation using:
+  - **Gemini 3 Flash** & **Gemini 3.1 Pro High**
+  - **Claude 4.6 Sonnet** & **Claude 4.6 Opus**
+- **ChatGPT 5.3 (Free)**: Utilized during the initial conceptualization and prompting phases of the project.
+
+The combination of these models allowed for rapid prototyping and deployment of complex features like the **end-to-end commission process**, **comprehensive admin dashboard management**, etc.
+
+---
+
 ## 📁 Project Structure
 
 ```
