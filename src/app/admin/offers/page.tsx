@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
     Loader2, Copy, Users, Check, Lock, MousePointer2,
-    QrCode, X, Plus, Percent, Trash2, Calendar, Clock
+    QrCode, X, Plus, Percent, Trash2, Calendar, Clock, Edit2
 } from 'lucide-react';
 import { ADMIN_EMAILS } from '@/lib/config/constants';
 import { useSession, signOut } from 'next-auth/react';
@@ -30,6 +30,7 @@ interface OfferData {
     };
     is_active: boolean;
     is_public: boolean;
+    only_india_delivery: boolean;
     created_at: string;
 }
 
@@ -46,6 +47,7 @@ export default function AdminOffersPage() {
     const [offerToDelete, setOfferToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showCreateOffer, setShowCreateOffer] = useState(false);
+    const [offerToEdit, setOfferToEdit] = useState<OfferData | null>(null);
     const [fullscreenQRCode, setFullscreenQRCode] = useState<{ id: string, name: string, code: string } | null>(null);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -198,6 +200,7 @@ export default function AdminOffersPage() {
                     <OfferListView
                         offers={offers}
                         onDelete={(id) => setOfferToDelete(id)}
+                        onEdit={(offer) => setOfferToEdit(offer)}
                         onShowQR={(offer) => setFullscreenQRCode(offer)}
                         showNotification={showNotification}
                     />
@@ -247,15 +250,20 @@ export default function AdminOffersPage() {
                 )}
             </AnimatePresence>
 
-            {/* Create Offer Modal */}
+            {/* Create/Edit Offer Modal */}
             <AnimatePresence>
-                {showCreateOffer && (
-                    <CreateOfferModal
-                        onClose={() => setShowCreateOffer(false)}
+                {(showCreateOffer || offerToEdit) && (
+                    <OfferModal
+                        editOffer={offerToEdit}
+                        onClose={() => {
+                            setShowCreateOffer(false);
+                            setOfferToEdit(null);
+                        }}
                         onSuccess={() => {
                             setShowCreateOffer(false);
+                            setOfferToEdit(null);
                             fetchOffers();
-                            showNotification('Offer created successfully');
+                            showNotification(offerToEdit ? 'Offer updated successfully' : 'Offer created successfully');
                         }}
                     />
                 )}
@@ -333,9 +341,10 @@ export default function AdminOffersPage() {
     );
 }
 
-function OfferListView({ offers, onDelete, onShowQR, showNotification }: {
+function OfferListView({ offers, onDelete, onEdit, onShowQR, showNotification }: {
     offers: OfferData[],
     onDelete: (id: string) => void,
+    onEdit: (offer: OfferData) => void,
     onShowQR: (offer: { id: string, name: string, code: string }) => void,
     showNotification: (m: string) => void
 }) {
@@ -375,12 +384,22 @@ function OfferListView({ offers, onDelete, onShowQR, showNotification }: {
                                     </button>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => onDelete(offer.id)}
-                                className="p-2 rounded-full bg-red-500/5 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-foreground"
-                            >
-                                <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => onEdit(offer)}
+                                    className="p-2 rounded-full bg-accent/5 text-accent hover:bg-accent hover:text-background transition-all"
+                                    title="Edit Offer"
+                                >
+                                    <Edit2 size={14} />
+                                </button>
+                                <button
+                                    onClick={() => onDelete(offer.id)}
+                                    className="p-2 rounded-full bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-foreground transition-all"
+                                    title="Delete Offer"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-foreground/5">
@@ -440,25 +459,25 @@ function OfferListView({ offers, onDelete, onShowQR, showNotification }: {
     );
 }
 
-function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
+function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, onSuccess: () => void, editOffer?: OfferData | null }) {
     const [loading, setLoading] = useState(false);
     const [showClockPicker, setShowClockPicker] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
-        name: '',
-        code: '',
-        discount_percent: 10,
-        usage_limit: 3,
-        expiry_date: '',
-        expiry_time: '23:59',
+        name: editOffer?.name || '',
+        code: editOffer?.code || '',
+        discount_percent: editOffer?.discount_percent || 10,
+        usage_limit: editOffer?.usage_limit || 3,
+        expiry_date: editOffer?.expires_at ? new Date(editOffer.expires_at).toISOString().split('T')[0] : '',
+        expiry_time: editOffer?.expires_at ? new Date(editOffer.expires_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '23:59',
         free_extras: {
-            delivery: false,
-            timelapse: false,
-            background: false,
-            framing: false
+            delivery: editOffer?.free_extras?.delivery || false,
+            timelapse: editOffer?.free_extras?.timelapse || false,
+            background: editOffer?.free_extras?.background || false,
+            framing: editOffer?.free_extras?.framing || false
         },
-        only_india_delivery: false,
-        is_public: true
+        only_india_delivery: editOffer?.only_india_delivery || false,
+        is_public: editOffer?.is_public !== false
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -466,8 +485,11 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch('/api/admin/offers', {
-                method: 'POST',
+            const url = editOffer ? `/api/admin/offers/${editOffer.id}` : '/api/admin/offers';
+            const method = editOffer ? 'PATCH' : 'POST';
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: formData.name,
@@ -491,7 +513,7 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
             onSuccess();
         } catch (err) {
             console.error(err);
-            setError(err instanceof Error ? err.message : 'Failed to create offer. Please try again.');
+            setError(err instanceof Error ? err.message : 'Failed to save offer. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -530,8 +552,8 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
 
                 <div className="space-y-5">
                     <div className="space-y-1">
-                        <h2 className="text-2xl font-serif">Create New Offer</h2>
-                        <p className="text-neutral-400 text-xs italic">Define your unique promotional parameters</p>
+                        <h2 className="text-2xl font-serif">{editOffer ? 'Edit Offer' : 'Create New Offer'}</h2>
+                        <p className="text-neutral-400 text-xs italic">{editOffer ? 'Update existing promotional parameters' : 'Define your unique promotional parameters'}</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -714,7 +736,7 @@ function CreateOfferModal({ onClose, onSuccess }: { onClose: () => void, onSucce
                             disabled={loading}
                             className="w-full py-5 bg-foreground text-background rounded-3xl font-bold flex items-center justify-center gap-3 hover:bg-neutral-200 transition-all disabled:opacity-50 mt-4 shadow-2xl"
                         >
-                            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Publish Offer'}
+                            {loading ? <Loader2 size={20} className="animate-spin" /> : (editOffer ? 'Save Changes' : 'Publish Offer')}
                         </button>
                     </form>
                 </div>

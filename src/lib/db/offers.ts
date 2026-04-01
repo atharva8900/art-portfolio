@@ -148,6 +148,22 @@ export async function decrementOfferUsage(id: string): Promise<boolean> {
     return true;
 }
 
+export async function updateOffer(id: string, updates: Partial<OfferData>): Promise<OfferData | null> {
+    const { data, error } = await supabaseAdmin
+        .from('offers')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating offer in Supabase:', error);
+        return null;
+    }
+
+    return data as OfferData;
+}
+
 export async function getPublicOffer(): Promise<OfferData | null> {
     const { data, error } = await supabaseAdmin
         .from('offers')
