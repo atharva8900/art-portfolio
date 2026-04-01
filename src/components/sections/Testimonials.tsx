@@ -3,11 +3,32 @@
 import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Quote, Heart, Sparkles } from 'lucide-react';
+import { Quote, Heart, Sparkles, Instagram } from 'lucide-react';
+
+const TESTIMONIALS = [
+    {
+        name: "Namrata Paste",
+        role: "Buyer",
+        content: "Exceptional work 🙌 This sketch is beyond what I imagined. You brought so much life and emotion to it—Thank you so much ❤️",
+        avatar: "N",
+        color: "amber",
+        icon: Quote,
+        instagramUrl: "https://www.instagram.com/p/DSCH4LZjY6C/?igsh=bGZvdWFhMXIxd2gy"
+    },
+    {
+        name: "Shubham Paste",
+        role: "The Recipient",
+        content: "You've created something unforgettable. The detailing, the effort — everything is perfect. Truly grateful for this masterpiece. ❤️🔥🙌",
+        avatar: "S",
+        color: "accent",
+        icon: Sparkles,
+        instagramUrl: "https://www.instagram.com/p/DSCH4LZjY6C/?igsh=bGZvdWFhMXIxd2gy"
+    }
+];
 
 const Testimonials = () => {
     return (
-        <section className="py-16 md:py-24 bg-background overflow-hidden border-t border-foreground/5">
+        <section className="py-16 md:py-24 bg-background overflow-hidden border-t border-foreground/5" id="testimonials">
             <div className="container mx-auto px-6">
                 <div className="text-center mb-16 space-y-4">
                     <h2 className="font-serif text-3xl md:text-5xl tracking-widest uppercase text-foreground">
@@ -66,47 +87,64 @@ const Testimonials = () => {
                         </motion.div>
 
                         <div className="space-y-8">
-                            {/* Testimonial 1 - The Buyer */}
-                            <motion.div
-                                initial={{ opacity: 0, x: 30 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: false }}
-                                transition={{ duration: 0.6, delay: 0.2 }}
-                                className="relative p-8 rounded-2xl bg-surface border border-foreground/5 shadow-sm group hover:border-amber-500/30 transition-colors"
-                            >
-                                <Quote className="absolute -top-4 -left-4 text-amber-500/20 w-12 h-12 group-hover:text-amber-500/40 transition-colors" />
-                                <p className="text-lg text-foreground/80 mb-6 italic leading-relaxed">
-                                    &quot;Exceptional work 🙌 This sketch is beyond what I imagined. You brought so much life and emotion to it—Thank you so much ❤️&quot;
-                                </p>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 font-bold">N</div>
-                                    <div>
-                                        <h4 className="text-foreground font-bold">Namrata Paste</h4>
-                                        <p className="text-foreground/40 text-xs uppercase tracking-tighter">Buyer</p>
-                                    </div>
-                                </div>
-                            </motion.div>
+                            {TESTIMONIALS.map((testimonial, index) => {
+                                // Explicitly define classes so Tailwind can detect them
+                                const themeStyles = testimonial.color === 'amber'
+                                    ? {
+                                        cardHover: "hover:border-amber-500/30",
+                                        iconBase: "text-amber-500/20",
+                                        iconHover: "group-hover:text-amber-500/40",
+                                        avatarBg: "bg-amber-500/20",
+                                        avatarText: "text-amber-500"
+                                    }
+                                    : {
+                                        cardHover: "hover:border-accent/30",
+                                        iconBase: "text-accent/20",
+                                        iconHover: "group-hover:text-accent/40",
+                                        avatarBg: "bg-accent/20",
+                                        avatarText: "text-accent"
+                                    };
 
-                            {/* Testimonial 2 - The Recipient */}
-                            <motion.div
-                                initial={{ opacity: 0, x: 30 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: false }}
-                                transition={{ duration: 0.6, delay: 0.4 }}
-                                className="relative p-8 rounded-2xl bg-surface border border-foreground/5 shadow-sm group hover:border-accent/30 transition-colors"
-                            >
-                                <Sparkles className="absolute -top-4 -left-4 text-accent/20 w-12 h-12 group-hover:text-accent/40 transition-colors" />
-                                <p className="text-lg text-foreground/80 mb-6 italic leading-relaxed">
-                                    &quot;You&apos;ve created something unforgettable. The detailing, the effort — everything is perfect. Truly grateful for this masterpiece. ❤️🔥🙌&quot;
-                                </p>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold">S</div>
-                                    <div>
-                                        <h4 className="text-foreground font-bold">Shubham Paste</h4>
-                                        <p className="text-foreground/40 text-xs uppercase tracking-tighter">The Recipient</p>
-                                    </div>
-                                </div>
-                            </motion.div>
+                                return (
+                                    <motion.div
+                                        key={testimonial.name}
+                                        initial={{ opacity: 0, x: 30 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: false }}
+                                        transition={{ duration: 0.6, delay: 0.2 * (index + 1) }}
+                                        className={`relative p-8 rounded-2xl bg-surface border border-foreground/5 shadow-sm group transition-colors ${themeStyles.cardHover}`}
+                                    >
+                                        <testimonial.icon className={`absolute -top-4 -left-4 w-12 h-12 transition-colors ${themeStyles.iconBase} ${themeStyles.iconHover}`} />
+                                        <p className="text-lg text-foreground/80 mb-6 italic leading-relaxed">
+                                            &quot;{testimonial.content}&quot;
+                                        </p>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${themeStyles.avatarBg} ${themeStyles.avatarText}`}>
+                                                    {testimonial.avatar}
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-foreground font-bold">{testimonial.name}</h4>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-foreground/40 text-xs uppercase tracking-tighter">{testimonial.role}</p>
+                                                        {testimonial.instagramUrl && (
+                                                            <a
+                                                                href={testimonial.instagramUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-foreground/40 hover:text-[#E4405F] transition-colors p-1"
+                                                                title="View on Instagram"
+                                                            >
+                                                                <Instagram size={14} />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </div>
                     </div>
 
