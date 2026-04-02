@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import RevealText from '@/components/shared/RevealText';
+import LazyVideo from '@/components/shared/LazyVideo';
 
 export default function About() {
     return (
@@ -66,17 +67,11 @@ export default function About() {
                             onMouseLeave={() => window.dispatchEvent(new Event('cursor-show'))}
                             data-hide-cursor="true"
                         >
-                            <iframe
-                                width="100%"
-                                height="100%"
-                                src="https://www.youtube.com/embed/wgsWB-FK6F0?si=qgJUgCsv96ukowa2&rel=0"
-                                title="Realistic Eye Drawing Timelapse"
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerPolicy="strict-origin-when-cross-origin"
-                                allowFullScreen
-                                className="w-full h-full"
-                            ></iframe>
+                            <LazyVideo 
+                                title="Realistic Eye Drawing Timelapse" 
+                                videoSrc="/images/eye%20drawing%20timelapse%20video.mp4"
+                                thumbnailUrl="/images/eye%20drawing%20thumbnail.jpg"
+                            />
                         </div>
 
                         {/* Card Footer */}
@@ -97,3 +92,4 @@ export default function About() {
         </section>
     );
 }
+

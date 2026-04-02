@@ -12,6 +12,7 @@ const SmoothScroll = dynamic(() => import('@/components/layout/SmoothScroll'), {
 const CustomCursor = dynamic(() => import('@/components/features/CustomCursor'), { ssr: false });
 const ChatWidget = dynamic(() => import('@/components/features/ChatWidget'), { ssr: false });
 const TurnstileScript = dynamic(() => import('@/components/shared/TurnstileScript'), { ssr: false });
+import DeviceGuard from '@/components/shared/DeviceGuard';
 
 import { getBaseUrl } from '@/lib/utils/utils';
 
@@ -71,10 +72,16 @@ export default function RootLayout({
 
         <ThemeProvider attribute="class" defaultTheme="dark">
           <AuthProvider>
-            <CustomCursor />
-            <SmoothScroll>
-              {children}
-            </SmoothScroll>
+            <DeviceGuard 
+              fallback={children} 
+              minWidth={1024} 
+              disableOnTouch={true}
+            >
+              <CustomCursor />
+              <SmoothScroll>
+                {children}
+              </SmoothScroll>
+            </DeviceGuard>
             <Analytics />
             <SpeedInsights />
             <GoogleAnalytics gaId="G-00470JC3GM" />

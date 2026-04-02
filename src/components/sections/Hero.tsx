@@ -35,10 +35,10 @@ export default function Hero() {
         // These target the inner elements.
         const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-        tl.from(beyondLoadRef.current, { yPercent: 100, opacity: 0, duration: 1.2, delay: 0.1 })
-            .from(realismLoadRef.current, { yPercent: 100, opacity: 0, duration: 1.2 }, "-=0.9")
-            .from(descriptionLoadRef.current, { opacity: 0, y: 20, duration: 1.2 }, "-=0.8")
-            .from(ctaLoadRef.current, { opacity: 0, y: 20, duration: 1.2 }, "-=1.0");
+        tl.from(beyondLoadRef.current, { yPercent: 100, opacity: 0, duration: 0.8, delay: 0.05, clearProps: "all" })
+            .from(realismLoadRef.current, { yPercent: 100, opacity: 0, duration: 0.8, clearProps: "all" }, "-=0.6")
+            .from(descriptionLoadRef.current, { opacity: 0, y: 15, duration: 0.8, clearProps: "all" }, "-=0.6")
+            .from(ctaLoadRef.current, { opacity: 0, y: 15, duration: 0.8, clearProps: "all" }, "-=0.7");
 
         // --- 2. The "Gate" Scroll Animation ---
         // These target the OUTER wrapper elements. By separating the targets,
