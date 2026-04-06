@@ -72,16 +72,26 @@ export default function RootLayout({
 
         <ThemeProvider attribute="class" defaultTheme="dark">
           <AuthProvider>
-            <DeviceGuard 
-              fallback={children} 
-              minWidth={1024} 
-              disableOnTouch={true}
-            >
+            {/* 
+              PERFORMANCE NOTE: We only wrap CustomCursor in DeviceGuard. 
+              If DeviceGuard wraps the main {children}, it returns `null` on hydration 
+              which completely deletes the page DOM and causes massive LCP/INP (7s+) penalties on mobile.
+              DeviceGuard is kept exclusively for CustomCursor to ensure it stays fully disabled on 
+              mobile devices even if they request "Desktop Site" (since touch is still detected).
+            */}
+            <DeviceGuard disableOnTouch={true} minWidth={1024}>
               <CustomCursor />
-              <SmoothScroll>
-                {children}
-              </SmoothScroll>
             </DeviceGuard>
+
+            {/* 
+              PERFORMANCE NOTE: SmoothScroll wraps {children} directly, passing them through on SSR. 
+              We do NOT wrap it in DeviceGuard to preserve fast hydration. 
+              It already internally guards against "Desktop Site" touch devices by checking 
+              `navigator.maxTouchPoints` inside its own useEffect, safely bailing out without unmounting.
+            */}
+            <SmoothScroll>
+              {children}
+            </SmoothScroll>
             <Analytics />
             <SpeedInsights />
             <GoogleAnalytics gaId="G-00470JC3GM" />
