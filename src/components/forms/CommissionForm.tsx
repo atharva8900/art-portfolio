@@ -1108,7 +1108,7 @@ export default function CommissionForm() {
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="mt-8 p-8 bg-neutral-900 border border-accent/20 rounded-[2.5rem] shadow-2xl relative overflow-hidden group"
+                                className="mt-8 p-8 bg-neutral-50 dark:bg-neutral-900 border border-black/5 dark:border-accent/20 rounded-[2.5rem] shadow-2xl relative overflow-hidden group"
                             >
                                 {/* Decorative elements */}
                                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent/10 rounded-full blur-[60px] group-hover:bg-accent/20 transition-all" />
@@ -1125,7 +1125,7 @@ export default function CommissionForm() {
                                     </div>
 
                                     <div className="text-center space-y-2">
-                                        <h3 className="text-3xl font-serif text-white">
+                                        <h3 className="text-3xl font-serif text-neutral-900 dark:text-white">
                                             {offer.name}
                                         </h3>
                                         <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-bold opacity-80">
@@ -1133,13 +1133,13 @@ export default function CommissionForm() {
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center gap-12 py-6 px-10 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 w-full justify-center relative overflow-hidden group/benefit">
+                                    <div className="flex items-center gap-12 py-6 px-10 bg-black/5 dark:bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-black/5 dark:border-white/10 w-full justify-center relative overflow-hidden group/benefit">
                                         <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover/benefit:opacity-100 transition-opacity" />
 
                                         <div className="text-center relative z-10">
                                             <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-black mb-2 px-3 py-0.5 bg-accent/10 rounded-full inline-block">Benefit</p>
                                             <div className="flex items-baseline justify-center gap-1">
-                                                <span className="text-5xl md:text-6xl font-cinzel text-white leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{offer.discount_percent ?? 0}</span>
+                                                <span className="text-5xl md:text-6xl font-cinzel text-neutral-900 dark:text-white leading-none drop-shadow-[0_0_15px_rgba(0,0,0,0.05)] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{offer.discount_percent ?? 0}</span>
                                                 <div className="flex flex-col items-start">
                                                     <span className="text-2xl font-cinzel text-accent leading-none">%</span>
                                                     <span className="text-[10px] uppercase font-black tracking-tighter text-accent/60 leading-none mt-1">OFF</span>
@@ -1147,12 +1147,12 @@ export default function CommissionForm() {
                                             </div>
                                         </div>
 
-                                        <div className="w-[1px] h-16 bg-white/10 relative z-10" />
+                                        <div className="w-[1px] h-16 bg-black/10 dark:bg-white/10 relative z-10" />
 
                                         <div className="text-center relative z-10">
                                             <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold mb-2">Availability</p>
                                             <div className="flex items-baseline justify-center gap-1">
-                                                <span className="text-4xl font-cinzel text-white">{offer.usage_count ?? 0}</span>
+                                                <span className="text-4xl font-cinzel text-neutral-900 dark:text-white">{offer.usage_count ?? 0}</span>
                                                 <span className="text-lg font-cinzel text-neutral-500">/</span>
                                                 <span className="text-lg font-cinzel text-neutral-500">{offer.usage_limit ?? 0}</span>
                                             </div>
@@ -1171,7 +1171,7 @@ export default function CommissionForm() {
                                                     { label: 'secs', value: timeLeft.seconds }
                                                 ].map((t, i) => (
                                                     <div key={i} className="flex flex-col items-center gap-1">
-                                                        <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl font-bold border border-white/10 text-white shadow-inner">
+                                                        <div className="w-14 h-14 bg-neutral-100 dark:bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl font-bold border border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white shadow-inner">
                                                             {String(t.value).padStart(2, '0')}
                                                         </div>
                                                         <span className="text-[9px] uppercase tracking-tighter font-black text-neutral-500">{t.label}</span>
