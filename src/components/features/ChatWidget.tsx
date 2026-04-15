@@ -18,8 +18,6 @@ export default function ChatWidget() {
     const [messageCount, setMessageCount] = useState(0);
     const [fingerprint, setFingerprint] = useState<string>('unknown_device');
     const [localError, setLocalError] = useState<string | null>(null);
-    const [diagInfo, setDiagInfo] = useState<{ status?: number; code?: string } | null>(null);
-    const [showDetails, setShowDetails] = useState(false);
 
     // Initialize/Check Daily Limit & Fingerprint
     useEffect(() => {
@@ -77,18 +75,14 @@ export default function ChatWidget() {
                 const text = await response.text();
                 try {
                     const json = JSON.parse(text);
-                    setDiagInfo({ status: response.status, code: json.code });
                     setLocalError(json.error || response.statusText);
                 } catch {
-                    setDiagInfo({ status: response.status });
                     setLocalError(text || response.statusText);
                 }
             }
         },
         onFinish: () => {
             setLocalError(null);
-            setDiagInfo(null);
-            setShowDetails(false);
             const newCount = messageCount + 1;
             setMessageCount(newCount);
             const savedData = JSON.parse(localStorage.getItem('art_assistant_limit') || '{}');
