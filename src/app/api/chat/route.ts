@@ -224,21 +224,26 @@ export async function POST(req: Request) {
         return result.toUIMessageStreamResponse();
     } catch (error: unknown) {
         console.error('--- CHAT API CRITICAL ERROR ---');
-        console.error('Error Object:', error);
+        console.error('Time:', new Date().toISOString());
         
-        const err = error as { message?: string, status?: number, code?: string };
+        const err = error as { message?: string, status?: number, code?: string, stack?: string };
+        const status = err.status || 500;
+        const errorCode = err.code || 'UNKNOWN_ERROR';
         const errorMessage = err.message || 'Error processing your request';
         
+        console.error(`Status: ${status} | Code: ${errorCode}`);
         console.error('Message:', errorMessage);
+        if (err.stack) console.error('Stack:', err.stack);
         console.error('-------------------------------');
 
         return NextResponse.json(
             { 
                 error: errorMessage,
-                code: err.code || 'UNKNOWN_ERROR',
-                details: "Check server logs for full stack trace"
+                code: errorCode,
+                status: status,
+                details: "Check server logs/details for full diagnostics"
             },
-            { status: err.status || 500 }
+            { status }
         );
     }
 }
