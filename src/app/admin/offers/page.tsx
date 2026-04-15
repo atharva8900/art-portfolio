@@ -13,25 +13,13 @@ import AdminNav from '@/components/admin/AdminNav';
 import ClockTimePicker from '@/components/admin/ClockTimePicker';
 import { QRCodeSVG } from 'qrcode.react';
 
-interface OfferData {
-    id: string;
-    code: string;
-    name: string;
-    discount_percent: number;
-    usage_limit: number;
-    usage_count: number;
-    click_count: number;
-    expires_at: string | null;
-    free_extras: {
-        delivery?: boolean;
-        timelapse?: boolean;
-        background?: boolean;
-        framing?: boolean;
-    };
-    is_active: boolean;
-    is_public: boolean;
-    only_india_delivery: boolean;
-    created_at: string;
+import { OfferData } from '@/lib/db/offers';
+
+function getOfferStatus(offer: OfferData): 'ACTIVE' | 'EXHAUSTED' | 'EXPIRED' | 'INACTIVE' {
+    if (!offer.is_active) return 'INACTIVE';
+    if (offer.usage_limit > 0 && offer.usage_count >= offer.usage_limit) return 'EXHAUSTED';
+    if (offer.expires_at && new Date(offer.expires_at) < new Date()) return 'EXPIRED';
+    return 'ACTIVE';
 }
 
 const ALLOWED_EMAILS = ADMIN_EMAILS;
@@ -49,6 +37,7 @@ export default function AdminOffersPage() {
     const [showCreateOffer, setShowCreateOffer] = useState(false);
     const [offerToEdit, setOfferToEdit] = useState<OfferData | null>(null);
     const [fullscreenQRCode, setFullscreenQRCode] = useState<{ id: string, name: string, code: string } | null>(null);
+    const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ message, type });
@@ -182,10 +171,25 @@ export default function AdminOffersPage() {
                                 Active Offers
                             </span>
                             <span className="font-cinzel text-xl text-foreground">
-                                {offers.filter(o => o.is_active).length}
+                                {offers.filter(o => getOfferStatus(o) === 'ACTIVE').length}
                             </span>
                         </div>
                     </div>
+                </div>
+
+                <div className="flex items-center gap-4 border-b border-foreground/5 py-4 overflow-x-auto shrink-0">
+                    <button 
+                        onClick={() => setActiveTab('active')}
+                        className={`text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full transition-all whitespace-nowrap ${activeTab === 'active' ? 'bg-accent text-background' : 'text-neutral-500 hover:text-foreground hover:bg-surface'}`}
+                    >
+                        Active Offers
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('expired')}
+                        className={`text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full transition-all whitespace-nowrap ${activeTab === 'expired' ? 'bg-accent text-background' : 'text-neutral-500 hover:text-foreground hover:bg-surface'}`}
+                    >
+                        Past / Expired
+                    </button>
                 </div>
 
                 {error ? (
@@ -198,11 +202,14 @@ export default function AdminOffersPage() {
                     </div>
                 ) : (
                     <OfferListView
-                        offers={offers}
+                        offers={activeTab === 'active' 
+                            ? offers.filter(o => getOfferStatus(o) === 'ACTIVE') 
+                            : offers.filter(o => getOfferStatus(o) !== 'ACTIVE')}
                         onDelete={(id) => setOfferToDelete(id)}
                         onEdit={(offer) => setOfferToEdit(offer)}
                         onShowQR={(offer) => setFullscreenQRCode(offer)}
                         showNotification={showNotification}
+                        emptyMessage={activeTab === 'active' ? "No active offers yet" : "No past or expired offers"}
                     />
                 )}
             </div>
@@ -341,50 +348,63 @@ export default function AdminOffersPage() {
     );
 }
 
-function OfferListView({ offers, onDelete, onEdit, onShowQR, showNotification }: {
+function OfferListView({ offers, onDelete, onEdit, onShowQR, showNotification, emptyMessage = "No active offers yet" }: {
     offers: OfferData[],
     onDelete: (id: string) => void,
     onEdit: (offer: OfferData) => void,
     onShowQR: (offer: { id: string, name: string, code: string }) => void,
-    showNotification: (m: string) => void
+    showNotification: (m: string) => void,
+    emptyMessage?: string
 }) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4"
         >
             {offers.length === 0 ? (
                 <div className="col-span-full text-center py-20 text-neutral-500 bg-surface border border-foreground/5 rounded-3xl">
                     <QrCode size={48} className="opacity-20 mx-auto mb-4" />
-                    <p className="uppercase tracking-widest text-xs">No active offers yet</p>
+                    <p className="uppercase tracking-widest text-xs">{emptyMessage}</p>
                 </div>
             ) : (
-                offers.map((offer) => (
-                    <div key={offer.id} className="bg-surface border border-foreground/5 rounded-3xl p-6 space-y-4 hover:border-accent/20 transition-all group shadow-xl">
+                offers.map((offer) => {
+                    const status = getOfferStatus(offer);
+                    const isActive = status === 'ACTIVE';
+                    
+                    return (
+                    <div key={offer.id} className={`bg-surface border border-foreground/5 rounded-3xl p-6 space-y-4 transition-all group shadow-xl ${!isActive ? 'opacity-60 grayscale-[30%]' : 'hover:border-accent/20'}`}>
                         <div className="flex justify-between items-start">
                             <div className="space-y-1">
                                 <h3 className="font-serif text-xl flex items-center gap-2">
                                     {offer.name}
-                                    <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ${offer.is_public !== false ? 'bg-emerald-500/20 text-emerald-400' : 'bg-neutral-500/20 text-neutral-400'}`}>
-                                        {offer.is_public !== false ? 'Public' : 'Private'}
-                                    </span>
+                                    {isActive ? (
+                                        <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ${offer.is_public !== false ? 'bg-emerald-500/20 text-emerald-400' : 'bg-neutral-500/20 text-neutral-400'}`}>
+                                            {offer.is_public !== false ? 'Public' : 'Private'}
+                                        </span>
+                                    ) : (
+                                        <span className="text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold bg-red-500/20 text-red-500">
+                                            {status}
+                                        </span>
+                                    )}
                                 </h3>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono text-accent text-xs font-bold uppercase tracking-wider">{offer.code}</span>
-                                    <button
-                                        onClick={() => {
-                                            const url = `${window.location.origin}?promo=${offer.code}`;
-                                            navigator.clipboard.writeText(url);
-                                            showNotification('Offer link copied');
-                                        }}
-                                        className="text-neutral-500 hover:text-foreground transition-colors"
-                                    >
-                                        <Copy size={12} />
-                                    </button>
+                                    {isActive && (
+                                        <button
+                                            onClick={() => {
+                                                const url = `${window.location.origin}?promo=${offer.code}`;
+                                                navigator.clipboard.writeText(url);
+                                                showNotification('Offer link copied');
+                                            }}
+                                            className="text-neutral-500 hover:text-foreground transition-colors"
+                                        >
+                                            <Copy size={12} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-right">
                                 <button
                                     onClick={() => onEdit(offer)}
                                     className="p-2 rounded-full bg-accent/5 text-accent hover:bg-accent hover:text-background transition-all"
@@ -402,12 +422,20 @@ function OfferListView({ offers, onDelete, onEdit, onShowQR, showNotification }:
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-foreground/5">
-                            <div className="space-y-1">
-                                <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Discount</p>
-                                <p className="font-cinzel text-lg text-emerald-400">{offer.discount_percent}% OFF</p>
-                            </div>
-                            <div className="space-y-1 text-right">
+                        {offer.note && (
+                            <p className="text-[11px] text-neutral-500 italic mt-0 leading-relaxed max-w-[90%]">
+                                {offer.note}
+                            </p>
+                        )}
+
+                        <div className={`grid gap-4 pt-4 border-t border-foreground/5 ${offer.discount_percent > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                            {offer.discount_percent > 0 && (
+                                <div className="space-y-1">
+                                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Discount</p>
+                                    <p className="font-cinzel text-lg text-emerald-400">{offer.discount_percent}% OFF</p>
+                                </div>
+                            )}
+                            <div className={`space-y-1 ${offer.discount_percent > 0 ? 'text-right' : ''}`}>
                                 <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Usage</p>
                                 <p className="font-cinzel text-lg">{offer.usage_count} / {offer.usage_limit}</p>
                             </div>
@@ -433,27 +461,36 @@ function OfferListView({ offers, onDelete, onEdit, onShowQR, showNotification }:
                             <span className="font-mono font-bold text-accent">{offer.click_count}</span>
                         </div>
 
-                        <button
-                            onClick={() => onShowQR({ id: offer.id, name: offer.name, code: offer.code })}
-                            className="pt-4 flex items-center justify-center bg-white rounded-2xl p-4 border border-foreground/10 w-full hover:scale-[1.02] transition-transform cursor-zoom-in"
-                        >
-                            <QRCodeSVG
-                                value={`${window.location.origin}?promo=${offer.code}`}
-                                size={120}
-                                level="M"
-                                includeMargin={true}
-                                imageSettings={{
-                                    src: "/logo.png",
-                                    x: undefined,
-                                    y: undefined,
-                                    height: 24,
-                                    width: 24,
-                                    excavate: true,
-                                }}
-                            />
-                        </button>
+                        {isActive ? (
+                            <button
+                                onClick={() => onShowQR({ id: offer.id, name: offer.name, code: offer.code })}
+                                className="pt-4 flex items-center justify-center bg-white rounded-2xl p-4 border border-foreground/10 w-full hover:scale-[1.02] transition-transform cursor-zoom-in"
+                            >
+                                <QRCodeSVG
+                                    value={`${window.location.origin}?promo=${offer.code}`}
+                                    size={120}
+                                    level="M"
+                                    includeMargin={true}
+                                    imageSettings={{
+                                        src: "/logo.png",
+                                        x: undefined,
+                                        y: undefined,
+                                        height: 24,
+                                        width: 24,
+                                        excavate: true,
+                                    }}
+                                />
+                            </button>
+                        ) : (
+                            <div className="pt-4 flex items-center justify-center bg-foreground/5 rounded-2xl p-4 border border-foreground/10 w-full h-[154px]">
+                                <div className="text-center space-y-2 opacity-50">
+                                    <QrCode size={32} className="mx-auto" />
+                                    <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-500">QR Disabled</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                ))
+                )})
             )}
         </motion.div>
     );
@@ -468,6 +505,7 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
         code: editOffer?.code || '',
         discount_percent: editOffer?.discount_percent || 10,
         usage_limit: editOffer?.usage_limit || 3,
+        note: editOffer?.note || '',
         expiry_date: editOffer?.expires_at ? new Date(editOffer.expires_at).toISOString().split('T')[0] : '',
         expiry_time: editOffer?.expires_at ? new Date(editOffer.expires_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '23:59',
         free_extras: {
@@ -496,6 +534,7 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
                     code: formData.code.toUpperCase(),
                     discount_percent: formData.discount_percent,
                     usage_limit: formData.usage_limit,
+                    note: formData.note || null,
                     free_extras: formData.free_extras,
                     only_india_delivery: formData.only_india_delivery,
                     is_public: formData.is_public,
@@ -587,7 +626,10 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
                                         min="0"
                                         max="100"
                                         value={formData.discount_percent}
-                                        onChange={(e) => setFormData({ ...formData, discount_percent: parseInt(e.target.value) })}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            setFormData({ ...formData, discount_percent: isNaN(val) ? 0 : val });
+                                        }}
                                         className="w-full bg-foreground/5 border border-foreground/10 rounded-2xl pl-12 pr-5 py-3.5 focus:border-accent outline-none transition-all"
                                     />
                                 </div>
@@ -600,7 +642,10 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
                                         type="number"
                                         min="1"
                                         value={formData.usage_limit}
-                                        onChange={(e) => setFormData({ ...formData, usage_limit: parseInt(e.target.value) })}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            setFormData({ ...formData, usage_limit: isNaN(val) ? 1 : val });
+                                        }}
                                         className="w-full bg-foreground/5 border border-foreground/10 rounded-2xl pl-12 pr-5 py-3.5 focus:border-accent outline-none transition-all"
                                     />
                                 </div>
@@ -652,6 +697,16 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
                                     </div>
                                 )}
                             </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 px-2">Note (Optional)</label>
+                            <input
+                                placeholder="e.g. For Instagram 50K followers giveaway"
+                                value={formData.note}
+                                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                                className="w-full bg-foreground/5 border border-foreground/10 rounded-2xl px-5 py-3.5 focus:border-accent outline-none transition-all placeholder:text-neutral-600"
+                            />
                         </div>
 
                         <div className="space-y-4">

@@ -196,7 +196,7 @@ export default function CommissionForm() {
     const [originalTotalValue, setOriginalTotalValue] = useState<number>(0);
     const [totalSavings, setTotalSavings] = useState<number>(0);
     const [promoCode, setPromoCode] = useState('');
-    const [offer, setOffer] = useState<{ id?: string, code?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, usage_count?: number, usage_limit?: number, delivery_restricted?: boolean, only_india_delivery?: boolean } | null>(null);
+    const [offer, setOffer] = useState<{ id?: string, code?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, note?: string | null, usage_count?: number, usage_limit?: number, delivery_restricted?: boolean, only_india_delivery?: boolean } | null>(null);
     const [offerError, setOfferError] = useState('');
     const [isValidatingPromo, setIsValidatingPromo] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -315,7 +315,7 @@ export default function CommissionForm() {
                     console.log('[OFFER DEBUG] Applying public offer:', data.offer.code);
                     setOffer(data.offer);
                     setPromoCode(data.offer.code);
-                    setOfferAppliedMessage(`Limited Time Offer: ${data.offer.name}`);
+                    setOfferAppliedMessage(`${data.offer.expires_at ? 'Limited Time' : 'Special'} Offer: ${data.offer.name}`);
                 } else {
                     console.log('[OFFER DEBUG] No valid public offer returned by server.');
                 }
@@ -1121,7 +1121,7 @@ export default function CommissionForm() {
                                 <div className="relative z-10 flex flex-col items-center gap-6">
                                     <div className="flex items-center gap-2 px-5 py-2 bg-accent text-background rounded-full text-[11px] font-black uppercase tracking-[0.25em] shadow-lg shadow-accent/20">
                                         <Flame size={14} className="animate-pulse" />
-                                        Limited Time Offer Applied
+                                        {offer.expires_at ? 'Limited Time Offer Applied' : 'Special Offer Applied'}
                                     </div>
 
                                     <div className="text-center space-y-2">
@@ -1133,32 +1133,53 @@ export default function CommissionForm() {
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center gap-12 py-6 px-10 bg-black/5 dark:bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-black/5 dark:border-white/10 w-full justify-center relative overflow-hidden group/benefit">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover/benefit:opacity-100 transition-opacity" />
+                                    {offer.note && (
+                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 italic text-center leading-relaxed max-w-xs">
+                                            {offer.note}
+                                        </p>
+                                    )}
 
-                                        <div className="text-center relative z-10">
-                                            <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-black mb-2 px-3 py-0.5 bg-accent/10 rounded-full inline-block">Benefit</p>
-                                            <div className="flex items-baseline justify-center gap-1">
-                                                <span className="text-5xl md:text-6xl font-cinzel text-neutral-900 dark:text-white leading-none drop-shadow-[0_0_15px_rgba(0,0,0,0.05)] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{offer.discount_percent ?? 0}</span>
-                                                <div className="flex flex-col items-start">
-                                                    <span className="text-2xl font-cinzel text-accent leading-none">%</span>
-                                                    <span className="text-[10px] uppercase font-black tracking-tighter text-accent/60 leading-none mt-1">OFF</span>
+                                    {(offer.discount_percent ?? 0) > 0 ? (
+                                        <div className="flex items-center gap-12 py-6 px-10 bg-black/5 dark:bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-black/5 dark:border-white/10 w-full justify-center relative overflow-hidden group/benefit">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover/benefit:opacity-100 transition-opacity" />
+
+                                            <div className="text-center relative z-10">
+                                                <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-black mb-2 px-3 py-0.5 bg-accent/10 rounded-full inline-block">Benefit</p>
+                                                <div className="flex items-baseline justify-center gap-1">
+                                                    <span className="text-5xl md:text-6xl font-cinzel text-neutral-900 dark:text-white leading-none drop-shadow-[0_0_15px_rgba(0,0,0,0.05)] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{offer.discount_percent ?? 0}</span>
+                                                    <div className="flex flex-col items-start">
+                                                        <span className="text-2xl font-cinzel text-accent leading-none">%</span>
+                                                        <span className="text-[10px] uppercase font-black tracking-tighter text-accent/60 leading-none mt-1">OFF</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="w-[1px] h-16 bg-black/10 dark:bg-white/10 relative z-10" />
+                                            <div className="w-[1px] h-16 bg-black/10 dark:bg-white/10 relative z-10" />
 
-                                        <div className="text-center relative z-10">
-                                            <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold mb-2">Availability</p>
-                                            <div className="flex items-baseline justify-center gap-1">
-                                                <span className="text-4xl font-cinzel text-neutral-900 dark:text-white">{offer.usage_count ?? 0}</span>
-                                                <span className="text-lg font-cinzel text-neutral-500">/</span>
-                                                <span className="text-lg font-cinzel text-neutral-500">{offer.usage_limit ?? 0}</span>
+                                            <div className="text-center relative z-10">
+                                                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold mb-2">Availability</p>
+                                                <div className="flex items-baseline justify-center gap-1">
+                                                    <span className="text-4xl font-cinzel text-neutral-900 dark:text-white">{offer.usage_count ?? 0}</span>
+                                                    <span className="text-lg font-cinzel text-neutral-500">/</span>
+                                                    <span className="text-lg font-cinzel text-neutral-500">{offer.usage_limit ?? 0}</span>
+                                                </div>
+                                                <p className="text-[9px] uppercase font-black tracking-widest text-neutral-600 mt-1">Spots Claimed</p>
                                             </div>
-                                            <p className="text-[9px] uppercase font-black tracking-widest text-neutral-600 mt-1">Spots Claimed</p>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center py-6 px-10 bg-black/5 dark:bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-black/5 dark:border-white/10 w-full relative overflow-hidden group/benefit">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover/benefit:opacity-100 transition-opacity" />
+                                            <div className="text-center relative z-10">
+                                                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold mb-2">Availability</p>
+                                                <div className="flex items-baseline justify-center gap-1">
+                                                    <span className="text-4xl font-cinzel text-neutral-900 dark:text-white">{offer.usage_count ?? 0}</span>
+                                                    <span className="text-lg font-cinzel text-neutral-500">/</span>
+                                                    <span className="text-lg font-cinzel text-neutral-500">{offer.usage_limit ?? 0}</span>
+                                                </div>
+                                                <p className="text-[9px] uppercase font-black tracking-widest text-neutral-600 mt-1">Spots Claimed</p>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {timeLeft && (
                                         <div className="flex flex-col items-center gap-3">
