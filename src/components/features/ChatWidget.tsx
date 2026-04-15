@@ -288,31 +288,12 @@ export default function ChatWidget() {
                             {(error || localError) && (
                                 <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center space-y-3">
                                     <div className="space-y-1">
-                                        <p className="font-bold flex items-center justify-center gap-1.5">
-                                            I&apos;m having trouble connecting
-                                            {diagInfo?.status && <span className="px-1.5 py-0.5 bg-red-500/20 rounded-md text-[9px] font-mono tracking-tighter opacity-70">Error {diagInfo.status}</span>}
-                                        </p>
-                                        <div className="px-2 py-2 bg-red-500/20 rounded-lg font-mono text-[10px] break-words text-left leading-relaxed">
+                                        <p className="font-bold">I&apos;m having trouble connecting.</p>
+                                        <div className="px-2 py-1 bg-red-500/20 rounded font-mono text-[10px] break-words">
                                             {localError || (typeof error === 'string' 
                                                 ? error 
                                                 : (error as Error)?.message || JSON.stringify(error))}
                                         </div>
-                                        
-                                        <button 
-                                            onClick={() => setShowDetails(!showDetails)}
-                                            className="text-[9px] uppercase tracking-widest font-bold opacity-50 hover:opacity-100 transition-opacity pt-1"
-                                        >
-                                            {showDetails ? 'Hide Details' : 'Show Diagnostic Info'}
-                                        </button>
-
-                                        {showDetails && (
-                                            <div className="mt-2 p-2 bg-black/20 rounded text-[9px] text-left space-y-1 opacity-80 border border-white/5 font-mono">
-                                                <p>• Status: {diagInfo?.status || 'Unknown'}</p>
-                                                <p>• Code: {diagInfo?.code || 'None'}</p>
-                                                <p>• Context: {diagInfo?.status === 503 ? 'Provider Overloaded' : diagInfo?.status === 429 ? 'Rate Limit (Too many requests)' : 'Server Error'}</p>
-                                                <p>• Fingerprint: {fingerprint.slice(0, 8)}...</p>
-                                            </div>
-                                        )}
                                         
                                         <p className="opacity-80 pt-1">This could be a network issue or a temporary limit. Please try again soon.</p>
                                     </div>
