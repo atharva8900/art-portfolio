@@ -20,8 +20,8 @@ export default function RevealText({ children, className = "", delay = 0 }: Reve
             {words.map((word, i) => (
                 <span key={i} style={{ marginRight: '0.25em' }} className="inline-block overflow-hidden -mb-[0.1em] align-bottom">
                     <motion.span
-                        initial={typeof window !== 'undefined' && window.innerWidth < 768 ? { y: 0 } : { y: "100%" }}
-                        animate={isInView ? { y: 0 } : (typeof window !== 'undefined' && window.innerWidth < 768 ? { y: 0 } : { y: "100%" })}
+                        initial={{ y: 0 }}
+                        animate={isInView ? { y: 0 } : { y: 0 }} // Simplified for now to guarantee visibility
                         transition={{
                             duration: 0.8,
                             ease: [0.16, 1, 0.3, 1],

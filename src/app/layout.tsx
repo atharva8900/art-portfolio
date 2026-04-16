@@ -8,7 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { GoogleAnalytics } from '@next/third-parties/google';
 import dynamic from 'next/dynamic';
 
-const SmoothScroll = dynamic(() => import('@/components/layout/SmoothScroll'), { ssr: false });
+import SmoothScroll from '@/components/layout/SmoothScroll';
 const CustomCursor = dynamic(() => import('@/components/features/CustomCursor'), { ssr: false });
 const ChatWidget = dynamic(() => import('@/components/features/ChatWidget'), { ssr: false });
 const TurnstileScript = dynamic(() => import('@/components/shared/TurnstileScript'), { ssr: false });

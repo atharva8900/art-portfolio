@@ -102,7 +102,7 @@ export default function GrainOverlay() {
 
     // ── Renderer ─────────────────────────────────────────────────────────
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    const dpr = isTouchDevice ? 0.75 : Math.min(window.devicePixelRatio, 1.5); // drop DPR on touch devices
+    const dpr = isTouchDevice ? 0.5 : Math.min(window.devicePixelRatio, 1.5); // lower DPR on mobile for better performance
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
     renderer.setPixelRatio(dpr);
     renderer.setClearColor(0x000000, 0);
