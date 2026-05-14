@@ -103,7 +103,7 @@ export async function POST(req: Request) {
             : '- No active promotional offers at this exact moment.';
 
         const result = await streamText({
-            model: google('gemini-3.1-flash-lite-preview'),
+            model: google('gemini-3.1-flash-lite'),
             providerOptions: {
                 google: {
                     thinkingConfig: {
