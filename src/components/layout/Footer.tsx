@@ -1,11 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { Instagram, Mail, Youtube } from 'lucide-react';
+import { LogoMarquee } from '@/components/features/LogoMarquee';
 import { ARTIST_EMAIL, ARTIST_INSTAGRAM } from '@/lib/config/constants';
 
 export default function Footer() {
     return (
-        <footer className="py-12 border-t border-foreground/5 bg-background text-center">
+        <footer className="pt-0 pb-12 border-t border-foreground/5 bg-background text-center">
+            <LogoMarquee />
             <div className="flex justify-center gap-8 mb-8 text-neutral-600 dark:text-neutral-400">
                 <a href={ARTIST_INSTAGRAM.startsWith('http') ? ARTIST_INSTAGRAM : `https://www.instagram.com/${ARTIST_INSTAGRAM}/`} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                     <Instagram size={24} />

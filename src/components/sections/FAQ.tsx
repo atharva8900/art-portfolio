@@ -45,7 +45,7 @@ export default function FAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     return (
-        <section id="faq" className="py-24 px-6 md:px-12 bg-background">
+        <section id="faq" className="pt-24 pb-12 px-6 md:px-12 bg-background">
             <div className="max-w-3xl mx-auto">
                 {/* Toggle Button */}
                 <div className="flex justify-center">
