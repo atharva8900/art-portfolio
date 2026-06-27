@@ -41,6 +41,7 @@ export function LogoMarquee() {
               style={{ minWidth: 'max-content' }}
             >
               {logo.src ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={logo.src}
                   alt={logo.name}
