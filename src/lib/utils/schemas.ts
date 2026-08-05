@@ -6,7 +6,7 @@ export const commissionSchema = z.object({
   email: z.string().email("Invalid email address").trim().toLowerCase(),
   phone: z.string().min(10, "Phone number is required for delivery and updates").max(20, "Phone number is too long").trim(),
   instagram_id: z.string().max(50, "Instagram ID is too long").optional().nullable(),
-  size: z.enum(['A5', 'A4', 'A3']),
+  size: z.enum(['A5', 'A4', 'A3', 'A2']),
   number_of_people: z.union([z.string(), z.number()]).transform(val => String(val)),
   address: z.string().min(10, "Address is too short").max(500, "Address is too long").trim(),
   detailed_background: z.boolean().optional(),

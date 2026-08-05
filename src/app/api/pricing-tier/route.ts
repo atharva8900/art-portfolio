@@ -31,6 +31,7 @@ export async function GET() {
                 A5: '₹499',
                 A4: '₹999',
                 A3: '₹1999',
+                A2: '₹3999',
             },
             progress: {
                 current: 0,

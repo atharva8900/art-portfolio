@@ -140,7 +140,7 @@ export default function CommissionForm() {
     const [showBackgroundInfo, setShowBackgroundInfo] = useState(false);
     const [showTimelapseInfo, setShowTimelapseInfo] = useState(false);
     const [showFramingInfo, setShowFramingInfo] = useState(false);
-    const [currentPrices, setCurrentPrices] = useState({ A5: '₹499', A4: '₹999', A3: '₹1999' });
+    const [currentPrices, setCurrentPrices] = useState({ A5: '₹499', A4: '₹999', A3: '₹1999', A2: '₹3999' });
     const [selectedSize, setSelectedSize] = useState<string>('A5');
     const [peopleCount, setPeopleCount] = useState<number>(1);
     const [userName, setUserName] = useState('');
@@ -427,7 +427,7 @@ export default function CommissionForm() {
         const basePrice = parseInt(basePriceStr.replace(/[^0-9]/g, ''));
 
         // Use centralized pricing logic
-        let baseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3');
+        let baseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
 
         // Apply Offer Discount on Base Price
         if (offer && offer.discount_percent) {
@@ -436,16 +436,16 @@ export default function CommissionForm() {
 
         const backgroundCost = (detailedBackground && !offer?.free_extras?.background) ? 499 : 0;
         const timelapseCost = (timelapse && !offer?.free_extras?.timelapse) ? 499 : 0;
-        const framingCost = (framing && !offer?.free_extras?.framing) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3'] : 0;
+        const framingCost = (framing && !offer?.free_extras?.framing) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
 
         // Note: Delivery is usually handled in shipping, but if free_extras.delivery is true, that's a bonus
         const total = baseTotal + backgroundCost + timelapseCost + framingCost;
 
         // Calculate original total (without any discounts)
-        const originalBaseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3');
+        const originalBaseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
         const originalBackgroundCost = detailedBackground ? 499 : 0;
         const originalTimelapseCost = timelapse ? 499 : 0;
-        const originalFramingCost = framing ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3'] : 0;
+        const originalFramingCost = framing ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
         const originalTotal = originalBaseTotal + originalBackgroundCost + originalTimelapseCost + originalFramingCost;
 
         setEstimatedTotal(Math.round(total));
@@ -1378,7 +1378,8 @@ export default function CommissionForm() {
                                     options={[
                                         { value: 'A5', label: `A5 (${currentPrices.A5}) · Small Tabletop Portrait` },
                                         { value: 'A4', label: `A4 (${currentPrices.A4}) · Best for Couples & Fanart` },
-                                        { value: 'A3', label: `A3 (${currentPrices.A3}) · Grand Portrait · Best for Groups` },
+                                        { value: 'A3', label: `A3 (${currentPrices.A3}) · Large Portrait · Good for Detailed Artwork` },
+                                        { value: 'A2', label: `A2 (${currentPrices.A2 || '₹3999'}) · Grand Portrait · Best for Group Portraits` },
                                     ]}
                                 />
                             </div>
@@ -1413,7 +1414,7 @@ export default function CommissionForm() {
                                 </div>
 
                                 {/* Discount Nudge Pill */}
-                                {(selectedSize === 'A4' || selectedSize === 'A3') && peopleCount === 1 && (
+                                {(selectedSize === 'A4' || selectedSize === 'A3' || selectedSize === 'A2') && peopleCount === 1 && (
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
@@ -1426,7 +1427,7 @@ export default function CommissionForm() {
                                         </div>
                                     </motion.div>
                                 )}
-                                {(selectedSize === 'A4' || selectedSize === 'A3') && peopleCount >= 2 && (
+                                {(selectedSize === 'A4' || selectedSize === 'A3' || selectedSize === 'A2') && peopleCount >= 2 && (
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
@@ -1584,7 +1585,7 @@ export default function CommissionForm() {
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
                                             <span className="text-foreground">
-                                                Framing {offer?.free_extras?.framing ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3']})</span>}
+                                                Framing {offer?.free_extras?.framing ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']})</span>}
                                             </span>
                                             <div className="relative group ml-2">
                                                 <button
@@ -1676,7 +1677,7 @@ export default function CommissionForm() {
                                         {offer && (offer.discount_percent ?? 0) > 0 && (
                                             <>
                                                 <span className="text-[10px] line-through text-neutral-500 font-mono">
-                                                    ₹{calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3').toLocaleString()}
+                                                    ₹{calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2').toLocaleString()}
                                                 </span>
                                                 <span className="font-mono text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20 font-bold">
                                                     -{offer.discount_percent}%
@@ -1684,7 +1685,7 @@ export default function CommissionForm() {
                                             </>
                                         )}
                                         <span className={`font-mono ${offer ? 'text-accent font-bold' : 'text-foreground'}`}>
-                                            ₹{(calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3') * (offer ? (1 - (offer.discount_percent ?? 0) / 100) : 1)).toLocaleString()}
+                                            ₹{(calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2') * (offer ? (1 - (offer.discount_percent ?? 0) / 100) : 1)).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -1708,7 +1709,7 @@ export default function CommissionForm() {
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400">+ Framing</span>
                                         <span className={`font-mono ${offer?.free_extras?.framing ? 'text-accent font-bold' : 'text-foreground'}`}>
-                                            {offer?.free_extras?.framing ? 'FREE' : `₹${FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3']}`}
+                                            {offer?.free_extras?.framing ? 'FREE' : `₹${FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']}`}
                                         </span>
                                     </div>
                                 )}
@@ -1954,7 +1955,7 @@ export default function CommissionForm() {
                                 <ArtVisualizer
                                     className="flex-1 min-h-0 flex flex-col h-full"
                                     embedded
-                                    forcedSize={selectedSize as 'A5' | 'A4' | 'A3'}
+                                    forcedSize={selectedSize as 'A5' | 'A4' | 'A3' | 'A2'}
                                     initialConfig={frameConfig || undefined}
                                     onFrameIt={(config) => {
                                         setFrameConfig(config);

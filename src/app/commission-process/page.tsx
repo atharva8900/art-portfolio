@@ -10,7 +10,7 @@ const steps = [
         title: "Fill Out the Commission Form",
         icon: ClipboardEdit,
         description:
-            "Everything starts with a short form on the homepage. You'll choose your paper size (A5, A4, or A3), the number of people in the portrait, and any add-ons you'd like — such as a detailed background, a timelapse recording of the drawing process, or custom framing. You can also upload up to 6 reference photos directly in the form, so I can see exactly what you have in mind.",
+            "Everything starts with a short form on the homepage. You'll choose your paper size (A5, A4, A3, or A2), the number of people in the portrait, and any add-ons you'd like — such as a detailed background, a timelapse recording of the drawing process, or custom framing. You can also upload up to 6 reference photos directly in the form, so I can see exactly what you have in mind.",
         note: "You'll need to sign in with Google or your email to submit. This keeps your commission tied to your account and lets you track it later in your Client Dashboard.",
     },
     {

@@ -44,9 +44,9 @@ export async function POST(req: Request) {
     const lastUserMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
     
     const faqResponses: Record<string, string> = {
-        'price': "Atharva’s skilled graphite portraits start at just **₹500** for A5 size. A4 is **₹1000**, and the high-detail A3 is **₹2000**. Which size are you considering for your wall?",
-        'pricing': "Atharva’s skilled graphite portraits start at just **₹500** for A5 size. A4 is **₹1000**, and the high-detail A3 is **₹2000**. Which size are you considering for your wall?",
-        'cost': "Atharva’s skilled graphite portraits start at just **₹500** for A5 size. A4 is **₹1000**, and the high-detail A3 is **₹2000**. Which size are you considering for your wall?",
+        'price': "Atharva’s skilled graphite portraits start at just **₹499** (Early Access) for A5 size. A4 is **₹999**, A3 is **₹1999**, and statement A2 is **₹3999** (regular prices: A5 ₹750, A4 ₹1499, A3 ₹2999, A2 ₹5999). All prices are fixed and non-negotiable. Which size are you considering for your wall?",
+        'pricing': "Atharva’s skilled graphite portraits start at just **₹499** (Early Access) for A5 size. A4 is **₹999**, A3 is **₹1999**, and statement A2 is **₹3999** (regular prices: A5 ₹750, A4 ₹1499, A3 ₹2999, A2 ₹5999). All prices are fixed and non-negotiable. Which size are you considering for your wall?",
+        'cost': "Atharva’s skilled graphite portraits start at just **₹499** (Early Access) for A5 size. A4 is **₹999**, A3 is **₹1999**, and statement A2 is **₹3999** (regular prices: A5 ₹750, A4 ₹1499, A3 ₹2999, A2 ₹5999). All prices are fixed and non-negotiable. Which size are you considering for your wall?",
         'contact': "You can reach Atharva directly on **Instagram (@atharva_sherlekar_art)** or provide your details in the Commission Form below. He’ll personally reach out to discuss your portrait!",
         'frame': "The interactive **Frame Designer** in the Commission Form lets you preview your artwork in a sleek Ink Black frame with custom matting. It’s perfect for seeing the final look before you buy!",
         'framing': "The interactive **Frame Designer** in the Commission Form lets you preview your artwork in a sleek Ink Black frame with custom matting. It’s perfect for seeing the final look before you buy!",
@@ -149,11 +149,14 @@ export async function POST(req: Request) {
     - **On Delivery:** The portrait is finished, the final balance is paid, and it is being shipped.
 
     ### PRICING & PROMO CODES (Early Access)
-    - A5 Size: ₹500 (Perfect for tabletops)
-    - A4 Size: ₹1000 (Most Popular - Best for couple portraits & fanart)
-    - A3 Size: ₹2000 (Maximum detail & group portraits)
-        - Group Portraits: A4 & A3 get a 50% discount for every additional face. A5 is charged at base price per person.
-    - Detailed backgrounds: Additional ₹500.
+    - A5 Size: ₹499 (Perfect for tabletops) | Regular: ₹750
+    - A4 Size: ₹999 (Most Popular - Best for couple portraits & fanart) | Regular: ₹1499
+    - A3 Size: ₹1999 (Large portrait - Good for detailed artwork) | Regular: ₹2999
+    - A2 Size: ₹3999 (Grand portrait - Best for group portraits) | Regular: ₹5999
+        - Group Portraits: A4, A3 & A2 get a 50% discount for every additional face. A5 is charged at base price per person.
+    - Detailed backgrounds: Additional ₹499.
+    - Framing: Custom framing available (A5: ₹400, A4: ₹500, A3: ₹600, A2: ₹800).
+    - **NON-NEGOTIABLE:** All prices are fixed and strictly non-negotiable. Do not offer custom price discounts or bargain.
     
     **Size Consultant (Fun Personality):** If a user doesn't know what size to get, act like an expert consultant. Ask them questions like: "Is this for a desk, a living room wall, or a gift for someone who has everything?" Based on their answer, confidently assign them the A4 or A3 size. Do NOT just list the sizes plainly again.
     
@@ -168,6 +171,7 @@ export async function POST(req: Request) {
     - Currently, we only offer an **Ink Black** frame style with **White Matting**, but the exact matting size (in pixels) can be customized using a slider.
 
     ### POLICIES
+    - Non-Negotiable: All prices are fixed and strictly non-negotiable.
     - Deposit: 50% advance to confirm the slot.
     - Refund: The initial payment (50% deposit or 25% waitlist fee) is 100% refundable IF cancelled within 48 hours. After 48 hours, or once a second payment is made, it becomes strictly non-refundable to cover materials and time.
     - Shipping: Ships all over India and worldwide. Shipping costs are calculated based on location and weight.

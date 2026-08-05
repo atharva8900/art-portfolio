@@ -12,7 +12,7 @@ const faqs = [
     },
     {
         question: "How long does a portrait take?",
-        answer: "Typically **2-4 weeks** depending on size (A5/A4/A3) and complexity. I'll provide a specific estimate when your commission is accepted."
+        answer: "Typically **2-4 weeks** depending on size (A5/A4/A3/A2) and complexity. I'll provide a specific estimate when your commission is accepted."
     },
     {
         question: "What payment methods are accepted?",

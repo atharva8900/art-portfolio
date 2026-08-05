@@ -18,7 +18,7 @@ import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'reac
 import Image from 'next/image';
 
 type FrameStyle = 'minimal-black' | 'classic-wood' | 'premium-gold' | 'sleek-white';
-type PortraitSize = 'A5' | 'A4' | 'A3';
+type PortraitSize = 'A5' | 'A4' | 'A3' | 'A2';
 type Orientation = 'portrait' | 'landscape';
 
 const SAMPLE_IMAGE = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=1000&auto=format&fit=crop";
@@ -427,7 +427,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                     <label className="text-xs uppercase tracking-widest text-foreground/60 font-bold">Paper Size</label>
                                 </div>
                                 <div className="flex gap-2">
-                                    {(['A5', 'A4', 'A3'] as PortraitSize[]).map((s) => (
+                                    {(['A5', 'A4', 'A3', 'A2'] as PortraitSize[]).map((s) => (
                                         <button
                                             key={s}
                                             type="button"

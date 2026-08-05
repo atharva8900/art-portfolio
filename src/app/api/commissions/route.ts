@@ -306,9 +306,9 @@ export async function POST(request: NextRequest) {
         }
 
         // Pre-calculate prices for notifications and storage
-        const basePriceStr = await getPriceForSize(size as 'A5' | 'A4' | 'A3');
+        const basePriceStr = await getPriceForSize(size as 'A5' | 'A4' | 'A3' | 'A2');
         const basePriceForOne = basePriceStr ? parseInt(basePriceStr.replace('₹', '').replace(',', ''), 10) : 0;
-        const totalBasePriceOriginal = calculatePortraitPrice(basePriceForOne, Number(number_of_people), size as 'A5' | 'A4' | 'A3');
+        const totalBasePriceOriginal = calculatePortraitPrice(basePriceForOne, Number(number_of_people), size as 'A5' | 'A4' | 'A3' | 'A2');
         let totalBasePrice = totalBasePriceOriginal;
         const additionalPeopleCost = totalBasePriceOriginal - basePriceForOne;
 
@@ -339,12 +339,12 @@ export async function POST(request: NextRequest) {
 
         const backgroundCostOriginal = detailed_background ? 500 : 0;
         const timelapseCostOriginal = timelapse_recording ? 500 : 0;
-        const framingCostOriginal = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3'] : 0;
+        const framingCostOriginal = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
         const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + timelapseCostOriginal + framingCostOriginal);
 
         const backgroundCost = (detailed_background && !appliedOffer?.free_extras?.background) ? 500 : 0;
         const timelapseCost = (timelapse_recording && !appliedOffer?.free_extras?.timelapse) ? 500 : 0;
-        const framingCost = (framing && !appliedOffer?.free_extras?.framing) ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3'] : 0;
+        const framingCost = (framing && !appliedOffer?.free_extras?.framing) ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
 
         const totalAmount = Math.round(totalBasePrice + backgroundCost + timelapseCost + framingCost);
         const totalSavings = totalAmountOriginal - totalAmount;
@@ -581,9 +581,9 @@ export async function POST(request: NextRequest) {
                     const toEmail = referralInfo ? referralInfo.referrer_email : referrer_email;
                     const rName = referralInfo ? referralInfo.referrer_name : referrer_name;
 
-                    const estimatedBasePriceStr = await getPriceForSize(size as 'A5' | 'A4' | 'A3');
+                    const estimatedBasePriceStr = await getPriceForSize(size as 'A5' | 'A4' | 'A3' | 'A2');
                     const estimatedBasePrice = estimatedBasePriceStr ? parseInt(estimatedBasePriceStr.replace('₹', '').replace(',', ''), 10) : 0;
-                    const estimatedTotalPrice = calculatePortraitPrice(estimatedBasePrice, Number(number_of_people), size as 'A5' | 'A4' | 'A3');
+                    const estimatedTotalPrice = calculatePortraitPrice(estimatedBasePrice, Number(number_of_people), size as 'A5' | 'A4' | 'A3' | 'A2');
                     const estimatedCommissionableAmt = estimatedTotalPrice + (detailed_background ? 500 : 0);
                     const estimatedCommission = estimatedCommissionableAmt > 0 ? (estimatedCommissionableAmt * 0.20) : 0;
 

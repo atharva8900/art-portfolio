@@ -28,7 +28,7 @@ export async function getCurrentPrices(): Promise<typeof EARLY_ACCESS_PRICES> {
 }
 
 // Get price for a specific size
-export async function getPriceForSize(size: 'A5' | 'A4' | 'A3'): Promise<string> {
+export async function getPriceForSize(size: 'A5' | 'A4' | 'A3' | 'A2'): Promise<string> {
     const prices = await getCurrentPrices();
     return prices[size];
 }
