@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { CommissionData } from '@/lib/db/commissions';
+import type { OfferData } from '@/lib/db/offers';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,34 +39,47 @@ export async function GET() {
         // Enrich commissions with extras array
         const enrichedCommissions = await Promise.all((commissions || []).map(async (c: CommissionData) => {
             const extras: string[] = [];
-            let offer = null;
+            const offers: OfferData[] = [];
+            let hasFreeBackground = false;
+            let hasFreeTimelapse = false;
+            let hasFreeFraming = false;
+            let hasFreeDelivery = false;
 
-            if (c.promo_id) {
+            if (c.promo_ids && Array.isArray(c.promo_ids)) {
                 try {
-                    offer = await getOfferById(c.promo_id);
+                    for (const pid of c.promo_ids) {
+                        const offer = await getOfferById(pid);
+                        if (offer) {
+                            offers.push(offer);
+                            if (offer.free_extras?.background) hasFreeBackground = true;
+                            if (offer.free_extras?.timelapse) hasFreeTimelapse = true;
+                            if (offer.free_extras?.framing) hasFreeFraming = true;
+                            if (offer.free_extras?.delivery) hasFreeDelivery = true;
+                        }
+                    }
                 } catch {
                     // Ignore offer fetch errors
                 }
             }
 
             if (c.detailed_background) {
-                extras.push(`Detailed Background ${offer?.free_extras?.background ? '(FREE)' : '(+₹500)'}`);
+                extras.push(`Detailed Background ${hasFreeBackground ? '(FREE)' : '(+₹500)'}`);
             }
             if (c.timelapse_recording) {
-                extras.push(`Timelapse Recording ${offer?.free_extras?.timelapse ? '(FREE)' : '(+₹500)'}`);
+                extras.push(`Timelapse Recording ${hasFreeTimelapse ? '(FREE)' : '(+₹500)'}`);
             }
             if (c.framing) {
                 // framing base price is variable based on size, but we can just say Framing or Framing (FREE)
-                extras.push(`Framing ${offer?.free_extras?.framing ? '(FREE)' : ''}`);
+                extras.push(`Framing ${hasFreeFraming ? '(FREE)' : ''}`);
             }
-            if (offer?.free_extras?.delivery) {
+            if (hasFreeDelivery) {
                 extras.push('Delivery (FREE)');
             }
 
             return {
                 ...c,
                 extras,
-                discount_percent: offer?.discount_percent || 0
+                discount_percents: offers.map(o => o.discount_percent || 0)
             };
         }));
 

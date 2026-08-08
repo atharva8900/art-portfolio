@@ -15,7 +15,7 @@ import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/u
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth';
 import { sendDiscordNotification } from '@/lib/api/discord';
-import { getOfferById, incrementOfferUsage } from '@/lib/db/offers';
+import { getOfferById, incrementOfferUsage, OfferData } from '@/lib/db/offers';
 import { commissionSchema } from '@/lib/utils/schemas';
 import { checkDeviceBanStatus } from '@/lib/db/rate-limits';
 import { getBaseUrl } from '@/lib/utils/utils';
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
             attachment_urls,
             attachment_base64,
             frame_image_base64,
-            promo_id,
+            promo_ids,
             turnstile_token,
             referral_locked_browser,
             fingerprint_hash,
@@ -313,28 +313,40 @@ export async function POST(request: NextRequest) {
         let totalBasePrice = totalBasePriceOriginal;
         const additionalPeopleCost = totalBasePriceOriginal - basePriceForOne;
 
-        // Fetch Offer for server-side validation and pricing
-        let appliedOffer = null;
-        if (promo_id) {
-            appliedOffer = await getOfferById(promo_id);
-            if (appliedOffer && (appliedOffer.usage_limit - appliedOffer.usage_count) > 0) {
-                const { searchParams } = new URL(request.url);
-                const countryParam = searchParams.get('country');
-                const country = countryParam || request.headers.get('x-vercel-ip-country') || 'IN'; // priority: param > header > default
-                
-                // Regional Restriction Logic
-                if (country !== 'IN' && appliedOffer.only_india_delivery) {
-                    if (appliedOffer.free_extras) {
-                        appliedOffer.free_extras.delivery = false;
-                    }
-                }
+        // Fetch Offers for server-side validation and pricing
+        const validOffers: OfferData[] = [];
+        let hasFreeBackground = false;
+        let hasFreeTimelapse = false;
+        let hasFreeFraming = false;
+        let appliedOffersEmailDraft = '';
 
-                // Apply discount to base price
-                if (appliedOffer.discount_percent) {
-                    totalBasePrice = totalBasePriceOriginal * (1 - appliedOffer.discount_percent / 100);
+        if (promo_ids && Array.isArray(promo_ids)) {
+            const { searchParams } = new URL(request.url);
+            const countryParam = searchParams.get('country');
+            const country = countryParam || request.headers.get('x-vercel-ip-country') || 'IN'; // priority: param > header > default
+            
+            for (const pid of promo_ids) {
+                const offer = await getOfferById(pid);
+                if (offer && (offer.usage_limit - offer.usage_count) > 0) {
+                    
+                    // Regional Restriction Logic
+                    if (country !== 'IN' && offer.only_india_delivery) {
+                        if (offer.free_extras) {
+                            offer.free_extras.delivery = false;
+                        }
+                    }
+
+                    validOffers.push(offer);
+
+                    // Apply compounding discount to base price
+                    if (offer.discount_percent) {
+                        totalBasePrice = totalBasePrice * (1 - offer.discount_percent / 100);
+                        appliedOffersEmailDraft += `- Applied Offer (${offer.code}): -${offer.discount_percent}%\n`;
+                    }
+                    if (offer.free_extras?.background) hasFreeBackground = true;
+                    if (offer.free_extras?.timelapse) hasFreeTimelapse = true;
+                    if (offer.free_extras?.framing) hasFreeFraming = true;
                 }
-            } else {
-                appliedOffer = null; // Offer invalid or expired
             }
         }
 
@@ -343,16 +355,16 @@ export async function POST(request: NextRequest) {
         const framingCostOriginal = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
         const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + timelapseCostOriginal + framingCostOriginal);
 
-        const backgroundCost = (detailed_background && !appliedOffer?.free_extras?.background) ? 500 : 0;
-        const timelapseCost = (timelapse_recording && !appliedOffer?.free_extras?.timelapse) ? 500 : 0;
-        const framingCost = (framing && !appliedOffer?.free_extras?.framing) ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
+        const backgroundCost = (detailed_background && !hasFreeBackground) ? 500 : 0;
+        const timelapseCost = (timelapse_recording && !hasFreeTimelapse) ? 500 : 0;
+        const framingCost = (framing && !hasFreeFraming) ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
 
         const totalAmount = Math.round(totalBasePrice + backgroundCost + timelapseCost + framingCost);
         const totalSavings = totalAmountOriginal - totalAmount;
 
-        // Increment Offer Usage if valid
-        if (appliedOffer) {
-            await incrementOfferUsage(appliedOffer.id);
+        // Increment Offer Usages if valid
+        for (const offer of validOffers) {
+            await incrementOfferUsage(offer.id);
         }
 
         // Construct Email Draft for Artist (to copy-paste to client)
@@ -362,10 +374,10 @@ export async function POST(request: NextRequest) {
 
         const priceBreakdownDraft =
             `- Base Price (${size}, ${number_of_people} people): ₹${totalBasePriceOriginal}\n` +
-            (detailed_background ? `- Detailed Background: ₹500 ${appliedOffer?.free_extras?.background ? '(FREE)' : ''}\n` : '') +
-            (timelapse_recording ? `- Timelapse Recording: ₹500 ${appliedOffer?.free_extras?.timelapse ? '(FREE)' : ''}\n` : '') +
-            (framing ? `- Professional Framing: ₹${framingCostOriginal} ${appliedOffer?.free_extras?.framing ? '(FREE)' : ''}\n` : '') +
-            (appliedOffer?.discount_percent ? `- Applied Offer (${appliedOffer.code}): -${appliedOffer.discount_percent}%\n` : '') +
+            (detailed_background ? `- Detailed Background: ₹500 ${hasFreeBackground ? '(FREE)' : ''}\n` : '') +
+            (timelapse_recording ? `- Timelapse Recording: ₹500 ${hasFreeTimelapse ? '(FREE)' : ''}\n` : '') +
+            (framing ? `- Professional Framing: ₹${framingCostOriginal} ${hasFreeFraming ? '(FREE)' : ''}\n` : '') +
+            appliedOffersEmailDraft +
             (totalSavings > 0 ? `**Total Savings: ₹${totalSavings}**\n` : '') +
             `**Final Total: ₹${totalAmount}**`;
 
@@ -674,8 +686,8 @@ export async function POST(request: NextRequest) {
                 base_price: totalBasePrice,
                 extras_total: extrasTotal,
                 commission_amount: referrersShare,
-                promo_id: appliedOffer?.id || null,
-                promotion_code: appliedOffer?.code || null,
+                promo_ids: validOffers.length > 0 ? validOffers.map(o => o.id) : null,
+                promotion_codes: validOffers.length > 0 ? validOffers.map(o => o.code) : null,
                 frame_image: frame_image || undefined,
                 razorpay_order_id: razorpay_order_id || undefined,
                 razorpay_payment_id: razorpay_payment_id || undefined,

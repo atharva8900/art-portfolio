@@ -45,9 +45,10 @@ export interface CommissionData {
     is_self_referral_flag?: boolean;
     flag_reason?: string | null;
     // Promo/Offer Fields
-    promo_id?: string | null;
-    promotion_code?: string | null;
+    promo_ids?: string[] | null;
+    promotion_codes?: string[] | null;
     discount_percent?: number | null;
+    discount_percents?: number[] | null;
     submitter_email?: string | null;
     // WIP Gallery
     wip_images?: string[];
@@ -59,7 +60,7 @@ export interface CommissionData {
 export async function getAllCommissions(): Promise<CommissionData[]> {
     const { data, error } = await supabaseAdmin
         .from('commissions')
-        .select('*, offers(discount_percent)')
+        .select('*')
         .order('submitted_at', { ascending: false });
 
     if (error) {
@@ -67,16 +68,7 @@ export async function getAllCommissions(): Promise<CommissionData[]> {
         return [];
     }
 
-    // Flatten the joined offers data
-    const enrichedData = (data as (CommissionData & { offers: { discount_percent: number } | null })[] || []).map((item) => {
-        const { offers, ...rest } = item;
-        return {
-            ...rest,
-            discount_percent: offers?.discount_percent || 0
-        };
-    });
-
-    return enrichedData as CommissionData[];
+    return data as CommissionData[];
 }
 
 // Save a new commission

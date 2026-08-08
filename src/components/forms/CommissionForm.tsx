@@ -13,6 +13,7 @@ import Link from 'next/link';
 import ArtVisualizer, { FrameConfig } from '@/components/features/ArtVisualizer';
 import SafeTurnstile, { type SafeTurnstileHandle } from '@/components/shared/SafeTurnstile';
 import { loadRazorpay } from '@/lib/load-razorpay';
+import type { OfferData } from '@/lib/db/offers';
 
 
 
@@ -198,14 +199,14 @@ export default function CommissionForm() {
     const [estimatedTotal, setEstimatedTotal] = useState<number>(0);
     const [originalTotalValue, setOriginalTotalValue] = useState<number>(0);
     const [totalSavings, setTotalSavings] = useState<number>(0);
-    const [promoCode, setPromoCode] = useState('');
-    const [offer, setOffer] = useState<{ id?: string, code?: string, discount_percent?: number, free_extras?: Record<string, boolean>, expires_at?: string, name?: string, note?: string | null, usage_count?: number, usage_limit?: number, delivery_restricted?: boolean, only_india_delivery?: boolean } | null>(null);
-    const [offerError, setOfferError] = useState('');
-    const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+    const [promoCodes, setPromoCodes] = useState<string[]>(['', '', '']);
+    const [offers, setOffers] = useState<(OfferData | null)[]>([null, null, null]);
+    const [offerErrors, setOfferErrors] = useState<string[]>(['', '', '']);
+    const [isValidatingPromos, setIsValidatingPromos] = useState<boolean[]>([false, false, false]);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 // (Removed showTurnstile state as SafeTurnstile handles it internally)
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
-    const [offerAppliedMessage, setOfferAppliedMessage] = useState('');
+    const [offerAppliedMessages, setOfferAppliedMessages] = useState<string[]>(['', '', '']);
     const originalBodyOverflow = useRef('');
     const publicOfferFetched = useRef(false);
 
@@ -238,14 +239,17 @@ export default function CommissionForm() {
     }, [showFrameModal]);
 
     // Promo Validation
-    const validatePromo = useCallback(async (code: string) => {
+    const validatePromo = useCallback(async (code: string, index: number) => {
         if (!code) {
-            setOffer(null);
-            setOfferError('');
+            setOffers(prev => { const newArr = [...prev]; newArr[index] = null; return newArr; });
+            setOfferErrors(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
+            setOfferAppliedMessages(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
             return;
         }
-        setIsValidatingPromo(true);
-        setOfferError('');
+        setIsValidatingPromos(prev => { const newArr = [...prev]; newArr[index] = true; return newArr; });
+        setOfferErrors(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
+        setOfferAppliedMessages(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
+        
         const country = new URLSearchParams(window.location.search).get('country');
         const query = country ? `?country=${country}` : '';
         try {
@@ -256,27 +260,33 @@ export default function CommissionForm() {
             });
             const data = await res.json();
             if (res.ok && data.valid) {
-                setOffer(data.offer);
-                setOfferAppliedMessage(`Offer Applied: ${data.offer.name}`);
-                setPromoCode(code.toUpperCase());
+                // Check if already applied in another slot
+                if (offers.some((o, i) => i !== index && o?.id === data.offer.id)) {
+                    setOffers(prev => { const newArr = [...prev]; newArr[index] = null; return newArr; });
+                    setOfferErrors(prev => { const newArr = [...prev]; newArr[index] = 'Offer already applied'; return newArr; });
+                } else {
+                    setOffers(prev => { const newArr = [...prev]; newArr[index] = data.offer; return newArr; });
+                    setOfferAppliedMessages(prev => { const newArr = [...prev]; newArr[index] = `Offer Applied: ${data.offer.name}`; return newArr; });
+                    setPromoCodes(prev => { const newArr = [...prev]; newArr[index] = code.toUpperCase(); return newArr; });
+                }
             } else {
-                setOffer(null);
-                setOfferError(data.error || 'Invalid or expired offer code');
+                setOffers(prev => { const newArr = [...prev]; newArr[index] = null; return newArr; });
+                setOfferErrors(prev => { const newArr = [...prev]; newArr[index] = data.error || 'Invalid or expired offer code'; return newArr; });
             }
         } catch {
-            setOfferError('Failed to validate code');
+            setOfferErrors(prev => { const newArr = [...prev]; newArr[index] = 'Failed to validate code'; return newArr; });
         } finally {
-            setIsValidatingPromo(false);
+            setIsValidatingPromos(prev => { const newArr = [...prev]; newArr[index] = false; return newArr; });
         }
-    }, [setOffer, setOfferError, setIsValidatingPromo, setOfferAppliedMessage, setPromoCode, fingerprintHash]);
+    }, [offers, fingerprintHash]);
 
     // Auto-validate from URL promo (runs once on mount)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const promo = params.get('promo');
         if (promo) {
-            setPromoCode(promo);
-            validatePromo(promo);
+            setPromoCodes(prev => { const newArr = [...prev]; newArr[0] = promo; return newArr; });
+            validatePromo(promo, 0);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -316,9 +326,9 @@ export default function CommissionForm() {
                 console.log('[OFFER DEBUG] Received data:', data);
                 if (data.offer) {
                     console.log('[OFFER DEBUG] Applying public offer:', data.offer.code);
-                    setOffer(data.offer);
-                    setPromoCode(data.offer.code);
-                    setOfferAppliedMessage(`${data.offer.expires_at ? 'Limited Time' : 'Special'} Offer: ${data.offer.name}`);
+                    setOffers([data.offer, null, null]);
+                    setPromoCodes([data.offer.code, '', '']);
+                    setOfferAppliedMessages([`${data.offer.expires_at ? 'Limited Time' : 'Special'} Offer: ${data.offer.name}`, '', '']);
                 } else {
                     console.log('[OFFER DEBUG] No valid public offer returned by server.');
                 }
@@ -332,20 +342,23 @@ export default function CommissionForm() {
 
     // Countdown Timer Logic
     useEffect(() => {
-        if (!offer?.expires_at) {
+        const expiringOfferIndex = offers.findIndex(o => o && o.expires_at);
+        const expiringOffer = expiringOfferIndex !== -1 ? offers[expiringOfferIndex] : null;
+
+        if (!expiringOffer?.expires_at) {
             setTimeLeft(null);
             return;
         }
 
         const timer = setInterval(() => {
             const now = new Date().getTime();
-            const distance = new Date(offer.expires_at!).getTime() - now;
+            const distance = new Date(expiringOffer.expires_at as string | number | Date).getTime() - now;
 
             if (distance < 0) {
                 clearInterval(timer);
                 setTimeLeft(null);
-                setOffer(null);
-                setOfferError('Offer has expired');
+                setOffers(prev => { const newArr = [...prev]; newArr[expiringOfferIndex] = null; return newArr; });
+                setOfferErrors(prev => { const newArr = [...prev]; newArr[expiringOfferIndex] = 'Offer has expired'; return newArr; });
             } else {
                 setTimeLeft({
                     days: Math.floor(distance / (1000 * 60 * 60 * 24)),
@@ -357,7 +370,7 @@ export default function CommissionForm() {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [offer]);
+    }, [offers]);
 
     const user = session?.user;
     const authLoading = authStatus === 'loading';
@@ -433,13 +446,22 @@ export default function CommissionForm() {
         let baseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
 
         // Apply Offer Discount on Base Price
-        if (offer && offer.discount_percent) {
-            baseTotal = baseTotal * (1 - offer.discount_percent / 100);
+        let hasFreeBackground = false;
+        let hasFreeTimelapse = false;
+        let hasFreeFraming = false;
+
+        for (const offer of offers) {
+            if (offer && offer.discount_percent) {
+                baseTotal = baseTotal * (1 - offer.discount_percent / 100);
+            }
+            if (offer?.free_extras?.background) hasFreeBackground = true;
+            if (offer?.free_extras?.timelapse) hasFreeTimelapse = true;
+            if (offer?.free_extras?.framing) hasFreeFraming = true;
         }
 
-        const backgroundCost = (detailedBackground && !offer?.free_extras?.background) ? 499 : 0;
-        const timelapseCost = (timelapse && !offer?.free_extras?.timelapse) ? 499 : 0;
-        const framingCost = (framing && !offer?.free_extras?.framing) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
+        const backgroundCost = (detailedBackground && !hasFreeBackground) ? 499 : 0;
+        const timelapseCost = (timelapse && !hasFreeTimelapse) ? 499 : 0;
+        const framingCost = (framing && !hasFreeFraming) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
 
         // Note: Delivery is usually handled in shipping, but if free_extras.delivery is true, that's a bonus
         const total = baseTotal + backgroundCost + timelapseCost + framingCost;
@@ -454,7 +476,7 @@ export default function CommissionForm() {
         setEstimatedTotal(Math.round(total));
         setOriginalTotalValue(Math.round(originalTotal));
         setTotalSavings(Math.round(originalTotal - total));
-    }, [selectedSize, peopleCount, currentPrices, detailedBackground, timelapse, framing, offer]);
+    }, [selectedSize, peopleCount, currentPrices, detailedBackground, timelapse, framing, offers]);
 
     const minDateStr = (() => {
         const d = new Date();
@@ -671,7 +693,7 @@ export default function CommissionForm() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...data,
-                    promo_id: offer?.id || null,
+                    promo_ids: offers.filter(o => o !== null).map(o => o.id),
                     detailed_background: detailedBackground,
                     timelapse_recording: timelapse,
                     framing: framing,
@@ -814,7 +836,7 @@ export default function CommissionForm() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             ...data,
-                            promo_id: offer?.id || null,
+                            promo_ids: offers.filter(o => o !== null).map(o => o.id),
                             detailed_background: detailedBackground,
                             timelapse_recording: timelapse,
                             framing: framing,
@@ -1107,7 +1129,7 @@ export default function CommissionForm() {
 
                     {/* Offer Urgency & Countdown */}
                     <AnimatePresence>
-                        {offer && status === 'open' && (
+                        {offers[0] && status === 'open' && (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -1124,32 +1146,36 @@ export default function CommissionForm() {
                                 <div className="relative z-10 flex flex-col items-center gap-6">
                                     <div className="flex items-center gap-2 px-5 py-2 bg-accent text-background rounded-full text-[11px] font-black uppercase tracking-[0.25em] shadow-lg shadow-accent/20">
                                         <Flame size={14} className="animate-pulse" />
-                                        {offer.expires_at ? 'Limited Time Offer Applied' : 'Special Offer Applied'}
+                                        {offers.filter(Boolean).length > 1 ? `${offers.filter(Boolean).length} Offers Applied` : (offers[0]?.expires_at ? 'Limited Time Offer Applied' : 'Special Offer Applied')}
                                     </div>
 
                                     <div className="text-center space-y-2">
                                         <h3 className="text-3xl font-serif text-neutral-900 dark:text-white">
-                                            {offer.name}
+                                            {offers.filter((o): o is OfferData => Boolean(o)).length > 1
+                                                ? offers.filter((o): o is OfferData => Boolean(o)).map(o => o.name).join(' + ')
+                                                : offers[0]?.name || ''}
                                         </h3>
                                         <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-bold opacity-80">
-                                            OFFER CODE : {offer.code || 'OFFER CODE'}
+                                            {offers.filter((o): o is OfferData => Boolean(o)).length > 1
+                                                ? `CODES: ${offers.filter((o): o is OfferData => Boolean(o)).map(o => o.code).join(', ')}`
+                                                : `OFFER CODE : ${offers[0]?.code || 'OFFER CODE'}`}
                                         </p>
                                     </div>
 
-                                    {offer.note && (
+                                    {(offers[0]?.note as string) && (
                                         <p className="text-[11px] text-neutral-500 dark:text-neutral-400 italic text-center leading-relaxed max-w-xs">
-                                            {offer.note}
+                                            {offers[0].note as string}
                                         </p>
                                     )}
 
-                                    {(offer.discount_percent ?? 0) > 0 ? (
+                                    {((offers[0]?.discount_percent as number) ?? 0) > 0 ? (
                                         <div className="flex items-center gap-12 py-6 px-10 bg-black/5 dark:bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-black/5 dark:border-white/10 w-full justify-center relative overflow-hidden group/benefit">
                                             <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover/benefit:opacity-100 transition-opacity" />
 
                                             <div className="text-center relative z-10">
                                                 <p className="text-[10px] uppercase tracking-[0.2em] text-accent font-black mb-2 px-3 py-0.5 bg-accent/10 rounded-full inline-block">Benefit</p>
                                                 <div className="flex items-baseline justify-center gap-1">
-                                                    <span className="text-5xl md:text-6xl font-cinzel text-neutral-900 dark:text-white leading-none drop-shadow-[0_0_15px_rgba(0,0,0,0.05)] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{offer.discount_percent ?? 0}</span>
+                                                    <span className="text-5xl md:text-6xl font-cinzel text-neutral-900 dark:text-white leading-none drop-shadow-[0_0_15px_rgba(0,0,0,0.05)] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{offers[0]?.discount_percent as number ?? 0}</span>
                                                     <div className="flex flex-col items-start">
                                                         <span className="text-2xl font-cinzel text-accent leading-none">%</span>
                                                         <span className="text-[10px] uppercase font-black tracking-tighter text-accent/60 leading-none mt-1">OFF</span>
@@ -1162,9 +1188,9 @@ export default function CommissionForm() {
                                             <div className="text-center relative z-10">
                                                 <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold mb-2">Availability</p>
                                                 <div className="flex items-baseline justify-center gap-1">
-                                                    <span className="text-4xl font-cinzel text-neutral-900 dark:text-white">{offer.usage_count ?? 0}</span>
+                                                    <span className="text-4xl font-cinzel text-neutral-900 dark:text-white">{offers[0]?.usage_count as number ?? 0}</span>
                                                     <span className="text-lg font-cinzel text-neutral-500">/</span>
-                                                    <span className="text-lg font-cinzel text-neutral-500">{offer.usage_limit ?? 0}</span>
+                                                    <span className="text-lg font-cinzel text-neutral-500">{offers[0]?.usage_limit as number ?? 0}</span>
                                                 </div>
                                                 <p className="text-[9px] uppercase font-black tracking-widest text-neutral-600 mt-1">Spots Claimed</p>
                                             </div>
@@ -1175,9 +1201,9 @@ export default function CommissionForm() {
                                             <div className="text-center relative z-10">
                                                 <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold mb-2">Availability</p>
                                                 <div className="flex items-baseline justify-center gap-1">
-                                                    <span className="text-4xl font-cinzel text-neutral-900 dark:text-white">{offer.usage_count ?? 0}</span>
+                                                    <span className="text-4xl font-cinzel text-neutral-900 dark:text-white">{offers[0]?.usage_count as number ?? 0}</span>
                                                     <span className="text-lg font-cinzel text-neutral-500">/</span>
-                                                    <span className="text-lg font-cinzel text-neutral-500">{offer.usage_limit ?? 0}</span>
+                                                    <span className="text-lg font-cinzel text-neutral-500">{offers[0]?.usage_limit as number ?? 0}</span>
                                                 </div>
                                                 <p className="text-[9px] uppercase font-black tracking-widest text-neutral-600 mt-1">Spots Claimed</p>
                                             </div>
@@ -1205,16 +1231,18 @@ export default function CommissionForm() {
                                         </div>
                                     )}
 
-                                    {offer.free_extras && Object.values(offer.free_extras).some(v => v) && (
+                                    {offers.some(o => o && o.free_extras && Object.values(o.free_extras).some(Boolean)) && (
                                         <div className="flex flex-wrap justify-center gap-3 pt-2">
-                                            {Object.entries(offer.free_extras).map(([key, val]) => val && (
-                                                <div key={key} className="flex items-center gap-2 bg-accent/10 px-4 py-1.5 rounded-full border border-accent/20">
-                                                    <Check size={12} className="text-accent" />
-                                                    <span className="text-[10px] uppercase font-bold tracking-widest text-accent">
-                                                        Free {key} {(key === 'delivery' && (offer.only_india_delivery || offer.delivery_restricted)) && '(India Only)'}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                            {offers.filter((o): o is OfferData => Boolean(o)).flatMap(o =>
+                                                Object.entries(o.free_extras || {}).filter(([, val]) => Boolean(val)).map(([key]) => (
+                                                    <div key={`${o.id}-${key}`} className="flex items-center gap-2 bg-accent/10 px-4 py-1.5 rounded-full border border-accent/20">
+                                                        <Check size={12} className="text-accent" />
+                                                        <span className="text-[10px] uppercase font-bold tracking-widest text-accent">
+                                                            Free {key} {(key === 'delivery' && (o.only_india_delivery || (o as unknown as { delivery_restricted?: boolean }).delivery_restricted)) && '(India Only)'}
+                                                        </span>
+                                                    </div>
+                                                ))
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1351,31 +1379,39 @@ export default function CommissionForm() {
                                 )}
                             </div>
 
-                            {/* Promo Code Input */}
-                            <div className="space-y-2 md:col-span-2">
-                                <label htmlFor="promo_code" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Promo Code (Optional)</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        id="promo_code"
-                                        name="promo_code"
-                                        type="text"
-                                        value={promoCode}
-                                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                                        autoComplete="off"
-                                        placeholder="HAVE A CODE?"
-                                        className={`flex-1 bg-surface border ${offer ? 'border-emerald-500/50' : 'border-foreground/10'} p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors font-mono tracking-widest placeholder:text-neutral-500`}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => validatePromo(promoCode)}
-                                        disabled={isValidatingPromo || !promoCode}
-                                        className="px-6 py-4 bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-md text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50"
-                                    >
-                                        {isValidatingPromo ? <Loader2 size={16} className="animate-spin" /> : 'Apply'}
-                                    </button>
-                                </div>
-                                {offerError && <p className="text-[10px] text-red-400 font-bold uppercase tracking-widest mt-1 px-1">{offerError}</p>}
-                                {offer && <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1 px-1 flex items-center gap-1"><Check size={10} /> {offerAppliedMessage}</p>}
+                            {/* Promo Code Inputs (Max 3) */}
+                            <div className="space-y-4 md:col-span-2">
+                                <label className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Promo Codes (Up to 3)</label>
+                                {[0, 1, 2].map(index => (
+                                    <div key={index} className="flex flex-col gap-1">
+                                        <div className="flex gap-2">
+                                            <input
+                                                id={`promo_code_${index}`}
+                                                name={`promo_code_${index}`}
+                                                type="text"
+                                                value={promoCodes[index]}
+                                                onChange={(e) => {
+                                                    const newCodes = [...promoCodes];
+                                                    newCodes[index] = e.target.value.toUpperCase();
+                                                    setPromoCodes(newCodes);
+                                                }}
+                                                autoComplete="off"
+                                                placeholder={index === 0 ? "HAVE A CODE?" : `CODE ${index + 1} (OPTIONAL)`}
+                                                className={`flex-1 bg-surface border ${offers[index] ? 'border-emerald-500/50' : 'border-foreground/10'} p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors font-mono tracking-widest placeholder:text-neutral-500`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => validatePromo(promoCodes[index], index)}
+                                                disabled={isValidatingPromos[index] || !promoCodes[index]}
+                                                className="px-6 py-4 bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 rounded-md text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                                            >
+                                                {isValidatingPromos[index] ? <Loader2 size={16} className="animate-spin" /> : 'Apply'}
+                                            </button>
+                                        </div>
+                                        {offerErrors[index] && <p className="text-[10px] text-red-400 font-bold uppercase tracking-widest px-1">{offerErrors[index]}</p>}
+                                        {offers[index] && <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest px-1 flex items-center gap-1"><Check size={10} /> {offerAppliedMessages[index]}</p>}
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
@@ -1501,7 +1537,7 @@ export default function CommissionForm() {
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
                                             <span className="text-foreground">
-                                                Detailed Background {offer?.free_extras?.background ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
+                                                Detailed Background {offers.some(o => o?.free_extras?.background) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
                                             </span>
                                             <div className="relative group ml-2">
                                                 <button
@@ -1552,7 +1588,7 @@ export default function CommissionForm() {
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
                                             <span className="text-foreground">
-                                                Timelapse Recording {offer?.free_extras?.timelapse ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
+                                                Timelapse Recording {offers.some(o => o?.free_extras?.timelapse) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
                                             </span>
                                             <div className="relative group ml-2">
                                                 <button
@@ -1608,7 +1644,7 @@ export default function CommissionForm() {
                                     <div className="flex flex-col flex-1">
                                         <div className="flex items-center justify-between">
                                             <span className="text-foreground">
-                                                Framing {offer?.free_extras?.framing ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']})</span>}
+                                                Framing {offers.some(o => o?.free_extras?.framing) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']})</span>}
                                             </span>
                                             <div className="relative group ml-2">
                                                 <button
@@ -1697,57 +1733,57 @@ export default function CommissionForm() {
                                         Base ({selectedSize}, {peopleCount} {peopleCount === 1 ? 'person' : 'people'})
                                     </span>
                                     <div className="flex items-center gap-2">
-                                        {offer && (offer.discount_percent ?? 0) > 0 && (
-                                            <>
-                                                <span className="text-[10px] line-through text-neutral-500 font-mono">
-                                                    ₹{calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2').toLocaleString()}
-                                                </span>
-                                                <span className="font-mono text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20 font-bold">
-                                                    -{offer.discount_percent}%
-                                                </span>
-                                            </>
+                                        {offers.some(o => o && (o.discount_percent ?? 0) > 0) && (
+                                            <span className="text-[10px] line-through text-neutral-500 font-mono">
+                                                ₹{calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2').toLocaleString()}
+                                            </span>
                                         )}
-                                        <span className={`font-mono ${offer ? 'text-accent font-bold' : 'text-foreground'}`}>
-                                            ₹{(calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2') * (offer ? (1 - (offer.discount_percent ?? 0) / 100) : 1)).toLocaleString()}
+                                        {offers.map((offer, i) => offer && (offer.discount_percent ?? 0) > 0 ? (
+                                            <span key={i} className="font-mono text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20 font-bold">
+                                                -{offer.discount_percent}%
+                                            </span>
+                                        ) : null)}
+                                        <span className={`font-mono ${offers.some(o => o && (o.discount_percent ?? 0) > 0) ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                            ₹{Math.round(calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '₹500').replace(/[^0-9]/g, '')), peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2') * offers.reduce((acc, o) => acc * (o ? (1 - (o.discount_percent ?? 0) / 100) : 1), 1)).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
                                 {detailedBackground && (
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400">+ Detailed Background</span>
-                                        <span className={`font-mono ${offer?.free_extras?.background ? 'text-accent font-bold' : 'text-foreground'}`}>
-                                            {offer?.free_extras?.background ? 'FREE' : '₹500'}
+                                        <span className={`font-mono ${offers.some(o => o?.free_extras?.background) ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                            {offers.some(o => o?.free_extras?.background) ? 'FREE' : '₹500'}
                                         </span>
                                     </div>
                                 )}
                                 {timelapse && (
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400">+ Timelapse Recording</span>
-                                        <span className={`font-mono ${offer?.free_extras?.timelapse ? 'text-accent font-bold' : 'text-foreground'}`}>
-                                            {offer?.free_extras?.timelapse ? 'FREE' : '₹500'}
+                                        <span className={`font-mono ${offers.some(o => o?.free_extras?.timelapse) ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                            {offers.some(o => o?.free_extras?.timelapse) ? 'FREE' : '₹500'}
                                         </span>
                                     </div>
                                 )}
                                 {framing && (
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400">+ Framing</span>
-                                        <span className={`font-mono ${offer?.free_extras?.framing ? 'text-accent font-bold' : 'text-foreground'}`}>
-                                            {offer?.free_extras?.framing ? 'FREE' : `₹${FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']}`}
+                                        <span className={`font-mono ${offers.some(o => o?.free_extras?.framing) ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                            {offers.some(o => o?.free_extras?.framing) ? 'FREE' : `₹${FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']}`}
                                         </span>
                                     </div>
                                 )}
-                                {offer?.free_extras?.delivery && (
+                                {offers.some(o => o?.free_extras?.delivery) && (
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis mr-2">+ Delivery (Shipping)</span>
                                         <span className="font-mono text-accent font-bold whitespace-nowrap shrink-0">
-                                            FREE {(offer?.only_india_delivery || offer?.delivery_restricted) && '(INDIA ONLY)'}
+                                            FREE {offers.some(o => o?.free_extras?.delivery && (o?.only_india_delivery || o?.delivery_restricted)) && '(INDIA ONLY)'}
                                         </span>
                                     </div>
                                 )}
                             </div>
 
                             {/* Regional Delivery Restriction Notice */}
-                            {offer?.delivery_restricted && (
+                            {offers.some(o => o?.delivery_restricted) && (
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
@@ -1759,7 +1795,7 @@ export default function CommissionForm() {
                                     <div className="space-y-0.5">
                                         <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">Regional Advantage Locked</p>
                                         <p className="text-[10px] text-neutral-400 leading-relaxed">
-                                            Free Delivery on this offer is restricted to <span className="text-neutral-200 font-bold">India only</span>. Your region will be billed standard shipping.
+                                            Free Delivery on one or more offers is restricted to <span className="text-neutral-200 font-bold">India only</span>. Your region will be billed standard shipping.
                                         </p>
                                     </div>
                                 </motion.div>
@@ -1808,7 +1844,7 @@ export default function CommissionForm() {
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-neutral-400">Balance Due (on completion)</span>
-                                                    <span className="font-mono text-neutral-400">₹{balDue.toLocaleString()} {offer?.free_extras?.delivery ? '(incl. Shipping)' : '+ Shipping'}</span>
+                                                    <span className="font-mono text-neutral-400">₹{balDue.toLocaleString()} {offers.some(o => o?.free_extras?.delivery) ? '(incl. Shipping)' : '+ Shipping'}</span>
                                                 </div>
                                             </>
                                         );
@@ -1825,7 +1861,7 @@ export default function CommissionForm() {
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-neutral-400">Balance Due</span>
-                                                    <span className="font-mono text-neutral-400">₹{balance.toLocaleString()} {offer?.free_extras?.delivery ? '(incl. Shipping)' : '+ Shipping'}</span>
+                                                    <span className="font-mono text-neutral-400">₹{balance.toLocaleString()} {offers.some(o => o?.free_extras?.delivery) ? '(incl. Shipping)' : '+ Shipping'}</span>
                                                 </div>
                                             </>
                                         );
@@ -1836,7 +1872,7 @@ export default function CommissionForm() {
                             {/* Shipping Note */}
                             <div className="px-6 pt-3 pb-5">
                                 <p className="text-[11px] text-neutral-500 italic leading-relaxed">
-                                    {offer?.free_extras?.delivery
+                                    {offers.some(o => o?.free_extras?.delivery)
                                         ? "Your offer includes free shipping! No additional delivery costs will be charged."
                                         : "Shipping costs will be calculated and added to the final balance once the portrait is ready for delivery."
                                     }

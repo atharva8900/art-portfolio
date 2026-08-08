@@ -33,7 +33,7 @@ export const commissionSchema = z.object({
     content: z.string()
   })).optional(),
   frame_image_base64: z.string().optional().nullable(),
-  promo_id: z.string().optional().nullable(),
+  promo_ids: z.array(z.string()).max(3).optional(),
   turnstile_token: z.string().min(1, "Captcha is required"),
   referral_locked_browser: z.boolean().optional(),
   fingerprint_hash: z.string().optional().nullable(),
@@ -59,4 +59,6 @@ export const adminStatusUpdateSchema = z.object({
   payment_status: z.enum(['pending', 'reservation_paid', 'deposit_paid', 'fully_paid']).optional(),
   submitted_at: z.string().optional(),
   client_name: z.string().optional(),
+  promo_ids: z.array(z.string()).max(3, "Maximum 3 promo codes allowed").optional(),
+  promotion_codes: z.array(z.string()).max(3, "Maximum 3 promo codes allowed").optional(),
 });

@@ -8,7 +8,8 @@ import {
     updateCommissionPayoutStatus, 
     deleteCommission,
     getActiveWorkloadCount,
-    promoteNextInWaitlist
+    promoteNextInWaitlist,
+    type CommissionData
 } from '@/lib/db/commissions';
 import { setAvailability } from '@/lib/db/availability';
 
@@ -27,10 +28,25 @@ export async function GET() {
         }
 
         const commissions = await getAllCommissions();
+        const { getAllOffers } = await import('@/lib/db/offers');
+        const allOffers = await getAllOffers();
 
         // Sort by submission date (newest first)
         const sortedCommissions = commissions.sort((a: { submitted_at: string }, b: { submitted_at: string }) => {
             return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime();
+        }).map((c) => {
+            const row = c as unknown as Record<string, unknown>;
+            if (row.promo_ids && Array.isArray(row.promo_ids)) {
+                const appliedOffers = (row.promo_ids as string[])
+                    .map((id: string) => allOffers.find(o => o.id === id))
+                    .filter((o): o is NonNullable<typeof o> => !!o);
+                return {
+                    ...row,
+                    promotion_codes: appliedOffers.map(o => o.code),
+                    discount_percents: appliedOffers.map(o => o.discount_percent || 0),
+                };
+            }
+            return row;
         });
 
         return NextResponse.json({ commissions: sortedCommissions });
@@ -126,10 +142,12 @@ export async function PATCH(request: NextRequest) {
 
                     // --- Offer Usage Restoration ---
                     // If a commission with a promo is rejected or cancelled, restore the spot
-                    if (['rejected', 'cancelled'].includes(status) && existingCommission.promo_id) {
+                    if (['rejected', 'cancelled'].includes(status) && existingCommission.promo_ids && existingCommission.promo_ids.length > 0) {
                         const { decrementOfferUsage } = await import('@/lib/db/offers');
-                        await decrementOfferUsage(existingCommission.promo_id);
-                        console.log(`Restored usage for offer ${existingCommission.promo_id} after status change to ${status}`);
+                        for (const pid of existingCommission.promo_ids) {
+                            await decrementOfferUsage(pid);
+                            console.log(`Restored usage for offer ${pid} after status change to ${status}`);
+                        }
                     }
 
                     // --- AUTOMATED LINK GENERATION REMOVED ---
@@ -214,6 +232,72 @@ export async function PATCH(request: NextRequest) {
             const { updateCommissionClientName } = await import('@/lib/db/commissions');
             const resultClientName = await updateCommissionClientName(id, result.data.client_name);
             if (resultClientName) updatedCommission = resultClientName;
+        }
+
+        // Update Promo IDs
+        if (result.data.promo_ids !== undefined || result.data.promotion_codes !== undefined) {
+            const { supabaseAdmin } = await import('@/lib/supabase/admin');
+            const { getAllOffers } = await import('@/lib/db/offers');
+            const allOffers = await getAllOffers();
+
+            // Fetch the commission's current promo_ids before overwriting
+            const { data: currentCommission } = await supabaseAdmin
+                .from('commissions')
+                .select('promo_ids')
+                .eq('id', id)
+                .single();
+            const previousIds: string[] = (currentCommission?.promo_ids as string[]) || [];
+
+            // Resolve new IDs (either directly or from promotion_codes)
+            let newIds: string[] = [];
+            if (result.data.promo_ids !== undefined) {
+                newIds = result.data.promo_ids;
+            } else {
+                newIds = (result.data.promotion_codes || [])
+                    .map((code: string) => allOffers.find(o => o.code.toUpperCase() === code.toUpperCase())?.id)
+                    .filter(Boolean) as string[];
+            }
+
+            // Save updated promo_ids to commission
+            const { data, error } = await supabaseAdmin
+                .from('commissions')
+                .update({ promo_ids: newIds })
+                .eq('id', id)
+                .select()
+                .single();
+            if (!error && data) {
+                updatedCommission = data;
+            }
+
+            // Diff: increment usage for newly added, decrement for removed
+            const added = newIds.filter(nid => !previousIds.includes(nid));
+            const removed = previousIds.filter(pid => !newIds.includes(pid));
+
+            for (const offerId of added) {
+                const currentUsage = allOffers.find(o => o.id === offerId)?.usage_count ?? 0;
+                await supabaseAdmin.from('offers').update({ usage_count: currentUsage + 1 }).eq('id', offerId);
+            }
+            for (const offerId of removed) {
+                const currentUsage = allOffers.find(o => o.id === offerId)?.usage_count ?? 0;
+                if (currentUsage > 0) {
+                    await supabaseAdmin.from('offers').update({ usage_count: currentUsage - 1 }).eq('id', offerId);
+                }
+            }
+        }
+
+        // Re-enrich updatedCommission with promotion_codes + discount_percents if it has promo_ids
+        if (updatedCommission && (updatedCommission as unknown as Record<string, unknown>).promo_ids) {
+            const { getAllOffers } = await import('@/lib/db/offers');
+            const allOffers = await getAllOffers();
+            const promoIds = (updatedCommission as unknown as Record<string, unknown>).promo_ids as string[];
+            const appliedOffers = promoIds
+                .map((pid: string) => allOffers.find(o => o.id === pid))
+                .filter(Boolean);
+            updatedCommission = {
+                ...(updatedCommission as unknown as Record<string, unknown>),
+                promotion_codes: appliedOffers.map(o => o!.code),
+                discount_percents: appliedOffers.map(o => o!.discount_percent || 0),
+            } as unknown as CommissionData;
         }
 
         // Update Payout Status

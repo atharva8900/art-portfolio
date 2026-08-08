@@ -49,8 +49,7 @@ CREATE TABLE public.commissions (
     payment_status TEXT DEFAULT 'pending',
     is_self_referral_flag BOOLEAN DEFAULT FALSE,
     flag_reason TEXT,
-    promo_id TEXT,
-    promotion_code TEXT
+    promo_ids TEXT[] DEFAULT '{}'
 );
 
 -- 4. SECURITY (RLS)

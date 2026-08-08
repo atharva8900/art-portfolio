@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
     Loader2, Trash2, Lock, RefreshCcw, Check, X, AlertTriangle, ChevronDown,
     Phone, Instagram, MapPin, User, Package, Calendar, Copy, ExternalLink, ImagePlus,
-    Clock, CheckCircle, MoreVertical, ShieldOff, Ban, ArrowRight
+    Clock, CheckCircle, MoreVertical, ShieldOff, Ban, ArrowRight, Edit3
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -50,9 +50,9 @@ interface CommissionData {
     final_payment_link_id?: string;
     final_payment_link_url?: string;
     wip_images?: string[];
-    promo_id?: string | null;
-    promotion_code?: string | null;
-    discount_percent?: number | null;
+    promo_ids?: string[] | null;
+    promotion_codes?: string[] | null;
+    discount_percents?: number[] | null;
     is_self_referral_flag?: boolean;
     flag_reason?: string | null;
     fingerprint_hash?: string | null;
@@ -148,6 +148,8 @@ export default function AdminCommissionsPage() {
     const [editingDateValue, setEditingDateValue] = useState<string>('');
     const [editingNameId, setEditingNameId] = useState<string | null>(null);
     const [editingNameValue, setEditingNameValue] = useState<string>('');
+    const [editingPromoId, setEditingPromoId] = useState<string | null>(null);
+    const [editingPromoValue, setEditingPromoValue] = useState<string>('');
 
     const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
@@ -1098,17 +1100,109 @@ export default function AdminCommissionsPage() {
                                                                                     <div className="flex justify-between gap-4"><span className="text-neutral-500">Add-ons</span><span className="font-mono text-foreground">₹{(commission as CommissionData & { extras_total?: number }).extras_total}</span></div>
                                                                                 ) : null}
 
-                                                                                {commission.discount_percent ? (
-                                                                                    <>
-                                                                                        <div className="flex justify-between gap-4 border-t border-foreground/10 pt-1 mt-1 font-medium">
-                                                                                            <span className="text-neutral-500">Original Total</span>
-                                                                                            <span className="font-mono text-neutral-500 line-through">₹{Math.round((commission.base_price || 0) / (1 - (commission.discount_percent || 0) / 100) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0))}</span>
+                                                                                <div className="flex justify-between gap-4 mt-2 items-center">
+                                                                                    <span className="text-neutral-500 font-medium">Applied Offers</span>
+                                                                                    {editingPromoId === commission.id ? (
+                                                                                        <div className="flex items-center gap-2 max-w-xs">
+                                                                                            <input 
+                                                                                                type="text" 
+                                                                                                value={editingPromoValue}
+                                                                                                onChange={(e) => setEditingPromoValue(e.target.value)}
+                                                                                                onClick={(e) => e.stopPropagation()}
+                                                                                                onKeyDown={async (e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    if (e.key === 'Escape') { setEditingPromoId(null); return; }
+                                                                                                    if (e.key === 'Enter') {
+                                                                                                        setUpdatingId(commission.id);
+                                                                                                        try {
+                                                                                                            const codes = editingPromoValue.split(',').map(c => c.trim()).filter(Boolean);
+                                                                                                            if (codes.length > 3) { alert('Maximum 3 promo codes allowed'); setUpdatingId(null); return; }
+                                                                                                            const res = await fetch('/api/admin/commissions', {
+                                                                                                                method: 'PATCH',
+                                                                                                                headers: { 'Content-Type': 'application/json' },
+                                                                                                                body: JSON.stringify({ id: commission.id, promotion_codes: codes }),
+                                                                                                            });
+                                                                                                            if (res.ok) {
+                                                                                                                const { commission: updated } = await res.json();
+                                                                                                                setCommissions(prev => prev.map(c => c.id === commission.id ? updated : c));
+                                                                                                                setEditingPromoId(null);
+                                                                                                            } else { alert('Failed to update offers'); }
+                                                                                                        } catch (err) { console.error(err); }
+                                                                                                        finally { setUpdatingId(null); }
+                                                                                                    }
+                                                                                                }}
+                                                                                                placeholder="Comma separated codes e.g. SUMMER25, FRAME"
+                                                                                                className="bg-surface border border-foreground/20 rounded px-2 py-1 text-xs text-foreground outline-none focus:border-accent flex-1 min-w-0"
+                                                                                                autoFocus
+                                                                                            />
+                                                                                            <button 
+                                                                                                onClick={async (e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    setUpdatingId(commission.id);
+                                                                                                    try {
+                                                                                                        const codes = editingPromoValue.split(',').map(c => c.trim()).filter(Boolean);
+                                                                                                        if (codes.length > 3) {
+                                                                                                            // showNotification('Maximum 3 promo codes allowed', 'error'); // If showNotification is available, else ignore. The user gets error in UI.
+                                                                                                            alert('Maximum 3 promo codes allowed');
+                                                                                                            setUpdatingId(null);
+                                                                                                            return;
+                                                                                                        }
+                                                                                                        const res = await fetch('/api/admin/commissions', {
+                                                                                                            method: 'PATCH',
+                                                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                                                            body: JSON.stringify({ id: commission.id, promotion_codes: codes }),
+                                                                                                        });
+                                                                                                        if (res.ok) {
+                                                                                                            const { commission: updatedCommission } = await res.json();
+                                                                                                            setCommissions(prev => prev.map(c => c.id === commission.id ? updatedCommission : c));
+                                                                                                            setEditingPromoId(null);
+                                                                                                        } else {
+                                                                                                            alert('Failed to update offers');
+                                                                                                        }
+                                                                                                    } catch (err) {
+                                                                                                        console.error(err);
+                                                                                                    } finally {
+                                                                                                        setUpdatingId(null);
+                                                                                                    }
+                                                                                                }}
+                                                                                                disabled={updatingId === commission.id}
+                                                                                                className="p-1 hover:bg-emerald-500/20 text-emerald-400 rounded transition-colors disabled:opacity-50 shrink-0"
+                                                                                            >
+                                                                                                <Check size={14} />
+                                                                                            </button>
                                                                                         </div>
-                                                                                        <div className="flex justify-between gap-4 text-emerald-400 text-xs">
-                                                                                            <span className="font-medium">Offer Savings ({commission.promotion_code})</span>
-                                                                                            <span className="font-mono">-₹{Math.round(((commission.base_price || 0) / (1 - (commission.discount_percent || 0) / 100)) * ((commission.discount_percent || 0) / 100))}</span>
-                                                                                        </div>
-                                                                                    </>
+                                                                                    ) : (
+                                                                                        <button
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                setEditingPromoId(commission.id);
+                                                                                                setEditingPromoValue((commission.promotion_codes || []).join(', '));
+                                                                                            }}
+                                                                                            className="text-xs text-accent hover:underline flex items-center gap-1 bg-accent/10 px-2 py-0.5 rounded"
+                                                                                        >
+                                                                                            <Edit3 size={12} /> {commission.promotion_codes && commission.promotion_codes.length > 0 ? commission.promotion_codes.join(', ') : 'Add Code'}
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                {commission.discount_percents && commission.discount_percents.length > 0 && commission.discount_percents.some(p => p > 0) ? (
+                                                                                    (() => {
+                                                                                        const totalMultiplier = commission.discount_percents.reduce((acc, p) => acc * (1 - p / 100), 1);
+                                                                                        const originalBase = Math.round((commission.base_price || 0) / totalMultiplier);
+                                                                                        const totalSavings = originalBase - (commission.base_price || 0);
+                                                                                        return (
+                                                                                            <>
+                                                                                                <div className="flex justify-between gap-4 border-t border-foreground/10 pt-1 mt-1 font-medium">
+                                                                                                    <span className="text-neutral-500">Original Total</span>
+                                                                                                    <span className="font-mono text-neutral-500 line-through">₹{originalBase + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span>
+                                                                                                </div>
+                                                                                                <div className="flex justify-between gap-4 text-emerald-400 text-xs">
+                                                                                                    <span className="font-medium">Offer Savings ({commission.promotion_codes?.join(', ')})</span>
+                                                                                                    <span className="font-mono">-₹{totalSavings}</span>
+                                                                                                </div>
+                                                                                            </>
+                                                                                        );
+                                                                                    })()
                                                                                 ) : null}
 
                                                                                 <div className="flex justify-between gap-4 border-t border-foreground/10 pt-1 mt-1"><span className="text-foreground font-medium">Final Artwork Total</span><span className="font-mono text-foreground font-bold text-lg">₹{(commission.base_price || 0) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span></div>
@@ -1668,17 +1762,24 @@ export default function AdminCommissionsPage() {
                                                                 <div className="flex justify-between"><span className="text-neutral-500">Add-ons</span><span className="font-mono">₹{(commission as CommissionData & { extras_total?: number }).extras_total}</span></div>
                                                             ) : null}
 
-                                                            {commission.discount_percent ? (
-                                                                <>
-                                                                    <div className="flex justify-between border-t border-foreground/10 pt-1 mt-1">
-                                                                        <span className="text-neutral-500 text-xs">Original Total</span>
-                                                                        <span className="font-mono text-neutral-500 line-through text-xs">₹{Math.round((commission.base_price || 0) / (1 - (commission.discount_percent || 0) / 100) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0))}</span>
-                                                                    </div>
-                                                                    <div className="flex justify-between text-emerald-400 text-[10px]">
-                                                                        <span className="font-medium">Savings ({commission.promotion_code})</span>
-                                                                        <span className="font-mono">-₹{Math.round(((commission.base_price || 0) / (1 - (commission.discount_percent || 0) / 100)) * ((commission.discount_percent || 0) / 100))}</span>
-                                                                    </div>
-                                                                </>
+                                                            {commission.discount_percents && commission.discount_percents.length > 0 && commission.discount_percents.some(p => p > 0) ? (
+                                                                (() => {
+                                                                    const totalMultiplier = commission.discount_percents.reduce((acc, p) => acc * (1 - p / 100), 1);
+                                                                    const originalBase = Math.round((commission.base_price || 0) / totalMultiplier);
+                                                                    const totalSavings = originalBase - (commission.base_price || 0);
+                                                                    return (
+                                                                        <>
+                                                                            <div className="flex justify-between border-t border-foreground/10 pt-1 mt-1">
+                                                                                <span className="text-neutral-500 text-xs">Original Total</span>
+                                                                                <span className="font-mono text-neutral-500 line-through text-xs">₹{originalBase + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span>
+                                                                            </div>
+                                                                            <div className="flex justify-between text-emerald-400 text-[10px]">
+                                                                                <span className="font-medium">Savings ({commission.promotion_codes?.join(', ')})</span>
+                                                                                <span className="font-mono">-₹{totalSavings}</span>
+                                                                            </div>
+                                                                        </>
+                                                                    );
+                                                                })()
                                                             ) : null}
 
                                                             <div className="flex justify-between border-t border-foreground/10 pt-1 font-bold"><span className="text-foreground">Final Total</span><span className="font-mono text-foreground">₹{(commission.base_price || 0) + ((commission as CommissionData & { extras_total?: number }).extras_total || 0)}</span></div>
