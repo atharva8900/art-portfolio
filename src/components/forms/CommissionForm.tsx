@@ -2,7 +2,7 @@
 
 import { useState, useEffect, FormEvent, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X } from 'lucide-react';
+import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X, ShieldAlert } from 'lucide-react';
 
 import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
 import { useSession } from 'next-auth/react';
@@ -157,6 +157,9 @@ export default function CommissionForm() {
     const [banStatus, setBanStatus] = useState<'muted' | 'banned' | null>(null);
     const [banExpiresAt, setBanExpiresAt] = useState<string | null>(null);
     const [banCheckDone, setBanCheckDone] = useState(false);
+    const [submittedAtOverride, setSubmittedAtOverride] = useState<string>('');
+
+    const isAdmin = session?.user?.email ? ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'].includes(session.user.email.toLowerCase()) : false;
 
     // Load FingerprintJS on mount and capture the visitor ID
     useEffect(() => {
@@ -1294,6 +1297,26 @@ export default function CommissionForm() {
                     </div>
                 ) : (
                     <form onSubmit={status === 'waitlist' ? handleWaitlistSubmit : handleSubmit} className="space-y-8">
+                        {isAdmin && (
+                            <div className="bg-orange-500/10 border border-orange-500/30 p-6 rounded-lg space-y-3 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-orange-500" />
+                                <h4 className="text-orange-400 font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                                    <ShieldAlert size={14} /> Admin Tools: Backdate Submission
+                                </h4>
+                                <div className="space-y-2 relative z-10">
+                                    <label htmlFor="submitted_at" className="text-xs uppercase tracking-widest text-neutral-400 font-medium">Custom Submission Date</label>
+                                    <input 
+                                        id="submitted_at" 
+                                        name="submitted_at" 
+                                        type="datetime-local" 
+                                        value={submittedAtOverride}
+                                        onChange={(e) => setSubmittedAtOverride(e.target.value)}
+                                        className="w-full bg-surface/50 border border-orange-500/20 p-4 rounded-md text-foreground focus:border-orange-500 outline-none transition-colors" 
+                                    />
+                                    <p className="text-[10px] text-neutral-500">Leave blank to use the current date and time. Only visible to admins.</p>
+                                </div>
+                            </div>
+                        )}
                         {/* the rest of the form stays inside but needs indentation update visually but we can just leave the tags */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">

@@ -144,6 +144,8 @@ export default function AdminCommissionsPage() {
     const isAuthorized = !!session && !!userEmail && ALLOWED_EMAILS.includes(userEmail.toLowerCase());
 
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [editingDateId, setEditingDateId] = useState<string | null>(null);
+    const [editingDateValue, setEditingDateValue] = useState<string>('');
 
     const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
@@ -806,8 +808,73 @@ export default function AdminCommissionsPage() {
                                                         />
                                                     </div>
                                                 </td>
-                                                <td className="py-4 px-4 text-neutral-400 text-sm">
-                                                    {new Date(commission.submitted_at).toLocaleDateString('en-GB')}
+                                                <td className="py-4 px-4 text-neutral-400 text-sm group" onClick={e => e.stopPropagation()}>
+                                                    {editingDateId === commission.id ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <input 
+                                                                type="datetime-local" 
+                                                                value={editingDateValue}
+                                                                onChange={(e) => setEditingDateValue(e.target.value)}
+                                                                className="bg-surface border border-foreground/20 rounded p-1 text-xs text-foreground outline-none focus:border-accent"
+                                                            />
+                                                            <button 
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    setUpdatingId(commission.id);
+                                                                    try {
+                                                                        const res = await fetch('/api/admin/commissions', {
+                                                                            method: 'PATCH',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ id: commission.id, submitted_at: new Date(editingDateValue).toISOString() }),
+                                                                        });
+                                                                        if (res.ok) {
+                                                                            setCommissions(prev => prev.map(c => c.id === commission.id ? { ...c, submitted_at: new Date(editingDateValue).toISOString() } : c));
+                                                                            showNotification('Submission date updated!');
+                                                                        } else {
+                                                                            showNotification('Failed to update date', 'error');
+                                                                        }
+                                                                    } catch {
+                                                                        showNotification('Error updating date', 'error');
+                                                                    } finally {
+                                                                        setUpdatingId(null);
+                                                                        setEditingDateId(null);
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === commission.id}
+                                                                className="p-1 hover:bg-emerald-500/20 text-emerald-400 rounded transition-colors"
+                                                            >
+                                                                <Check size={14} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingDateId(null);
+                                                                }}
+                                                                className="p-1 hover:bg-red-500/20 text-red-400 rounded transition-colors"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div 
+                                                            className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors group-hover:bg-foreground/5 p-1 -ml-1 rounded"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Convert to local datetime string format for the input
+                                                                const d = new Date(commission.submitted_at);
+                                                                const pad = (n: number) => n.toString().padStart(2, '0');
+                                                                const dtStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                                                                setEditingDateValue(dtStr);
+                                                                setEditingDateId(commission.id);
+                                                            }}
+                                                            title="Click to edit date"
+                                                        >
+                                                            <span>{new Date(commission.submitted_at).toLocaleDateString('en-GB')}</span>
+                                                            <motion.div initial={{ opacity: 0 }} whileHover={{ opacity: 1 }} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <RefreshCcw size={12} className="text-neutral-500" />
+                                                            </motion.div>
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 px-4 text-right" onClick={e => e.stopPropagation()}>
                                                     <div className="flex items-center justify-end gap-2">

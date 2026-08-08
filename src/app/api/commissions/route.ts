@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
             turnstile_token,
             referral_locked_browser,
             fingerprint_hash,
+            submitted_at,
         } = result.data;
 
         // Verify Razorpay Payment if provided
@@ -668,7 +669,7 @@ export async function POST(request: NextRequest) {
                     instagram: referralInfo.referrer_instagram,
                 } : null,
                 status: commissionStatus,
-                submitted_at: new Date().toISOString(),
+                submitted_at: (submitted_at && submitterEmail && ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'].includes(submitterEmail.toLowerCase())) ? new Date(submitted_at).toISOString() : new Date().toISOString(),
                 needed_by: needed_by || undefined,
                 base_price: totalBasePrice,
                 extras_total: extrasTotal,

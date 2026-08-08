@@ -141,6 +141,29 @@ export async function updateCommissionStatus(
     return data as CommissionData;
 }
 
+// Update commission submitted_at date (Admin override)
+export async function updateCommissionSubmittedAt(
+    id: string,
+    submittedAt: string
+): Promise<CommissionData | null> {
+    const { data, error } = await supabaseAdmin
+        .from('commissions')
+        .update({
+            submitted_at: submittedAt,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating commission submitted_at in Supabase:', error);
+        return null;
+    }
+
+    return data as CommissionData;
+}
+
 // Generate unique commission ID
 export function generateCommissionId(): string {
     const timestamp = Date.now().toString(36);

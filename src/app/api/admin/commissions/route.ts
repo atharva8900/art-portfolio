@@ -202,6 +202,13 @@ export async function PATCH(request: NextRequest) {
         }
         }
 
+        // Update Submitted At
+        if (result.data.submitted_at) {
+            const { updateCommissionSubmittedAt } = await import('@/lib/db/commissions');
+            const resultSubmittedAt = await updateCommissionSubmittedAt(id, result.data.submitted_at);
+            if (resultSubmittedAt) updatedCommission = resultSubmittedAt;
+        }
+
         // Update Payout Status
         if (payout_status) {
             if (!['unpaid', 'requested', 'paid'].includes(payout_status)) {

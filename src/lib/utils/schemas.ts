@@ -37,6 +37,7 @@ export const commissionSchema = z.object({
   turnstile_token: z.string().min(1, "Captcha is required"),
   referral_locked_browser: z.boolean().optional(),
   fingerprint_hash: z.string().optional().nullable(),
+  submitted_at: z.string().optional().nullable(),
 });
 
 // Referral Creation Schema
@@ -56,4 +57,5 @@ export const adminStatusUpdateSchema = z.object({
   admin_note: z.string().max(2000).optional(),
   payout_status: z.enum(['unpaid', 'requested', 'paid']).optional(),
   payment_status: z.enum(['pending', 'reservation_paid', 'deposit_paid', 'fully_paid']).optional(),
+  submitted_at: z.string().optional(),
 });
