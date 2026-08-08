@@ -625,9 +625,10 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
                                         type="number"
                                         min="0"
                                         max="100"
+                                        step="0.01"
                                         value={formData.discount_percent}
                                         onChange={(e) => {
-                                            const val = parseInt(e.target.value);
+                                            const val = parseFloat(e.target.value);
                                             setFormData({ ...formData, discount_percent: isNaN(val) ? 0 : val });
                                         }}
                                         className="w-full bg-foreground/5 border border-foreground/10 rounded-2xl pl-12 pr-5 py-3.5 focus:border-accent outline-none transition-all"
