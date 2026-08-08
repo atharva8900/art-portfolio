@@ -209,6 +209,13 @@ export async function PATCH(request: NextRequest) {
             if (resultSubmittedAt) updatedCommission = resultSubmittedAt;
         }
 
+        // Update Client Name
+        if (result.data.client_name) {
+            const { updateCommissionClientName } = await import('@/lib/db/commissions');
+            const resultClientName = await updateCommissionClientName(id, result.data.client_name);
+            if (resultClientName) updatedCommission = resultClientName;
+        }
+
         // Update Payout Status
         if (payout_status) {
             if (!['unpaid', 'requested', 'paid'].includes(payout_status)) {

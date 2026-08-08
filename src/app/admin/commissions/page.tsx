@@ -146,6 +146,8 @@ export default function AdminCommissionsPage() {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [editingDateId, setEditingDateId] = useState<string | null>(null);
     const [editingDateValue, setEditingDateValue] = useState<string>('');
+    const [editingNameId, setEditingNameId] = useState<string | null>(null);
+    const [editingNameValue, setEditingNameValue] = useState<string>('');
 
     const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
@@ -753,8 +755,67 @@ export default function AdminCommissionsPage() {
                                                 <td className="py-4 px-4">
                                                     <div className="flex items-center gap-2">
                                                         <div>
-                                                            <div className="text-foreground flex items-center gap-2">
-                                                                {commission.client_name}
+                                                            <div className="text-foreground flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                                                {editingNameId === commission.id ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={editingNameValue}
+                                                                            onChange={(e) => setEditingNameValue(e.target.value)}
+                                                                            className="bg-surface border border-foreground/20 rounded px-2 py-1 text-sm text-foreground outline-none focus:border-accent w-[150px]"
+                                                                            autoFocus
+                                                                        />
+                                                                        <button 
+                                                                            onClick={async (e) => {
+                                                                                e.stopPropagation();
+                                                                                if (!editingNameValue.trim()) return;
+                                                                                setUpdatingId(commission.id);
+                                                                                try {
+                                                                                    const res = await fetch('/api/admin/commissions', {
+                                                                                        method: 'PATCH',
+                                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                                        body: JSON.stringify({ id: commission.id, client_name: editingNameValue.trim() }),
+                                                                                    });
+                                                                                    if (res.ok) {
+                                                                                        setCommissions(prev => prev.map(c => c.id === commission.id ? { ...c, client_name: editingNameValue.trim() } : c));
+                                                                                        showNotification('Client name updated!');
+                                                                                    } else {
+                                                                                        showNotification('Failed to update name', 'error');
+                                                                                    }
+                                                                                } catch {
+                                                                                    showNotification('Error updating name', 'error');
+                                                                                } finally {
+                                                                                    setUpdatingId(null);
+                                                                                    setEditingNameId(null);
+                                                                                }
+                                                                            }}
+                                                                            disabled={updatingId === commission.id || !editingNameValue.trim()}
+                                                                            className="p-1 hover:bg-emerald-500/20 text-emerald-400 rounded transition-colors disabled:opacity-50"
+                                                                        >
+                                                                            <Check size={14} />
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setEditingNameId(null);
+                                                                            }}
+                                                                            className="p-1 hover:bg-neutral-500/20 text-neutral-400 rounded transition-colors"
+                                                                        >
+                                                                            <X size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span 
+                                                                        className="cursor-pointer hover:text-accent transition-colors border-b border-transparent hover:border-accent border-dashed"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingNameId(commission.id);
+                                                                            setEditingNameValue(commission.client_name);
+                                                                        }}
+                                                                    >
+                                                                        {commission.client_name}
+                                                                    </span>
+                                                                )}
                                                                 {commission.status === 'banned' && (
                                                                     <span className="bg-red-500/10 text-red-500 border border-red-500/20 px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter flex items-center gap-1">
                                                                         <Ban size={10} /> BANNED
@@ -1377,8 +1438,67 @@ export default function AdminCommissionsPage() {
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="bg-foreground/10 text-foreground font-mono text-xs px-2 py-0.5 rounded shrink-0">#{index + 1}</span>
-                                                <div className="text-foreground font-medium text-base md:text-lg min-w-0 truncate pr-2 flex items-center gap-2">
-                                                    {commission.client_name}
+                                                <div className="text-foreground font-medium text-base md:text-lg min-w-0 pr-2 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                                    {editingNameId === commission.id ? (
+                                                        <div className="flex items-center gap-2 w-full max-w-full">
+                                                            <input 
+                                                                type="text" 
+                                                                value={editingNameValue}
+                                                                onChange={(e) => setEditingNameValue(e.target.value)}
+                                                                className="bg-surface border border-foreground/20 rounded px-2 py-1 text-sm text-foreground outline-none focus:border-accent flex-1 min-w-0"
+                                                                autoFocus
+                                                            />
+                                                            <button 
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    if (!editingNameValue.trim()) return;
+                                                                    setUpdatingId(commission.id);
+                                                                    try {
+                                                                        const res = await fetch('/api/admin/commissions', {
+                                                                            method: 'PATCH',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ id: commission.id, client_name: editingNameValue.trim() }),
+                                                                        });
+                                                                        if (res.ok) {
+                                                                            setCommissions(prev => prev.map(c => c.id === commission.id ? { ...c, client_name: editingNameValue.trim() } : c));
+                                                                            showNotification('Client name updated!');
+                                                                        } else {
+                                                                            showNotification('Failed to update name', 'error');
+                                                                        }
+                                                                    } catch {
+                                                                        showNotification('Error updating name', 'error');
+                                                                    } finally {
+                                                                        setUpdatingId(null);
+                                                                        setEditingNameId(null);
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === commission.id || !editingNameValue.trim()}
+                                                                className="p-1.5 hover:bg-emerald-500/20 text-emerald-400 rounded transition-colors disabled:opacity-50 shrink-0"
+                                                            >
+                                                                <Check size={16} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingNameId(null);
+                                                                }}
+                                                                className="p-1.5 hover:bg-neutral-500/20 text-neutral-400 rounded transition-colors shrink-0"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span 
+                                                            className="cursor-pointer hover:text-accent transition-colors border-b border-transparent hover:border-accent border-dashed truncate"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingNameId(commission.id);
+                                                                setEditingNameValue(commission.client_name);
+                                                            }}
+                                                        >
+                                                            {commission.client_name}
+                                                        </span>
+                                                    )}
                                                     {commission.status === 'banned' && (
                                                         <span className="bg-red-500/10 text-red-500 border border-red-500/20 px-1.5 py-0.5 rounded text-[9px] font-black uppercase">BAN</span>
                                                     )}

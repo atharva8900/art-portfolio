@@ -58,4 +58,5 @@ export const adminStatusUpdateSchema = z.object({
   payout_status: z.enum(['unpaid', 'requested', 'paid']).optional(),
   payment_status: z.enum(['pending', 'reservation_paid', 'deposit_paid', 'fully_paid']).optional(),
   submitted_at: z.string().optional(),
+  client_name: z.string().optional(),
 });
