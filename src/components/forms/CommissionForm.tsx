@@ -159,6 +159,9 @@ export default function CommissionForm() {
     const [banExpiresAt, setBanExpiresAt] = useState<string | null>(null);
     const [banCheckDone, setBanCheckDone] = useState(false);
     const [submittedAtOverride, setSubmittedAtOverride] = useState<string>('');
+    const [neededByDate, setNeededByDate] = useState<string>('');
+    const [rushFee, setRushFee] = useState<number>(0);
+    const [isRushOrder, setIsRushOrder] = useState<boolean>(false);
 
     const isAdmin = session?.user?.email ? ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'].includes(session.user.email.toLowerCase()) : false;
 
@@ -463,24 +466,45 @@ export default function CommissionForm() {
         const timelapseCost = (timelapse && !hasFreeTimelapse) ? 499 : 0;
         const framingCost = (framing && !hasFreeFraming) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
 
+        // Calculate Rush Fee if needed_by is between 15 and 19 days from today
+        const portraitPriceOriginal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
+        let computedRushFee = 0;
+        let rushActive = false;
+
+        if (neededByDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const target = new Date(neededByDate);
+            target.setHours(0, 0, 0, 0);
+            const diffTime = target.getTime() - today.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays >= 15 && diffDays <= 19) {
+                computedRushFee = Math.ceil(portraitPriceOriginal * 0.30);
+                rushActive = true;
+            }
+        }
+
+        setRushFee(computedRushFee);
+        setIsRushOrder(rushActive);
+
         // Note: Delivery is usually handled in shipping, but if free_extras.delivery is true, that's a bonus
-        const total = baseTotal + backgroundCost + timelapseCost + framingCost;
+        const total = baseTotal + backgroundCost + timelapseCost + framingCost + computedRushFee;
 
         // Calculate original total (without any discounts)
         const originalBaseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
         const originalBackgroundCost = detailedBackground ? 499 : 0;
         const originalTimelapseCost = timelapse ? 499 : 0;
         const originalFramingCost = framing ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
-        const originalTotal = originalBaseTotal + originalBackgroundCost + originalTimelapseCost + originalFramingCost;
+        const originalTotal = originalBaseTotal + originalBackgroundCost + originalTimelapseCost + originalFramingCost + computedRushFee;
 
         setEstimatedTotal(Math.round(total));
         setOriginalTotalValue(Math.round(originalTotal));
         setTotalSavings(Math.round(originalTotal - total));
-    }, [selectedSize, peopleCount, currentPrices, detailedBackground, timelapse, framing, offers]);
+    }, [selectedSize, peopleCount, currentPrices, detailedBackground, timelapse, framing, offers, neededByDate]);
 
     const minDateStr = (() => {
         const d = new Date();
-        d.setDate(d.getDate() + 14);
+        d.setDate(d.getDate() + 15);
         return d.toISOString().split('T')[0];
     })();
 
@@ -1503,16 +1527,56 @@ export default function CommissionForm() {
                         </div>
 
                         <div className="space-y-2">
-                            <label htmlFor="needed_by" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium">Date Needed By (Optional)</label>
+                            <label htmlFor="needed_by" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium flex items-center justify-between">
+                                <span>Target Delivery Deadline <span className="text-red-500">*</span></span>
+                                {isRushOrder && (
+                                    <span className="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded border border-amber-500/20 font-bold uppercase tracking-wider flex items-center gap-1">
+                                        <Flame size={10} /> +30% Rush Fee Active
+                                    </span>
+                                )}
+                            </label>
                             <input
+                                required
                                 id="needed_by"
                                 name="needed_by"
                                 type="date"
                                 min={minDateStr}
-                                className="w-full bg-surface border border-foreground/10 p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors"
+                                value={neededByDate}
+                                onChange={(e) => setNeededByDate(e.target.value)}
+                                className={`w-full bg-surface border p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors ${
+                                    isRushOrder ? 'border-amber-500/50 bg-amber-500/5' : 'border-foreground/10'
+                                }`}
                             />
-                            <p className="text-[10px] text-neutral-500 uppercase tracking-wider">
-                                ⏳ Portraits typically take <strong>2-4 weeks</strong>. Requesting a date earlier than 14 days from today is disabled to set realistic expectations.
+                            <AnimatePresence mode="wait">
+                                {isRushOrder ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -5 }}
+                                        className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2.5 text-xs text-amber-500"
+                                    >
+                                        <Flame size={16} className="shrink-0 mt-0.5 text-amber-500" />
+                                        <div>
+                                            <span className="font-semibold block">Rush Creation Requested (15–19 Days)</span>
+                                            <span className="text-[11px] opacity-90 block mt-0.5">
+                                                A +30% Artist Rush Fee (+₹{rushFee.toLocaleString()}) has been added to prioritize your artwork creation, packaging & express handling.
+                                            </span>
+                                        </div>
+                                    </motion.div>
+                                ) : neededByDate ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -5 }}
+                                        className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400"
+                                    >
+                                        <CheckCircle size={14} className="shrink-0" />
+                                        <span>Standard Delivery Timeline (20+ Days) — No rush fee applied.</span>
+                                    </motion.div>
+                                ) : null}
+                            </AnimatePresence>
+                            <p className="text-[10px] text-neutral-500 uppercase tracking-wider flex items-center gap-1 mt-1 leading-relaxed">
+                                <span>⏳ Standard artwork creation takes <strong>2-4 weeks</strong>. Dates earlier than 15 days are disabled. Need it sooner than 15 days? <a href="https://www.instagram.com/atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="text-accent underline font-bold hover:opacity-80">DM me on Instagram</a> to check emergency slot availability.</span>
                             </p>
                         </div>
 
@@ -1769,6 +1833,17 @@ export default function CommissionForm() {
                                         <span className="text-neutral-400">+ Framing</span>
                                         <span className={`font-mono ${offers.some(o => o?.free_extras?.framing) ? 'text-accent font-bold' : 'text-foreground'}`}>
                                             {offers.some(o => o?.free_extras?.framing) ? 'FREE' : `₹${FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']}`}
+                                        </span>
+                                    </div>
+                                )}
+                                {rushFee > 0 && (
+                                    <div className="flex justify-between items-center text-amber-500 font-medium pt-1 border-t border-amber-500/10">
+                                        <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
+                                            <Flame size={13} className="text-amber-500 shrink-0" />
+                                            + Artist Rush Fee (15–19 Days)
+                                        </span>
+                                        <span className="font-mono font-bold">
+                                            +₹{rushFee.toLocaleString()}
                                         </span>
                                     </div>
                                 )}

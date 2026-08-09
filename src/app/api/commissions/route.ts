@@ -313,6 +313,20 @@ export async function POST(request: NextRequest) {
         let totalBasePrice = totalBasePriceOriginal;
         const additionalPeopleCost = totalBasePriceOriginal - basePriceForOne;
 
+        // Calculate Artist Rush Fee if needed_by is 15-19 days from submitted_at / today
+        let rushFee = 0;
+        if (needed_by) {
+            const submissionDate = (submitted_at && submitterEmail && ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'].includes(submitterEmail.toLowerCase())) ? new Date(submitted_at) : new Date();
+            submissionDate.setHours(0, 0, 0, 0);
+            const targetDate = new Date(needed_by);
+            targetDate.setHours(0, 0, 0, 0);
+            const diffTime = targetDate.getTime() - submissionDate.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays >= 15 && diffDays <= 19) {
+                rushFee = Math.ceil(totalBasePriceOriginal * 0.30);
+            }
+        }
+
         // Fetch Offers for server-side validation and pricing
         const validOffers: OfferData[] = [];
         let hasFreeBackground = false;
@@ -353,13 +367,13 @@ export async function POST(request: NextRequest) {
         const backgroundCostOriginal = detailed_background ? 500 : 0;
         const timelapseCostOriginal = timelapse_recording ? 500 : 0;
         const framingCostOriginal = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
-        const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + timelapseCostOriginal + framingCostOriginal);
+        const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + timelapseCostOriginal + framingCostOriginal + rushFee);
 
         const backgroundCost = (detailed_background && !hasFreeBackground) ? 500 : 0;
         const timelapseCost = (timelapse_recording && !hasFreeTimelapse) ? 500 : 0;
         const framingCost = (framing && !hasFreeFraming) ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
 
-        const totalAmount = Math.round(totalBasePrice + backgroundCost + timelapseCost + framingCost);
+        const totalAmount = Math.round(totalBasePrice + backgroundCost + timelapseCost + framingCost + rushFee);
         const totalSavings = totalAmountOriginal - totalAmount;
 
         // Increment Offer Usages if valid
@@ -377,6 +391,7 @@ export async function POST(request: NextRequest) {
             (detailed_background ? `- Detailed Background: ₹500 ${hasFreeBackground ? '(FREE)' : ''}\n` : '') +
             (timelapse_recording ? `- Timelapse Recording: ₹500 ${hasFreeTimelapse ? '(FREE)' : ''}\n` : '') +
             (framing ? `- Professional Framing: ₹${framingCostOriginal} ${hasFreeFraming ? '(FREE)' : ''}\n` : '') +
+            (rushFee > 0 ? `- Artist Rush Fee (15–19 Days): ₹${rushFee}\n` : '') +
             appliedOffersEmailDraft +
             (totalSavings > 0 ? `**Total Savings: ₹${totalSavings}**\n` : '') +
             `**Final Total: ₹${totalAmount}**`;
@@ -531,6 +546,7 @@ export async function POST(request: NextRequest) {
                         ${detailed_background ? '<li style="margin-bottom: 5px;">Detailed Background: <strong>₹500</strong></li>' : ''}
                         ${timelapse_recording ? '<li style="margin-bottom: 5px;">Timelapse Recording: <strong>₹500</strong></li>' : ''}
                         ${framing ? `<li style="margin-bottom: 5px;">Professional Framing: <strong>₹${framingCost}</strong></li>` : ''}
+                        ${rushFee > 0 ? `<li style="margin-bottom: 5px; color: #d97706; font-weight: bold;">Artist Rush Fee (15–19 Days): <strong>+₹${rushFee}</strong></li>` : ''}
                         <li style="margin-top: 10px; border-top: 1px solid #ddd; pt: 10px; font-size: 18px;">Total: <strong>₹${totalAmount}</strong></li>
                     </ul>
                 </div>
@@ -656,7 +672,7 @@ export async function POST(request: NextRequest) {
         // Save commission to storage (after successful email)
         try {
             const commissionId = generateCommissionId();
-            const extrasTotal = backgroundCost + timelapseCost + framingCost;
+            const extrasTotal = backgroundCost + timelapseCost + framingCost + rushFee;
             const commissionableAmount = totalBasePrice + backgroundCost;
             const referrersShare = commissionEligible ? (commissionableAmount * 0.20) : 0;
 
@@ -685,6 +701,7 @@ export async function POST(request: NextRequest) {
                 needed_by: needed_by || undefined,
                 base_price: totalBasePrice,
                 extras_total: extrasTotal,
+                rush_fee: rushFee > 0 ? rushFee : undefined,
                 commission_amount: referrersShare,
                 promo_ids: validOffers.length > 0 ? validOffers.map(o => o.id) : null,
                 promotion_codes: validOffers.length > 0 ? validOffers.map(o => o.code) : null,

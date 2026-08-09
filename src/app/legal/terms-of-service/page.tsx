@@ -20,9 +20,9 @@ export default function TermsOfService() {
                 <div>
                     <h2 className="text-2xl font-serif text-foreground mb-4">2. The Commission Process</h2>
                     <ul className="list-disc pl-6 mt-4 space-y-2">
-                        <li><strong>Reference Quality:</strong> The final hyper-realistic outcome is heavily dependent on the quality of the reference photograph provided. Blurry, heavily filtered, or low-resolution images will be rejected. The artist reserves the right to decline a commission if a suitable reference cannot be provided.</li>
-                        <li><strong>Updates:</strong> You will receive general updates on the progress of your portrait. Revisions are generally not accommodated once shading and detailing have commenced, as graphite and charcoal are difficult to completely erase or fundamentally alter mid-process.</li>
-                        <li><strong>Timeline:</strong> Estimated completion times provided (e.g., 2-4 weeks) are approximations and not hard deadlines. Creation time may vary based on complexity, size, and current workload.</li>
+                        <li><strong>Reference Quality & Custom Poses:</strong> The hyper-realistic outcome relies heavily on the quality and angle of the reference photograph provided. Blurry, heavily filtered, or low-resolution images will be rejected. If you request a custom pose, composite artwork, or reimagined scene without a single direct reference photo in that exact pose (requiring the artist to extrapolate from multiple photos), exact 100% photographic accuracy cannot be guaranteed, and you agree to accept artistic interpretation based on observational drawing.</li>
+                        <li><strong>Updates & Revision Limits:</strong> You will receive progress updates during the creation of your portrait. Minor adjustments can be made during early stages. However, because traditional graphite and charcoal on physical paper suffer structural damage from repeated friction, a maximum of 2 to 3 minor revisions per area is permitted. Repeated erasing or redrawing on the same section beyond 3 to 4 attempts will not be accommodated, as excessive erasing degrades paper quality, surface tooth, and final rendering.</li>
+                        <li><strong>Timeline & Deadlines:</strong> Standard portrait creation typically requires 15 to 30 days. Requesting a target delivery deadline between 15 and 19 days from the booking date is classified as a Rush Order and is subject to a +30% Artist Rush Fee to prioritize artwork creation, packaging, and handling. Direct online bookings for deadlines under 15 days are disabled; clients requiring emergency turnaround (&lt; 15 days) must contact the artist via Instagram DM (@atharva_sherlekar_art) to check custom slot availability.</li>
                     </ul>
                 </div>
 
@@ -46,6 +46,7 @@ export default function TermsOfService() {
                     <ul className="list-disc pl-6 mt-4 space-y-2">
                         <li><strong>Active Slots:</strong> A 50% advance is required to confirm your commission and begin the drawing process. The remaining 50% plus shipping is due on completion.</li>
                         <li><strong>Waitlist Reservations:</strong> A 25% Slot Reservation Fee is required to hold your place. When a slot opens up, you will be contacted for the remaining 25% advance before work begins. The final 50% plus shipping is due on completion.</li>
+                        <li><strong>Artist Rush Fees:</strong> For rush commissions (15–19 days turnaround), a 30% Artist Rush Fee is calculated on the portrait base price (including additional face/person counts) and added to the total commission subtotal prior to deposit calculation.</li>
                     </ul>
                 </div>
 

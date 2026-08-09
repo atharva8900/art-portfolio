@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
     Loader2, Trash2, Lock, RefreshCcw, Check, X, AlertTriangle, ChevronDown,
     Phone, Instagram, MapPin, User, Package, Calendar, Copy, ExternalLink, ImagePlus,
-    Clock, CheckCircle, MoreVertical, ShieldOff, Ban, ArrowRight, Edit3
+    Clock, CheckCircle, MoreVertical, ShieldOff, Ban, ArrowRight, Edit3, Flame
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1063,13 +1063,28 @@ export default function AdminCommissionsPage() {
                                                                             <User size={13} className="text-neutral-500 shrink-0" />
                                                                             <span className="text-foreground">{commission.number_of_people} {Number(commission.number_of_people) === 1 ? 'person' : 'people'}</span>
                                                                         </div>
-                                                                        <div className="flex items-center gap-2 text-sm pt-1">
+                                                                        <div className="flex items-center gap-2 text-sm pt-1 flex-wrap">
                                                                             <Calendar size={13} className="text-neutral-500 shrink-0" />
                                                                             <span className={`${commission.needed_by ? 'text-accent font-medium' : 'text-neutral-500 italic'}`}>
                                                                                 {commission.needed_by
                                                                                     ? new Date(commission.needed_by).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                                                                                     : 'No deadline'}
                                                                             </span>
+                                                                            {commission.needed_by && (() => {
+                                                                                const subDate = new Date(commission.submitted_at);
+                                                                                subDate.setHours(0, 0, 0, 0);
+                                                                                const targetDate = new Date(commission.needed_by);
+                                                                                targetDate.setHours(0, 0, 0, 0);
+                                                                                const diffDays = Math.round((targetDate.getTime() - subDate.getTime()) / (1000 * 60 * 60 * 24));
+                                                                                if (diffDays >= 15 && diffDays <= 19) {
+                                                                                    return (
+                                                                                        <span className="text-[10px] bg-amber-500/10 text-amber-500 font-bold px-1.5 py-0.5 rounded border border-amber-500/30 uppercase tracking-wider flex items-center gap-1 shrink-0">
+                                                                                            <Flame size={10} /> RUSH (+30%)
+                                                                                        </span>
+                                                                                    );
+                                                                                }
+                                                                                return null;
+                                                                            })()}
                                                                         </div>
                                                                     </div>
 

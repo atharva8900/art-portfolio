@@ -30,6 +30,7 @@ export interface CommissionData {
     // Commission Calculation Fields
     base_price?: number;
     extras_total?: number;
+    rush_fee?: number;
     commission_amount?: number;
     frame_image?: string;
     razorpay_order_id?: string;
