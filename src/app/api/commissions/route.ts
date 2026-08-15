@@ -420,7 +420,70 @@ export async function POST(request: NextRequest) {
                 `Looking forward to working on this!`;
         }
 
-        // Send Email
+        // 1. Save commission to storage FIRST (Guarantees data is persisted before notification)
+        try {
+            const commissionId = generateCommissionId();
+            const extrasTotal = backgroundCost + timelapseCost + framingCost + rushFee;
+            const commissionableAmount = totalBasePrice + backgroundCost;
+            const referrersShare = commissionEligible ? (commissionableAmount * 0.20) : 0;
+
+            const commissionData: CommissionData = {
+                id: commissionId,
+                client_name: name,
+                client_email: email,
+                phone: phone,
+                instagram_id: instagram_id || undefined,
+                size: size,
+                number_of_people: number_of_people,
+                detailed_background: !!detailed_background,
+                timelapse_recording: !!timelapse_recording,
+                framing: !!framing,
+                consent: !!consent,
+                address: address,
+                referral_code: validReferralCode,
+                referrer_info: referralInfo ? {
+                    name: referralInfo.referrer_name,
+                    email: referralInfo.referrer_email,
+                    phone: referralInfo.referrer_phone,
+                    instagram: referralInfo.referrer_instagram,
+                } : null,
+                status: commissionStatus,
+                submitted_at: (submitted_at && submitterEmail && ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'].includes(submitterEmail.toLowerCase())) ? new Date(submitted_at).toISOString() : new Date().toISOString(),
+                needed_by: needed_by || undefined,
+                base_price: totalBasePrice,
+                extras_total: extrasTotal,
+                rush_fee: rushFee > 0 ? rushFee : undefined,
+                commission_amount: referrersShare,
+                promo_ids: validOffers.length > 0 ? validOffers.map(o => o.id) : null,
+                promotion_codes: validOffers.length > 0 ? validOffers.map(o => o.code) : null,
+                frame_image: frame_image || undefined,
+                razorpay_order_id: razorpay_order_id || undefined,
+                razorpay_payment_id: razorpay_payment_id || undefined,
+                payment_status: isWaitlist ? 'reservation_paid' : 'pending',
+                is_self_referral_flag: isSelfReferralFlag,
+                flag_reason: flagReason,
+            };
+
+            await saveCommission({
+                ...commissionData,
+                fingerprint_hash: fingerprint_hash || null,
+                submitter_email: submitterEmail
+            });
+
+            // Post-Save Referral Tracking
+            if (validReferralCode) {
+                const ipHash = hashIP(getClientIP(request));
+                await incrementReferralCount(validReferralCode, email, ipHash);
+                justExpired = await isReferralExpired(validReferralCode);
+            }
+        } catch (storageError) {
+            console.error('Failed to save commission data:', storageError);
+            return NextResponse.json({
+                error: 'We encountered an error saving your commission request. Please try again or contact support.'
+            }, { status: 500 });
+        }
+
+        // 2. Send Email & Discord Notifications (Non-fatal if email service is delayed)
         try {
             // Instant Discord Alert
             await sendDiscordNotification({
@@ -530,8 +593,6 @@ export async function POST(request: NextRequest) {
                 `,
             });
 
-
-
             // Send Confirmation to Client
             const clientSubject = isWaitlist
                 ? 'You\'re on the waitlist! – Atharva Sherlekar Art'
@@ -595,7 +656,6 @@ export async function POST(request: NextRequest) {
                     <p><strong>Atharva Sherlekar Art</strong></p>
                 </div>
             `;
-
 
             // Client confirmation via Gmail SMTP
             await sendEmail({
@@ -665,74 +725,7 @@ export async function POST(request: NextRequest) {
                 }
             }
         } catch (emailError: unknown) {
-            console.error('Email Sending Error (Non-fatal for save):', emailError);
-            // We continue to save the commission even if email fails
-        }
-
-        // Save commission to storage (after successful email)
-        try {
-            const commissionId = generateCommissionId();
-            const extrasTotal = backgroundCost + timelapseCost + framingCost + rushFee;
-            const commissionableAmount = totalBasePrice + backgroundCost;
-            const referrersShare = commissionEligible ? (commissionableAmount * 0.20) : 0;
-
-            const commissionData: CommissionData = {
-                id: commissionId,
-                client_name: name,
-                client_email: email,
-                phone: phone,
-                instagram_id: instagram_id || undefined,
-                size: size,
-                number_of_people: number_of_people,
-                detailed_background: !!detailed_background,
-                timelapse_recording: !!timelapse_recording,
-                framing: !!framing,
-                consent: !!consent,
-                address: address,
-                referral_code: validReferralCode,
-                referrer_info: referralInfo ? {
-                    name: referralInfo.referrer_name,
-                    email: referralInfo.referrer_email,
-                    phone: referralInfo.referrer_phone,
-                    instagram: referralInfo.referrer_instagram,
-                } : null,
-                status: commissionStatus,
-                submitted_at: (submitted_at && submitterEmail && ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'].includes(submitterEmail.toLowerCase())) ? new Date(submitted_at).toISOString() : new Date().toISOString(),
-                needed_by: needed_by || undefined,
-                base_price: totalBasePrice,
-                extras_total: extrasTotal,
-                rush_fee: rushFee > 0 ? rushFee : undefined,
-                commission_amount: referrersShare,
-                promo_ids: validOffers.length > 0 ? validOffers.map(o => o.id) : null,
-                promotion_codes: validOffers.length > 0 ? validOffers.map(o => o.code) : null,
-                frame_image: frame_image || undefined,
-                razorpay_order_id: razorpay_order_id || undefined,
-                razorpay_payment_id: razorpay_payment_id || undefined,
-                payment_status: isWaitlist ? 'reservation_paid' : 'pending',
-                is_self_referral_flag: isSelfReferralFlag,
-                flag_reason: flagReason,
-            };
-
-            await saveCommission({
-                ...commissionData,
-                fingerprint_hash: fingerprint_hash || null,
-                submitter_email: submitterEmail
-            });
-
-            // LAYER 6: Post-Save Referral Tracking
-            // Only increment counts and check for expiration AFTER successful commission save
-            if (validReferralCode) {
-                const ipHash = hashIP(getClientIP(request));
-                await incrementReferralCount(validReferralCode, email, ipHash);
-                
-                // Track if link just expired (reached 3rd use) for email notifications
-                justExpired = await isReferralExpired(validReferralCode);
-            }
-        } catch (storageError) {
-            console.error('Failed to save commission data:', storageError);
-            return NextResponse.json({
-                error: 'Your payment was successful, but we encountered an error saving your request. Please contact support with your payment ID: ' + razorpay_payment_id
-            }, { status: 500 });
+            console.error('Email Sending Error (Non-fatal since commission is saved):', emailError);
         }
 
         return NextResponse.json({ success: true, status: commissionStatus });
@@ -740,6 +733,5 @@ export async function POST(request: NextRequest) {
     } catch (err) {
         console.error('Handler Error:', err);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-
     }
 }

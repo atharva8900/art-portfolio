@@ -74,12 +74,93 @@ export async function getAllCommissions(): Promise<CommissionData[]> {
 
 // Save a new commission
 export async function saveCommission(commission: CommissionData): Promise<void> {
+    const {
+        id,
+        client_name,
+        client_email,
+        phone,
+        instagram_id,
+        size,
+        number_of_people,
+        detailed_background,
+        timelapse_recording,
+        framing,
+        consent,
+        address,
+        referral_code,
+        referrer_info,
+        status,
+        submitted_at,
+        updated_at,
+        admin_note,
+        payout_status,
+        payout_details,
+        needed_by,
+        base_price,
+        extras_total,
+        commission_amount,
+        frame_image,
+        razorpay_order_id,
+        razorpay_payment_id,
+        payment_status,
+        razorpay_payment_link_id,
+        razorpay_payment_link_url,
+        shipping_cost,
+        final_payment_link_id,
+        final_payment_link_url,
+        is_self_referral_flag,
+        flag_reason,
+        promo_ids,
+        submitter_email,
+        wip_images,
+        fingerprint_hash
+    } = commission;
+
+    const dbPayload = {
+        id,
+        client_name,
+        client_email,
+        phone: phone || null,
+        instagram_id: instagram_id || null,
+        size,
+        number_of_people,
+        detailed_background: !!detailed_background,
+        timelapse_recording: !!timelapse_recording,
+        framing: !!framing,
+        consent: !!consent,
+        address,
+        referral_code: referral_code || null,
+        referrer_info: referrer_info || null,
+        status: status || 'pending',
+        submitted_at: submitted_at || new Date().toISOString(),
+        updated_at: updated_at || null,
+        admin_note: admin_note || null,
+        payout_status: payout_status || 'unpaid',
+        payout_details: payout_details || null,
+        needed_by: needed_by || null,
+        base_price: base_price !== undefined ? base_price : null,
+        extras_total: extras_total !== undefined ? extras_total : null,
+        commission_amount: commission_amount !== undefined ? commission_amount : null,
+        frame_image: frame_image || null,
+        razorpay_order_id: razorpay_order_id || null,
+        razorpay_payment_id: razorpay_payment_id || null,
+        payment_status: payment_status || 'pending',
+        razorpay_payment_link_id: razorpay_payment_link_id || null,
+        razorpay_payment_link_url: razorpay_payment_link_url || null,
+        shipping_cost: shipping_cost !== undefined ? shipping_cost : null,
+        final_payment_link_id: final_payment_link_id || null,
+        final_payment_link_url: final_payment_link_url || null,
+        is_self_referral_flag: !!is_self_referral_flag,
+        flag_reason: flag_reason || null,
+        promo_ids: promo_ids || [],
+        submitter_email: submitter_email || null,
+        wip_images: wip_images || [],
+        fingerprint_hash: fingerprint_hash || null
+    };
+
     const { error } = await supabaseAdmin
         .from('commissions')
-        .insert([{
-            ...commission,
-            payment_status: commission.payment_status || 'pending'
-        }]);
+        .insert([dbPayload]);
 
     if (error) {
         console.error('Error saving commission to Supabase:', error);
