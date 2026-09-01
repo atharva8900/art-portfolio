@@ -113,13 +113,81 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             `;
             break;
         case 'completed':
-            subject = 'Enjoy your artwork! – Atharva Sherlekar Art';
+            subject = 'Your Artwork has been Delivered! – Atharva Sherlekar Art';
+            const basePrice = Number(commission.base_price || 0);
+            const extrasTotal = Number(commission.extras_total || 0);
+            const rushFee = Number(commission.rush_fee || 0);
+            const shippingCost = Number(commission.shipping_cost || 0);
+            const subtotal = (basePrice + extrasTotal + rushFee) || Number(commission.commission_amount || 0);
+            const totalPaid = subtotal + shippingCost;
+
+            const extrasList: string[] = [];
+            if (commission.framing) extrasList.push('Frame & Mount Protection');
+            if (commission.detailed_background) extrasList.push('Detailed Background');
+            if (commission.timelapse_recording) extrasList.push('Timelapse Video Recording');
+            if (commission.rush_fee && commission.rush_fee > 0) extrasList.push(`Rush Order Processing (₹${commission.rush_fee.toLocaleString('en-IN')})`);
+
             htmlContent = `
-                <h1>Commission Completed</h1>
-                <p>Hi ${commission.client_name},</p>
-                <p>Your commission has been marked as <strong>completed</strong>!</p>
-                <p>Thank you so much for choosing my art. I hope you love the final result.</p>
-                <br/>
+                <h1>Commission Delivered!</h1>
+                <p>Hi ${escapeHtml(commission.client_name)},</p>
+                <p>Your commission has been marked as <strong>delivered</strong>!</p>
+                <p>Thank you so much for choosing me for this commission artwork. I hope you love the final result.</p>
+                
+                <div style="margin: 25px 0; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                    <div style="background-color: #0f172a; color: #ffffff; padding: 18px 24px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td>
+                                    <h3 style="margin: 0; font-size: 15px; font-weight: 700; letter-spacing: 0.5px; color: #ffffff;">FINAL INVOICE & RECEIPT</h3>
+                                    <p style="margin: 4px 0 0; font-size: 12px; color: #94a3b8;">Order ID: #${escapeHtml(commission.id.slice(0, 8).toUpperCase())}</p>
+                                </td>
+                                <td style="text-align: right;">
+                                    <span style="display: inline-block; background-color: #10b981; color: #ffffff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Paid in Full</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div style="padding: 20px 24px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #334155;">
+                            <tbody>
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 10px 0; font-weight: 500;">
+                                        Custom Portrait (${escapeHtml(commission.size || 'Standard')}, ${escapeHtml(commission.number_of_people || '1')} Person${Number(commission.number_of_people) > 1 ? 's' : ''})
+                                    </td>
+                                    <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #0f172a;">
+                                        ₹${basePrice > 0 ? basePrice.toLocaleString('en-IN') : subtotal.toLocaleString('en-IN')}
+                                    </td>
+                                </tr>
+                                ${extrasList.map(extra => `
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 8px 0; color: #64748b; font-size: 13px;">+ ${escapeHtml(extra)}</td>
+                                    <td style="padding: 8px 0; text-align: right; font-size: 13px; color: #64748b;">Included</td>
+                                </tr>
+                                `).join('')}
+                                ${shippingCost > 0 ? `
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 10px 0; color: #475569;">Delivery / Shipping (DTDC Express)</td>
+                                    <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #0f172a;">₹${shippingCost.toLocaleString('en-IN')}</td>
+                                </tr>
+                                ` : `
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 10px 0; color: #475569;">Delivery / Shipping (DTDC Express)</td>
+                                    <td style="padding: 10px 0; text-align: right; font-weight: 600; color: #10b981;">FREE</td>
+                                </tr>
+                                `}
+                                <tr>
+                                    <td style="padding: 14px 0 6px; font-size: 16px; font-weight: 700; color: #0f172a;">Total Amount Paid</td>
+                                    <td style="padding: 14px 0 6px; text-align: right; font-size: 18px; font-weight: 800; color: #0f172a;">₹${totalPaid.toLocaleString('en-IN')}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 18px; padding-top: 15px; border-top: 1px dashed #cbd5e1; text-align: center;">
+                            <p style="margin: 0 0 10px; font-size: 12px; color: #64748b;">You can also view your full commission history & download the official PDF invoice anytime from your dashboard.</p>
+                            <a href="${baseUrl}/client/dashboard" style="display: inline-block; background-color: #D4AF37; color: #000000; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; letter-spacing: 0.3px;">VIEW DASHBOARD & INVOICE →</a>
+                        </div>
+                    </div>
+                </div>
+
                 <p>Best regards,</p>
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
@@ -172,18 +240,6 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             break;
         default:
             return null;
-    }
-
-    // Inject artist note into other templates if present (except rejected which already has it)
-    if (status !== 'rejected' && commission.admin_note && !htmlContent.includes(commission.admin_note)) {
-        const noteHtml = `
-            <div style="background-color: #f8fafc; border-left: 4px solid #64748b; padding: 15px; margin: 20px 0;">
-                <p style="margin: 0; color: #334155; font-weight: bold;">Note from the Artist:</p>
-                <p style="margin: 5px 0 0; color: #475569;">${escapeHtml(commission.admin_note)}</p>
-            </div>
-        `;
-        // Insert before "Best regards"
-        htmlContent = htmlContent.replace('<p>Best regards,</p>', noteHtml + '<p>Best regards,</p>');
     }
 
     // Push to Discord first (Manual Fallback)
