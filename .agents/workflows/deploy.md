@@ -30,10 +30,9 @@ description: Build, Lint, and Security Audit before manual push (Verified).
    - "Are those files necessary currently with what we are doing?"
    - "Will it affect anything from our project?"
 
-6. **Final Confirmation & Push**
-   After the cleanup, I will provide a final report.
-   I will **NEVER** push automatically. When you authorize the push:
+6. **Final Confirmation & Manual Push**
+   After the cleanup and git commit:
    - **Commit Message Rule**: The git commit message must **ONLY** describe specific changes made to the website/code. Do **NOT** mention anything about the deployment process (verification, audit, cleanup, etc) in the commit message.
    - Example: "Fix admin access for X email, update commission toggle logic, fix payout auth" (GOOD)
    - Example: "Completed deployment audit and pushed changes" (BAD)
-   I will wait for you to say "lets push" (or similar) before finishing.
+   - **Manual Push Rule**: Git push triggers interactive browser/credential login prompts. Therefore, always stage and commit the verified changes, and then **instruct the user to run `git push origin main` manually** in their terminal instead of running `git push` autonomously.
