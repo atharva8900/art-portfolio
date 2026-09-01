@@ -167,16 +167,26 @@ export default function CommissionForm() {
 
     // Load FingerprintJS on mount and capture the visitor ID
     useEffect(() => {
-        import('@fingerprintjs/fingerprintjs').then(FingerprintJS => {
-            FingerprintJS.load().then(fp => {
-                fp.get().then(result => {
-                    setFingerprintHash(result.visitorId);
-                });
+        import('@fingerprintjs/fingerprintjs')
+            .then(FingerprintJS => FingerprintJS.load())
+            .then(fp => fp.get())
+            .then(result => {
+                setFingerprintHash(result.visitorId);
+            })
+            .catch(() => {
+                // Non-fatal: fallback to persistent random client ID if fingerprint fails or is blocked
+                try {
+                    let fallback = localStorage.getItem('art_client_did');
+                    if (!fallback) {
+                        fallback = 'fp_fallback_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+                        localStorage.setItem('art_client_did', fallback);
+                    }
+                    setFingerprintHash(fallback);
+                } catch {
+                    setFingerprintHash('fp_fallback_guest');
+                }
+                setBanCheckDone(true); // unblock if fingerprint fails
             });
-        }).catch(() => {
-            // Non-fatal: fingerprinting is best-effort
-            setBanCheckDone(true); // unblock if fingerprint fails
-        });
     }, []);
 
     // After fingerprint loads, check ban/mute status
@@ -212,6 +222,7 @@ export default function CommissionForm() {
     const [offerAppliedMessages, setOfferAppliedMessages] = useState<string[]>(['', '', '']);
     const originalBodyOverflow = useRef('');
     const publicOfferFetched = useRef(false);
+    const urlPromoValidated = useRef(false);
 
 
 
@@ -242,7 +253,7 @@ export default function CommissionForm() {
     }, [showFrameModal]);
 
     // Promo Validation
-    const validatePromo = useCallback(async (code: string, index: number) => {
+    const validatePromo = useCallback(async (code: string, index: number, overrideFp?: string | null) => {
         if (!code) {
             setOffers(prev => { const newArr = [...prev]; newArr[index] = null; return newArr; });
             setOfferErrors(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
@@ -253,13 +264,14 @@ export default function CommissionForm() {
         setOfferErrors(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
         setOfferAppliedMessages(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
         
+        const activeFingerprint = overrideFp !== undefined ? overrideFp : fingerprintHash;
         const country = new URLSearchParams(window.location.search).get('country');
         const query = country ? `?country=${country}` : '';
         try {
             const res = await fetch(`/api/offers/validate${query}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code.toUpperCase(), fingerprint: fingerprintHash })
+                body: JSON.stringify({ code: code.toUpperCase(), fingerprint: activeFingerprint })
             });
             const data = await res.json();
             if (res.ok && data.valid) {
@@ -283,16 +295,26 @@ export default function CommissionForm() {
         }
     }, [offers, fingerprintHash]);
 
-    // Auto-validate from URL promo (runs once on mount)
+    // Populate URL promo into input immediately on mount
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const promo = params.get('promo');
         if (promo) {
-            setPromoCodes(prev => { const newArr = [...prev]; newArr[0] = promo; return newArr; });
-            validatePromo(promo, 0);
+            setPromoCodes(prev => { const newArr = [...prev]; newArr[0] = promo.toUpperCase(); return newArr; });
+            setIsValidatingPromos(prev => { const newArr = [...prev]; newArr[0] = true; return newArr; });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Auto-validate from URL promo once fingerprint is available
+    useEffect(() => {
+        if (!fingerprintHash || urlPromoValidated.current) return;
+        const params = new URLSearchParams(window.location.search);
+        const promo = params.get('promo');
+        if (promo) {
+            urlPromoValidated.current = true;
+            validatePromo(promo, 0, fingerprintHash);
+        }
+    }, [fingerprintHash, validatePromo]);
 
     // Fetch public offer when commissions are verified as 'open'
     useEffect(() => {
