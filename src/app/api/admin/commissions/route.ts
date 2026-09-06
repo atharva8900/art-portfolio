@@ -234,6 +234,84 @@ export async function PATCH(request: NextRequest) {
             if (resultClientName) updatedCommission = resultClientName;
         }
 
+        // Update Add-Ons & Recalculate Financials
+        if (
+            result.data.detailed_background !== undefined ||
+            result.data.detailed_clothes !== undefined ||
+            result.data.timelapse_recording !== undefined ||
+            result.data.framing !== undefined
+        ) {
+            const { supabaseAdmin } = await import('@/lib/supabase/admin');
+            const { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } = await import('@/lib/utils/pricing');
+            const { calculateDetailedBackgroundPrice, calculateDetailedClothesPrice } = await import('@/lib/utils/pricing-shared');
+            const { getAllOffers } = await import('@/lib/db/offers');
+
+            const size = (existingCommission.size as 'A5' | 'A4' | 'A3' | 'A2') || 'A5';
+            const peopleCount = Number(existingCommission.number_of_people) || 1;
+            const basePriceStr = await getPriceForSize(size);
+            const basePriceForOne = basePriceStr ? parseInt(basePriceStr.replace(/[^0-9]/g, ''), 10) : 0;
+            const totalBasePriceOriginal = calculatePortraitPrice(basePriceForOne, peopleCount, size);
+
+            // Fetch applied offers for free extra checks
+            const allOffers = await getAllOffers();
+            const promoIds = (existingCommission.promo_ids as string[]) || [];
+            const appliedOffers = promoIds.map(pid => allOffers.find(o => o.id === pid)).filter(Boolean);
+
+            let hasFreeBackground = false;
+            let hasFreeTimelapse = false;
+            let hasFreeFraming = false;
+            for (const offer of appliedOffers) {
+                if (offer?.free_extras?.background) hasFreeBackground = true;
+                if (offer?.free_extras?.timelapse) hasFreeTimelapse = true;
+                if (offer?.free_extras?.framing) hasFreeFraming = true;
+            }
+
+            const newDetailedBackground = result.data.detailed_background !== undefined
+                ? result.data.detailed_background
+                : !!existingCommission.detailed_background;
+
+            const newDetailedClothes = result.data.detailed_clothes !== undefined
+                ? result.data.detailed_clothes
+                : !!existingCommission.detailed_clothes;
+
+            const newTimelapse = result.data.timelapse_recording !== undefined
+                ? result.data.timelapse_recording
+                : !!existingCommission.timelapse_recording;
+
+            const newFraming = result.data.framing !== undefined
+                ? result.data.framing
+                : !!existingCommission.framing;
+
+            const backgroundCost = (newDetailedBackground && !hasFreeBackground) ? calculateDetailedBackgroundPrice(basePriceForOne) : 0;
+            const clothesCost = newDetailedClothes ? calculateDetailedClothesPrice(totalBasePriceOriginal) : 0;
+            const timelapseCost = (newTimelapse && !hasFreeTimelapse) ? 500 : 0;
+            const framingCost = (newFraming && !hasFreeFraming) ? FRAMING_PRICES[size] : 0;
+            const rushFee = existingCommission.rush_fee || 0;
+
+            const newExtrasTotal = backgroundCost + clothesCost + timelapseCost + framingCost + rushFee;
+            const commissionableAmount = (existingCommission.base_price || totalBasePriceOriginal) + backgroundCost + clothesCost;
+            const newReferralAmount = existingCommission.referral_code ? (commissionableAmount * 0.20) : (existingCommission.commission_amount || 0);
+
+            const { data, error } = await supabaseAdmin
+                .from('commissions')
+                .update({
+                    detailed_background: newDetailedBackground,
+                    detailed_clothes: newDetailedClothes,
+                    timelapse_recording: newTimelapse,
+                    framing: newFraming,
+                    extras_total: newExtrasTotal,
+                    commission_amount: newReferralAmount,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (!error && data) {
+                updatedCommission = data;
+            }
+        }
+
         // Update Promo IDs
         if (result.data.promo_ids !== undefined || result.data.promotion_codes !== undefined) {
             const { supabaseAdmin } = await import('@/lib/supabase/admin');

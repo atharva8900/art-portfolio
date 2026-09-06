@@ -9,6 +9,7 @@ export interface CommissionData {
     size: string;
     number_of_people: string;
     detailed_background?: boolean;
+    detailed_clothes?: boolean;
     timelapse_recording?: boolean;
     framing?: boolean;
     consent?: boolean;
@@ -83,6 +84,7 @@ export async function saveCommission(commission: CommissionData): Promise<void> 
         size,
         number_of_people,
         detailed_background,
+        detailed_clothes,
         timelapse_recording,
         framing,
         consent,
@@ -125,6 +127,7 @@ export async function saveCommission(commission: CommissionData): Promise<void> 
         size,
         number_of_people,
         detailed_background: !!detailed_background,
+        detailed_clothes: !!detailed_clothes,
         timelapse_recording: !!timelapse_recording,
         framing: !!framing,
         consent: !!consent,
@@ -496,4 +499,34 @@ export async function getActiveCommissionStatus(email: string): Promise<string |
     }
 
     return data ? data.status : null;
+}
+
+// Update Commission Add-Ons & Financials
+export async function updateCommissionAddOns(
+    id: string,
+    addOns: {
+        detailed_background?: boolean;
+        detailed_clothes?: boolean;
+        timelapse_recording?: boolean;
+        framing?: boolean;
+        extras_total?: number;
+        commission_amount?: number;
+    }
+): Promise<CommissionData | null> {
+    const { data, error } = await supabaseAdmin
+        .from('commissions')
+        .update({
+            ...addOns,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating commission add-ons in Supabase:', error);
+        return null;
+    }
+
+    return data as CommissionData;
 }

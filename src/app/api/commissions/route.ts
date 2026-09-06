@@ -11,7 +11,9 @@ import {
     isReferralExpired
 } from '@/lib/db/referrals';
 import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount, CommissionData } from '@/lib/db/commissions';
+import { getAvailability } from '@/lib/db/availability';
 import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
+import { SIZE_MIN_LEAD_DAYS, SIZE_RUSH_WINDOWS, parseLocalDate, formatLocalDate, calculateDetailedBackgroundPrice, calculateDetailedClothesPrice } from '@/lib/utils/pricing-shared';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth';
 import { sendDiscordNotification } from '@/lib/api/discord';
@@ -61,6 +63,7 @@ export async function POST(request: NextRequest) {
             number_of_people,
             address,
             detailed_background,
+            detailed_clothes,
             timelapse_recording,
             framing,
             consent,
@@ -159,6 +162,14 @@ export async function POST(request: NextRequest) {
         const isWaitlist = (pendingReviewCount + activeCount) >= 2;
         const commissionStatus = isWaitlist ? 'waitlist' : 'pending';
 
+        // Check 3-Day Submission Cooldown for Active Slots (Waitlist slots are exempt)
+        const availabilityData = await getAvailability();
+        if (!isWaitlist && availabilityData.cooldown_active) {
+            return NextResponse.json({
+                error: 'Commission submissions are temporarily paused for 3 days while the artist reviews a recent inquiry.'
+            }, { status: 403 });
+        }
+
         // Enforcement of 25% Deposit for Waitlist Slots 3 & 4
         if (isWaitlist) {
             if (!razorpay_payment_id || !razorpay_signature || !razorpay_order_id) {
@@ -204,12 +215,8 @@ export async function POST(request: NextRequest) {
                 let currentUserId: string | undefined;
                 try {
                     const session = await getServerSession(authOptions);
-                    // For NextAuth, we might use email as an identifier if id is not directly available 
-                    // or if the implementation plan specifically mentions ID.
-                    // The schema expects a string for currentUserId in validateNotSelfReferral.
                     currentUserId = session?.user?.email || undefined;
                 } catch {
-                    // Not authenticated or error - that's okay, commissions don't require auth
                     currentUserId = undefined;
                 }
 
@@ -313,16 +320,26 @@ export async function POST(request: NextRequest) {
         let totalBasePrice = totalBasePriceOriginal;
         const additionalPeopleCost = totalBasePriceOriginal - basePriceForOne;
 
-        // Calculate Artist Rush Fee if needed_by is 15-19 days from submitted_at / today
+        // Calculate Artist Rush Fee & Validate Lead Times based on size & queue_start_date
         let rushFee = 0;
         if (needed_by) {
-            const submissionDate = (submitted_at && submitterEmail && ['atharva8900@gmail.com', 'atharvasherlekarart@gmail.com'].includes(submitterEmail.toLowerCase())) ? new Date(submitted_at) : new Date();
-            submissionDate.setHours(0, 0, 0, 0);
-            const targetDate = new Date(needed_by);
-            targetDate.setHours(0, 0, 0, 0);
-            const diffTime = targetDate.getTime() - submissionDate.getTime();
+            const queueStartDate = parseLocalDate(availabilityData.queue_start_date || formatLocalDate(new Date()));
+            const targetDate = parseLocalDate(needed_by);
+
+            const diffTime = targetDate.getTime() - queueStartDate.getTime();
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays >= 15 && diffDays <= 19) {
+
+            const minLead = SIZE_MIN_LEAD_DAYS[size as 'A5' | 'A4' | 'A3' | 'A2'] || 14;
+            const rushWindow = SIZE_RUSH_WINDOWS[size as 'A5' | 'A4' | 'A3' | 'A2'];
+
+            // Validate that requested date meets minimum lead time
+            if (diffDays < minLead) {
+                return NextResponse.json({
+                    error: `The requested delivery date is earlier than the minimum ${minLead}-day lead time required for ${size} portraits.`
+                }, { status: 400 });
+            }
+
+            if (rushWindow && diffDays >= rushWindow.min && diffDays <= rushWindow.max) {
                 rushFee = Math.ceil(totalBasePriceOriginal * 0.30);
             }
         }
@@ -364,16 +381,18 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const backgroundCostOriginal = detailed_background ? 500 : 0;
+        const backgroundCostOriginal = detailed_background ? calculateDetailedBackgroundPrice(basePriceForOne) : 0;
+        const clothesCostOriginal = detailed_clothes ? calculateDetailedClothesPrice(totalBasePriceOriginal) : 0;
         const timelapseCostOriginal = timelapse_recording ? 500 : 0;
         const framingCostOriginal = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
-        const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + timelapseCostOriginal + framingCostOriginal + rushFee);
+        const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + clothesCostOriginal + timelapseCostOriginal + framingCostOriginal + rushFee);
 
-        const backgroundCost = (detailed_background && !hasFreeBackground) ? 500 : 0;
+        const backgroundCost = (detailed_background && !hasFreeBackground) ? calculateDetailedBackgroundPrice(basePriceForOne) : 0;
+        const clothesCost = detailed_clothes ? calculateDetailedClothesPrice(totalBasePriceOriginal) : 0;
         const timelapseCost = (timelapse_recording && !hasFreeTimelapse) ? 500 : 0;
         const framingCost = (framing && !hasFreeFraming) ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
 
-        const totalAmount = Math.round(totalBasePrice + backgroundCost + timelapseCost + framingCost + rushFee);
+        const totalAmount = Math.round(totalBasePrice + backgroundCost + clothesCost + timelapseCost + framingCost + rushFee);
         const totalSavings = totalAmountOriginal - totalAmount;
 
         // Increment Offer Usages if valid
@@ -388,7 +407,8 @@ export async function POST(request: NextRequest) {
 
         const priceBreakdownDraft =
             `- Base Price (${size}, ${number_of_people} people): ₹${totalBasePriceOriginal}\n` +
-            (detailed_background ? `- Detailed Background: ₹500 ${hasFreeBackground ? '(FREE)' : ''}\n` : '') +
+            (detailed_background ? `- Detailed Background: ₹${backgroundCostOriginal} ${hasFreeBackground ? '(FREE)' : ''}\n` : '') +
+            (detailed_clothes ? `- Detailed Clothes: ₹${clothesCostOriginal}\n` : '') +
             (timelapse_recording ? `- Timelapse Recording: ₹500 ${hasFreeTimelapse ? '(FREE)' : ''}\n` : '') +
             (framing ? `- Professional Framing: ₹${framingCostOriginal} ${hasFreeFraming ? '(FREE)' : ''}\n` : '') +
             (rushFee > 0 ? `- Artist Rush Fee (15–19 Days): ₹${rushFee}\n` : '') +
@@ -423,8 +443,8 @@ export async function POST(request: NextRequest) {
         // 1. Save commission to storage FIRST (Guarantees data is persisted before notification)
         try {
             const commissionId = generateCommissionId();
-            const extrasTotal = backgroundCost + timelapseCost + framingCost + rushFee;
-            const commissionableAmount = totalBasePrice + backgroundCost;
+            const extrasTotal = backgroundCost + clothesCost + timelapseCost + framingCost + rushFee;
+            const commissionableAmount = totalBasePrice + backgroundCost + clothesCost;
             const referrersShare = commissionEligible ? (commissionableAmount * 0.20) : 0;
 
             const commissionData: CommissionData = {
@@ -436,6 +456,7 @@ export async function POST(request: NextRequest) {
                 size: size,
                 number_of_people: number_of_people,
                 detailed_background: !!detailed_background,
+                detailed_clothes: !!detailed_clothes,
                 timelapse_recording: !!timelapse_recording,
                 framing: !!framing,
                 consent: !!consent,
@@ -547,7 +568,8 @@ export async function POST(request: NextRequest) {
                         <div style="border-top:1px solid #ddd;padding-top:20px;margin-top:20px;">
                             <p style="margin:6px 0;"><strong>Size:</strong> ${size}</p>
                             <p style="margin:6px 0;"><strong>People:</strong> ${number_of_people}</p>
-                            ${detailed_background ? '<p style="margin:6px 0;"><strong>Add-on:</strong> Detailed Background (+₹500)</p>' : ''}
+                            ${detailed_background ? `<p style="margin:6px 0;"><strong>Add-on:</strong> Detailed Background (+₹${backgroundCostOriginal})</p>` : ''}
+                            ${detailed_clothes ? `<p style="margin:6px 0;"><strong>Add-on:</strong> Detailed Clothes (+₹${clothesCostOriginal})</p>` : ''}
                             ${timelapse_recording ? '<p style="margin:6px 0;"><strong>Add-on:</strong> Timelapse Recording (+₹500)</p>' : ''}
                             
                             ${framing ? `

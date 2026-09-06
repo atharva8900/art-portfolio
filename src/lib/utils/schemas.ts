@@ -10,6 +10,7 @@ export const commissionSchema = z.object({
   number_of_people: z.union([z.string(), z.number()]).transform(val => String(val)),
   address: z.string().min(10, "Address is too short").max(500, "Address is too long").trim(),
   detailed_background: z.boolean().optional(),
+  detailed_clothes: z.boolean().optional(),
   timelapse_recording: z.boolean().optional(),
   framing: z.boolean().optional(),
   consent: z.boolean().optional(),
@@ -61,4 +62,8 @@ export const adminStatusUpdateSchema = z.object({
   client_name: z.string().optional(),
   promo_ids: z.array(z.string()).max(3, "Maximum 3 promo codes allowed").optional(),
   promotion_codes: z.array(z.string()).max(3, "Maximum 3 promo codes allowed").optional(),
+  detailed_background: z.boolean().optional(),
+  detailed_clothes: z.boolean().optional(),
+  timelapse_recording: z.boolean().optional(),
+  framing: z.boolean().optional(),
 });

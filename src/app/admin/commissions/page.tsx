@@ -155,6 +155,31 @@ export default function AdminCommissionsPage() {
 
     const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
+    const toggleAddOn = async (commissionId: string, addOnKey: 'detailed_background' | 'detailed_clothes' | 'timelapse_recording' | 'framing', currentValue: boolean) => {
+        setUpdatingId(commissionId);
+        try {
+            const res = await fetch('/api/admin/commissions', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: commissionId,
+                    [addOnKey]: !currentValue,
+                }),
+            });
+            if (res.ok) {
+                const { commission: updated } = await res.json();
+                setCommissions(prev => prev.map(c => c.id === commissionId ? { ...c, ...updated } : c));
+                showNotification('Add-on updated & total recalculated!');
+            } else {
+                showNotification('Failed to update add-on', 'error');
+            }
+        } catch {
+            showNotification('Error updating add-on', 'error');
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
     useEffect(() => {
         if (isAuthorized) {
             fetchCommissions();
@@ -1114,20 +1139,80 @@ export default function AdminCommissionsPage() {
                                                                     </div>
 
                                                                     {/* Add-ons */}
-                                                                    <div className="space-y-3">
-                                                                        <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase">Add-ons</p>
-                                                                        {!commission.detailed_background && !commission.timelapse_recording ? (
-                                                                            <span className="text-neutral-600 text-sm">None</span>
-                                                                        ) : (
-                                                                            <>
-                                                                                {(commission as CommissionData & { detailed_background?: boolean }).detailed_background && (
-                                                                                    <div className="text-sm text-emerald-400 flex items-center gap-1.5">✓ Detailed Background</div>
-                                                                                )}
-                                                                                {(commission as CommissionData & { timelapse_recording?: boolean }).timelapse_recording && (
-                                                                                    <div className="text-sm text-emerald-400 flex items-center gap-1.5">✓ Timelapse Recording</div>
-                                                                                )}
-                                                                            </>
-                                                                        )}
+                                                                    <div className="space-y-2">
+                                                                        <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase">Add-ons (Toggle)</p>
+                                                                        <div className="space-y-1.5">
+                                                                            {/* Detailed Background */}
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    toggleAddOn(commission.id, 'detailed_background', !!(commission as CommissionData & { detailed_background?: boolean }).detailed_background);
+                                                                                }}
+                                                                                disabled={updatingId === commission.id}
+                                                                                className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${
+                                                                                    (commission as CommissionData & { detailed_background?: boolean }).detailed_background
+                                                                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                                                                        : 'bg-surface border-foreground/10 text-neutral-400 hover:border-foreground/25 hover:text-foreground'
+                                                                                }`}
+                                                                                title="Click to toggle Detailed Background (2x Base Price)"
+                                                                            >
+                                                                                <span className="flex items-center gap-1.5">
+                                                                                    {(commission as CommissionData & { detailed_background?: boolean }).detailed_background ? '✓' : '○'} Background
+                                                                                </span>
+                                                                                <span className="text-[10px] opacity-75 font-mono">2x Base</span>
+                                                                            </button>
+
+                                                                            {/* Detailed Clothes */}
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    toggleAddOn(commission.id, 'detailed_clothes', !!(commission as CommissionData & { detailed_clothes?: boolean }).detailed_clothes);
+                                                                                }}
+                                                                                disabled={updatingId === commission.id}
+                                                                                className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${
+                                                                                    (commission as CommissionData & { detailed_clothes?: boolean }).detailed_clothes
+                                                                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                                                                        : 'bg-surface border-foreground/10 text-neutral-400 hover:border-foreground/25 hover:text-foreground'
+                                                                                }`}
+                                                                                title="Click to toggle Detailed Clothes (1.5x Portrait Price)"
+                                                                            >
+                                                                                <span className="flex items-center gap-1.5">
+                                                                                    {(commission as CommissionData & { detailed_clothes?: boolean }).detailed_clothes ? '✓' : '○'} Clothes
+                                                                                </span>
+                                                                                <span className="text-[10px] opacity-75 font-mono">1.5x Size</span>
+                                                                            </button>
+
+                                                                            {/* Timelapse Recording */}
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    toggleAddOn(commission.id, 'timelapse_recording', !!(commission as CommissionData & { timelapse_recording?: boolean }).timelapse_recording);
+                                                                                }}
+                                                                                disabled={updatingId === commission.id}
+                                                                                className={`w-full text-left px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${
+                                                                                    (commission as CommissionData & { timelapse_recording?: boolean }).timelapse_recording
+                                                                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                                                                        : 'bg-surface border-foreground/10 text-neutral-400 hover:border-foreground/25 hover:text-foreground'
+                                                                                }`}
+                                                                                title="Click to toggle Timelapse Recording (+₹500)"
+                                                                            >
+                                                                                <span className="flex items-center gap-1.5">
+                                                                                    {(commission as CommissionData & { timelapse_recording?: boolean }).timelapse_recording ? '✓' : '○'} Timelapse
+                                                                                </span>
+                                                                                <span className="text-[10px] opacity-75 font-mono">+₹500</span>
+                                                                            </button>
+
+                                                                            {/* Framing Status */}
+                                                                            {(commission as CommissionData & { framing?: boolean }).framing && (
+                                                                                <div className="px-2.5 py-1.5 rounded-md border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 text-xs font-medium flex items-center justify-between">
+                                                                                    <span>✓ Framing</span>
+                                                                                    <span className="text-[10px] opacity-75 font-mono">({commission.size})</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
 
                                                                     {/* Financials & Referrer */}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAvailability, setAvailability } from '@/lib/db/availability';
+import { getAvailability, setAvailability, liftCooldown } from '@/lib/db/availability';
 import { checkAdminAuth } from '@/lib/auth/admin-auth';
 
 // GET: Returns the current commission availability
@@ -22,7 +22,17 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { isOpen, reason, reopenDate } = body;
+        const { isOpen, reason, reopenDate, action } = body;
+
+        // Action: Lift Review Cooldown manually
+        if (action === 'lift_cooldown') {
+            const newData = await liftCooldown();
+            return NextResponse.json({
+                success: true,
+                status: newData.is_accepting_commissions ? 'OPEN' : 'CLOSED',
+                data: newData
+            });
+        }
 
         if (typeof isOpen !== 'boolean') {
             return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
@@ -34,7 +44,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             status: newData.is_accepting_commissions ? 'OPEN' : 'CLOSED',
-            updated: newData.last_updated
+            updated: newData.last_updated,
+            data: newData
         });
 
     } catch (error) {
@@ -42,4 +53,5 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
 

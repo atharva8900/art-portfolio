@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X, ShieldAlert } from 'lucide-react';
 
 import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
+import { SIZE_RUSH_WINDOWS, formatLocalDate, calculateDetailedBackgroundPrice, calculateDetailedClothesPrice } from '@/lib/utils/pricing-shared';
+import CommissionCalendar from '@/components/forms/CommissionCalendar';
 import { useSession } from 'next-auth/react';
 import { supabase } from '@/lib/supabase/client';
 import AuthOptions from '@/components/auth/AuthOptions';
@@ -139,6 +141,7 @@ export default function CommissionForm() {
     const [referrerEmail, setReferrerEmail] = useState<string | null>(null);
     const [referrerPhone, setReferrerPhone] = useState<string | null>(null);
     const [showBackgroundInfo, setShowBackgroundInfo] = useState(false);
+    const [showClothesInfo, setShowClothesInfo] = useState(false);
     const [showTimelapseInfo, setShowTimelapseInfo] = useState(false);
     const [showFramingInfo, setShowFramingInfo] = useState(false);
     const [currentPrices, setCurrentPrices] = useState({ A5: '₹499', A4: '₹999', A3: '₹1999', A2: '₹3999' });
@@ -147,6 +150,7 @@ export default function CommissionForm() {
     const [userName, setUserName] = useState('');
     const [userEmail, setUserEmail] = useState('');
     const [detailedBackground, setDetailedBackground] = useState(false);
+    const [detailedClothes, setDetailedClothes] = useState(false);
     const [timelapse, setTimelapse] = useState(false);
     const [framing, setFraming] = useState(false);
     const [consent, setConsent] = useState(false);
@@ -160,6 +164,13 @@ export default function CommissionForm() {
     const [banCheckDone, setBanCheckDone] = useState(false);
     const [submittedAtOverride, setSubmittedAtOverride] = useState<string>('');
     const [neededByDate, setNeededByDate] = useState<string>('');
+    const [queueStartDate, setQueueStartDate] = useState<string>(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 2);
+        return formatLocalDate(d);
+    });
+    const [bookedUntilDate, setBookedUntilDate] = useState<string | null>(null);
+    const [isBooked, setIsBooked] = useState<boolean>(false);
     const [rushFee, setRushFee] = useState<number>(0);
     const [isRushOrder, setIsRushOrder] = useState<boolean>(false);
 
@@ -484,23 +495,27 @@ export default function CommissionForm() {
             if (offer?.free_extras?.framing) hasFreeFraming = true;
         }
 
-        const backgroundCost = (detailedBackground && !hasFreeBackground) ? 499 : 0;
+        const portraitPriceOriginal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
+
+        const backgroundCost = (detailedBackground && !hasFreeBackground) ? calculateDetailedBackgroundPrice(basePrice) : 0;
+        const clothesCost = detailedClothes ? calculateDetailedClothesPrice(portraitPriceOriginal) : 0;
         const timelapseCost = (timelapse && !hasFreeTimelapse) ? 499 : 0;
         const framingCost = (framing && !hasFreeFraming) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
 
-        // Calculate Rush Fee if needed_by is between 15 and 19 days from today
-        const portraitPriceOriginal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
+        // Calculate Rush Fee based on size and queueStartDate
         let computedRushFee = 0;
         let rushActive = false;
 
         if (neededByDate) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const target = new Date(neededByDate);
-            target.setHours(0, 0, 0, 0);
-            const diffTime = target.getTime() - today.getTime();
+            const [y, m, d] = neededByDate.split('-').map(Number);
+            const target = new Date(y, m - 1, d);
+            const [qy, qm, qd] = (queueStartDate || formatLocalDate(new Date())).split('-').map(Number);
+            const queueStart = new Date(qy, qm - 1, qd);
+            const diffTime = target.getTime() - queueStart.getTime();
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays >= 15 && diffDays <= 19) {
+
+            const rushWindow = SIZE_RUSH_WINDOWS[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'];
+            if (rushWindow && diffDays >= rushWindow.min && diffDays <= rushWindow.max) {
                 computedRushFee = Math.ceil(portraitPriceOriginal * 0.30);
                 rushActive = true;
             }
@@ -510,25 +525,20 @@ export default function CommissionForm() {
         setIsRushOrder(rushActive);
 
         // Note: Delivery is usually handled in shipping, but if free_extras.delivery is true, that's a bonus
-        const total = baseTotal + backgroundCost + timelapseCost + framingCost + computedRushFee;
+        const total = baseTotal + backgroundCost + clothesCost + timelapseCost + framingCost + computedRushFee;
 
         // Calculate original total (without any discounts)
-        const originalBaseTotal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
-        const originalBackgroundCost = detailedBackground ? 499 : 0;
+        const originalBaseTotal = portraitPriceOriginal;
+        const originalBackgroundCost = detailedBackground ? calculateDetailedBackgroundPrice(basePrice) : 0;
+        const originalClothesCost = detailedClothes ? calculateDetailedClothesPrice(portraitPriceOriginal) : 0;
         const originalTimelapseCost = timelapse ? 499 : 0;
         const originalFramingCost = framing ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
-        const originalTotal = originalBaseTotal + originalBackgroundCost + originalTimelapseCost + originalFramingCost + computedRushFee;
+        const originalTotal = originalBaseTotal + originalBackgroundCost + originalClothesCost + originalTimelapseCost + originalFramingCost + computedRushFee;
 
         setEstimatedTotal(Math.round(total));
         setOriginalTotalValue(Math.round(originalTotal));
         setTotalSavings(Math.round(originalTotal - total));
-    }, [selectedSize, peopleCount, currentPrices, detailedBackground, timelapse, framing, offers, neededByDate]);
-
-    const minDateStr = (() => {
-        const d = new Date();
-        d.setDate(d.getDate() + 15);
-        return d.toISOString().split('T')[0];
-    })();
+    }, [selectedSize, peopleCount, currentPrices, detailedBackground, detailedClothes, timelapse, framing, offers, neededByDate, queueStartDate]);
 
     useEffect(() => {
         const checkStorage = () => {
@@ -630,6 +640,9 @@ export default function CommissionForm() {
                     setWaitlistSlotsRemaining(data.waitlist_slots_remaining);
                     setClosureReason(data.closure_reason);
                     setReopenDate(data.reopen_date);
+                    if (data.queue_start_date) setQueueStartDate(data.queue_start_date);
+                    setBookedUntilDate(data.booked_until_date || null);
+                    setIsBooked(!!data.is_booked);
                 }
             } catch (error) {
                 console.error('Failed to fetch availability:', error);
@@ -741,6 +754,7 @@ export default function CommissionForm() {
                     ...data,
                     promo_ids: offers.filter(o => o !== null).map(o => o.id),
                     detailed_background: detailedBackground,
+                    detailed_clothes: detailedClothes,
                     timelapse_recording: timelapse,
                     framing: framing,
                     consent: consent,
@@ -884,6 +898,7 @@ export default function CommissionForm() {
                             ...data,
                             promo_ids: offers.filter(o => o !== null).map(o => o.id),
                             detailed_background: detailedBackground,
+                            detailed_clothes: detailedClothes,
                             timelapse_recording: timelapse,
                             framing: framing,
                             consent: consent,
@@ -1548,7 +1563,7 @@ export default function CommissionForm() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             <label htmlFor="needed_by" className="text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-500 font-medium flex items-center justify-between">
                                 <span>Target Delivery Deadline <span className="text-red-500">*</span></span>
                                 {isRushOrder && (
@@ -1557,212 +1572,256 @@ export default function CommissionForm() {
                                     </span>
                                 )}
                             </label>
+
+                            {/* Custom Interactive Color-Coded Calendar */}
+                            <CommissionCalendar
+                                value={neededByDate}
+                                onChange={(d) => setNeededByDate(d)}
+                                queueStartDateStr={queueStartDate}
+                                bookedUntilDateStr={bookedUntilDate}
+                                isBooked={isBooked}
+                                size={selectedSize as 'A5' | 'A4' | 'A3' | 'A2'}
+                            />
+
+                            {/* Hidden native input for form serialization */}
                             <input
                                 required
                                 id="needed_by"
                                 name="needed_by"
-                                type="date"
-                                min={minDateStr}
+                                type="hidden"
                                 value={neededByDate}
-                                onChange={(e) => setNeededByDate(e.target.value)}
-                                className={`w-full bg-surface border p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors ${
-                                    isRushOrder ? 'border-amber-500/50 bg-amber-500/5' : 'border-foreground/10'
-                                }`}
                             />
-                            <AnimatePresence mode="wait">
-                                {isRushOrder ? (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -5 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -5 }}
-                                        className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2.5 text-xs text-amber-500"
-                                    >
-                                        <Flame size={16} className="shrink-0 mt-0.5 text-amber-500" />
-                                        <div>
-                                            <span className="font-semibold block">Rush Creation Requested (15–19 Days)</span>
-                                            <span className="text-[11px] opacity-90 block mt-0.5">
-                                                A +30% Artist Rush Fee (+₹{rushFee.toLocaleString()}) has been added to prioritize your artwork creation, packaging & express handling.
-                                            </span>
-                                        </div>
-                                    </motion.div>
-                                ) : neededByDate ? (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -5 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -5 }}
-                                        className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400"
-                                    >
-                                        <CheckCircle size={14} className="shrink-0" />
-                                        <span>Standard Delivery Timeline (20+ Days) — No rush fee applied.</span>
-                                    </motion.div>
-                                ) : null}
-                            </AnimatePresence>
+
                             <p className="text-[10px] text-neutral-500 uppercase tracking-wider flex items-center gap-1 mt-1 leading-relaxed">
-                                <span>⏳ Standard artwork creation takes <strong>2-4 weeks</strong>. Dates earlier than 15 days are disabled. Need it sooner than 15 days? <a href="https://www.instagram.com/atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="text-accent underline font-bold hover:opacity-80">DM me on Instagram</a> to check emergency slot availability.</span>
+                                <span>⏳ Need artwork urgently? <a href="https://www.instagram.com/atharva_sherlekar_art" target="_blank" rel="noopener noreferrer" className="text-accent underline font-bold hover:opacity-80">DM me on Instagram</a> to check emergency slot availability.</span>
                             </p>
                         </div>
 
                         {/* Add-ons Section */}
                         <div className="space-y-4">
                             <label className="text-xs uppercase tracking-widest text-neutral-500 block">Add-ons</label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <label htmlFor="detailed_background" className={`
-                                flex items-center p-4 border rounded-md cursor-pointer transition-all
-                                ${detailedBackground ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
-                            `}>
-                                    <input
-                                        id="detailed_background"
-                                        type="checkbox"
-                                        className="hidden"
-                                        checked={detailedBackground}
-                                        onChange={(e) => setDetailedBackground(e.target.checked)}
-                                    />
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${detailedBackground ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
-                                        {detailedBackground && <CheckCircle size={14} className="stroke-[3px]" />}
-                                    </div>
-                                    <div className="flex flex-col flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-foreground">
-                                                Detailed Background {offers.some(o => o?.free_extras?.background) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
-                                            </span>
-                                            <div className="relative group ml-2">
-                                                <button
-                                                    type="button"
-                                                    className="text-neutral-400 hover:text-foreground focus:outline-none"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setShowBackgroundInfo(!showBackgroundInfo);
-                                                    }}
-                                                    aria-label="More information about detailed background"
-                                                >
-                                                    <Info size={16} />
-                                                </button>
+                            {(() => {
+                                const currentBasePrice = parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '0').replace(/[^0-9]/g, '')) || 0;
+                                const currentPortraitPrice = calculatePortraitPrice(currentBasePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
+                                const bgPrice = calculateDetailedBackgroundPrice(currentBasePrice);
+                                const clothesPrice = calculateDetailedClothesPrice(currentPortraitPrice);
 
-                                                {/* Desktop Tooltip */}
-                                                <div className="absolute hidden lg:group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-surface border border-foreground/10 text-foreground text-xs p-3 rounded-lg shadow-xl z-20 pointer-events-none">
-                                                    Includes complex elements like buildings, specific landscapes, vehicles, or intricate patterns. Simple blurred or plain shading in the background is included for free.
-                                                </div>
+                                return (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* 1. Detailed Background */}
+                                        <label htmlFor="detailed_background" className={`
+                                        flex items-center p-4 border rounded-md cursor-pointer transition-all
+                                        ${detailedBackground ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
+                                    `}>
+                                            <input
+                                                id="detailed_background"
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={detailedBackground}
+                                                onChange={(e) => setDetailedBackground(e.target.checked)}
+                                            />
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${detailedBackground ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
+                                                {detailedBackground && <CheckCircle size={14} className="stroke-[3px]" />}
                                             </div>
-                                        </div>
-                                        {/* Mobile Expandable Text */}
-                                        <motion.div
-                                            initial={false}
-                                            animate={{ height: showBackgroundInfo ? 'auto' : 0, opacity: showBackgroundInfo ? 1 : 0 }}
-                                            className="overflow-hidden lg:hidden"
-                                        >
-                                            <p className="text-xs text-neutral-400 mt-2">
-                                                Includes complex elements like buildings, specific landscapes, vehicles, or intricate patterns. Simple blurred or plain shading in the background is included for free.
-                                            </p>
-                                        </motion.div>
-                                    </div>
-                                </label>
+                                            <div className="flex flex-col flex-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-foreground">
+                                                        Detailed Background {offers.some(o => o?.free_extras?.background) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹{bgPrice})</span>}
+                                                    </span>
+                                                    <div className="relative group ml-2">
+                                                        <button
+                                                            type="button"
+                                                            className="text-neutral-400 hover:text-foreground focus:outline-none"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setShowBackgroundInfo(!showBackgroundInfo);
+                                                            }}
+                                                            aria-label="More information about detailed background"
+                                                        >
+                                                            <Info size={16} />
+                                                        </button>
 
-                                <label htmlFor="timelapse_recording" className={`
-                                flex items-center p-4 border rounded-md cursor-pointer transition-all
-                                ${timelapse ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
-                            `}>
-                                    <input
-                                        id="timelapse_recording"
-                                        type="checkbox"
-                                        className="hidden"
-                                        checked={timelapse}
-                                        onChange={(e) => setTimelapse(e.target.checked)}
-                                    />
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${timelapse ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
-                                        {timelapse && <CheckCircle size={14} className="stroke-[3px]" />}
-                                    </div>
-                                    <div className="flex flex-col flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-foreground">
-                                                Timelapse Recording {offers.some(o => o?.free_extras?.timelapse) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
-                                            </span>
-                                            <div className="relative group ml-2">
-                                                <button
-                                                    type="button"
-                                                    className="text-neutral-400 hover:text-foreground focus:outline-none"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setShowTimelapseInfo(!showTimelapseInfo);
-                                                    }}
-                                                    aria-label="More information about timelapse recording"
-                                                >
-                                                    <Info size={16} />
-                                                </button>
-                                                {/* Desktop Tooltip */}
-                                                <div className="absolute hidden lg:group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-surface border border-foreground/10 text-foreground text-xs p-3 rounded-lg shadow-xl z-20 pointer-events-none">
-                                                    A high-quality, edited video of your portrait coming to life from start to finish. Perfect for sharing on social media or as a keepsake!
+                                                        {/* Desktop Tooltip */}
+                                                        <div className="absolute hidden lg:group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-surface border border-foreground/10 text-foreground text-xs p-3 rounded-lg shadow-xl z-20 pointer-events-none">
+                                                            Includes complex elements like architectural buildings, landscapes, vehicles, or intricate room settings (2x base price). Simple blurred or plain shading is included for free.
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                                {/* Mobile Expandable Text */}
+                                                <motion.div
+                                                    initial={false}
+                                                    animate={{ height: showBackgroundInfo ? 'auto' : 0, opacity: showBackgroundInfo ? 1 : 0 }}
+                                                    className="overflow-hidden lg:hidden"
+                                                >
+                                                    <p className="text-xs text-neutral-400 mt-2">
+                                                        Includes complex elements like architectural buildings, landscapes, vehicles, or intricate room settings (2x base price). Simple blurred or plain shading is included for free.
+                                                    </p>
+                                                </motion.div>
                                             </div>
-                                        </div>
-                                        {/* Mobile Expandable Text */}
-                                        <motion.div
-                                            initial={false}
-                                            animate={{ height: showTimelapseInfo ? 'auto' : 0, opacity: showTimelapseInfo ? 1 : 0 }}
-                                            className="overflow-hidden lg:hidden"
-                                        >
-                                            <p className="text-xs text-neutral-400 mt-2">
-                                                A high-quality, edited video of your portrait coming to life from start to finish. Perfect for sharing on social media or as a keepsake!
-                                            </p>
-                                        </motion.div>
-                                    </div>
-                                </label>
+                                        </label>
 
-                                <label htmlFor="framing" className={`
-                                flex items-center p-4 border rounded-md cursor-pointer transition-all md:col-span-2
-                                ${framing ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
-                            `}>
-                                    <input
-                                        id="framing"
-                                        type="checkbox"
-                                        className="hidden"
-                                        checked={framing}
-                                        onChange={(e) => {
-                                            const isChecked = e.target.checked;
-                                            setFraming(isChecked);
-                                            if (!isChecked) {
-                                                setFrameConfig(null);
-                                            }
-                                        }}
-                                    />
-                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${framing ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
-                                        {framing && <CheckCircle size={14} className="stroke-[3px]" />}
-                                    </div>
-                                    <div className="flex flex-col flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-foreground">
-                                                Framing {offers.some(o => o?.free_extras?.framing) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']})</span>}
-                                            </span>
-                                            <div className="relative group ml-2">
-                                                <button
-                                                    type="button"
-                                                    className="text-neutral-400 hover:text-foreground focus:outline-none"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setShowFramingInfo(!showFramingInfo);
-                                                    }}
-                                                    aria-label="More information about framing"
-                                                >
-                                                    <Info size={16} />
-                                                </button>
-                                                {/* Desktop Tooltip */}
-                                                <div className="absolute hidden lg:group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-surface border border-foreground/10 text-foreground text-xs p-3 rounded-lg shadow-xl z-20 pointer-events-none">
-                                                    Professional framing for your artwork. Customize to fit your space exactly!
-                                                </div>
+                                        {/* 2. Detailed Clothes */}
+                                        <label htmlFor="detailed_clothes" className={`
+                                        flex items-center p-4 border rounded-md cursor-pointer transition-all
+                                        ${detailedClothes ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
+                                    `}>
+                                            <input
+                                                id="detailed_clothes"
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={detailedClothes}
+                                                onChange={(e) => setDetailedClothes(e.target.checked)}
+                                            />
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${detailedClothes ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
+                                                {detailedClothes && <CheckCircle size={14} className="stroke-[3px]" />}
                                             </div>
-                                        </div>
-                                        {/* Mobile Expandable Text */}
-                                        <motion.div
-                                            initial={false}
-                                            animate={{ height: showFramingInfo ? 'auto' : 0, opacity: showFramingInfo ? 1 : 0 }}
-                                            className="overflow-hidden lg:hidden"
-                                        >
-                                            <p className="text-xs text-neutral-400 mt-2">
-                                                Professional framing for your artwork. Customize to fit your space exactly!
-                                            </p>
-                                        </motion.div>
+                                            <div className="flex flex-col flex-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-foreground">
+                                                        Detailed Clothes <span className="text-neutral-500 ml-1">(+₹{clothesPrice})</span>
+                                                    </span>
+                                                    <div className="relative group ml-2">
+                                                        <button
+                                                            type="button"
+                                                            className="text-neutral-400 hover:text-foreground focus:outline-none"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setShowClothesInfo(!showClothesInfo);
+                                                            }}
+                                                            aria-label="More information about detailed clothes"
+                                                        >
+                                                            <Info size={16} />
+                                                        </button>
+
+                                                        {/* Desktop Tooltip */}
+                                                        <div className="absolute hidden lg:group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-surface border border-foreground/10 text-foreground text-xs p-3 rounded-lg shadow-xl z-20 pointer-events-none">
+                                                            Includes intricate embroidery, heavy wedding/traditional garments (sherwanis, bridal lehengas, lace sarees), jewelry, or complex textile textures (1x portrait price). Plain/simple clothing is included for free.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Mobile Expandable Text */}
+                                                <motion.div
+                                                    initial={false}
+                                                    animate={{ height: showClothesInfo ? 'auto' : 0, opacity: showClothesInfo ? 1 : 0 }}
+                                                    className="overflow-hidden lg:hidden"
+                                                >
+                                                    <p className="text-xs text-neutral-400 mt-2">
+                                                        Includes intricate embroidery, heavy wedding/traditional garments (sherwanis, bridal lehengas, lace sarees), jewelry, or complex textile textures (1x portrait price). Plain/simple clothing is included for free.
+                                                    </p>
+                                                </motion.div>
+                                            </div>
+                                        </label>
+
+                                        {/* 3. Timelapse Recording */}
+                                        <label htmlFor="timelapse_recording" className={`
+                                        flex items-center p-4 border rounded-md cursor-pointer transition-all
+                                        ${timelapse ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
+                                    `}>
+                                            <input
+                                                id="timelapse_recording"
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={timelapse}
+                                                onChange={(e) => setTimelapse(e.target.checked)}
+                                            />
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${timelapse ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
+                                                {timelapse && <CheckCircle size={14} className="stroke-[3px]" />}
+                                            </div>
+                                            <div className="flex flex-col flex-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-foreground">
+                                                        Timelapse Recording {offers.some(o => o?.free_extras?.timelapse) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹500)</span>}
+                                                    </span>
+                                                    <div className="relative group ml-2">
+                                                        <button
+                                                            type="button"
+                                                            className="text-neutral-400 hover:text-foreground focus:outline-none"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setShowTimelapseInfo(!showTimelapseInfo);
+                                                            }}
+                                                            aria-label="More information about timelapse recording"
+                                                        >
+                                                            <Info size={16} />
+                                                        </button>
+                                                        {/* Desktop Tooltip */}
+                                                        <div className="absolute hidden lg:group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-surface border border-foreground/10 text-foreground text-xs p-3 rounded-lg shadow-xl z-20 pointer-events-none">
+                                                            A high-quality, edited video of your portrait coming to life from start to finish. Perfect for sharing on social media or as a keepsake!
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Mobile Expandable Text */}
+                                                <motion.div
+                                                    initial={false}
+                                                    animate={{ height: showTimelapseInfo ? 'auto' : 0, opacity: showTimelapseInfo ? 1 : 0 }}
+                                                    className="overflow-hidden lg:hidden"
+                                                >
+                                                    <p className="text-xs text-neutral-400 mt-2">
+                                                        A high-quality, edited video of your portrait coming to life from start to finish. Perfect for sharing on social media or as a keepsake!
+                                                    </p>
+                                                </motion.div>
+                                            </div>
+                                        </label>
+
+                                        {/* 4. Framing */}
+                                        <label htmlFor="framing" className={`
+                                        flex items-center p-4 border rounded-md cursor-pointer transition-all
+                                        ${framing ? 'bg-foreground/10 border-accent' : 'bg-surface border-foreground/10 hover:border-foreground/30'}
+                                    `}>
+                                            <input
+                                                id="framing"
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={framing}
+                                                onChange={(e) => {
+                                                    const isChecked = e.target.checked;
+                                                    setFraming(isChecked);
+                                                    if (!isChecked) {
+                                                        setFrameConfig(null);
+                                                    }
+                                                }}
+                                            />
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 transition-all ${framing ? 'border-foreground bg-foreground text-background shadow-lg' : 'border-neutral-500'}`}>
+                                                {framing && <CheckCircle size={14} className="stroke-[3px]" />}
+                                            </div>
+                                            <div className="flex flex-col flex-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-foreground">
+                                                        Framing {offers.some(o => o?.free_extras?.framing) ? <span className="text-accent font-bold ml-1">(FREE)</span> : <span className="text-neutral-500 ml-1">(+₹{FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2']})</span>}
+                                                    </span>
+                                                    <div className="relative group ml-2">
+                                                        <button
+                                                            type="button"
+                                                            className="text-neutral-400 hover:text-foreground focus:outline-none"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setShowFramingInfo(!showFramingInfo);
+                                                            }}
+                                                            aria-label="More information about framing"
+                                                        >
+                                                            <Info size={16} />
+                                                        </button>
+                                                        {/* Desktop Tooltip */}
+                                                        <div className="absolute hidden lg:group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-surface border border-foreground/10 text-foreground text-xs p-3 rounded-lg shadow-xl z-20 pointer-events-none">
+                                                            Premium wood framing with archival matting to preserve and display your portrait beautifully.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Mobile Expandable Text */}
+                                                <motion.div
+                                                    initial={false}
+                                                    animate={{ height: showFramingInfo ? 'auto' : 0, opacity: showFramingInfo ? 1 : 0 }}
+                                                    className="overflow-hidden lg:hidden"
+                                                >
+                                                    <p className="text-xs text-neutral-400 mt-2">
+                                                        Premium wood framing with archival matting to preserve and display your portrait beautifully.
+                                                    </p>
+                                                </motion.div>
+                                            </div>
+                                        </label>
                                     </div>
-                                </label>
-                            </div>
+                                );
+                            })()}
 
                             {/* Customize Your Frame Button */}
                             {framing && (
@@ -1838,7 +1897,15 @@ export default function CommissionForm() {
                                     <div className="flex justify-between">
                                         <span className="text-neutral-400">+ Detailed Background</span>
                                         <span className={`font-mono ${offers.some(o => o?.free_extras?.background) ? 'text-accent font-bold' : 'text-foreground'}`}>
-                                            {offers.some(o => o?.free_extras?.background) ? 'FREE' : '₹500'}
+                                            {offers.some(o => o?.free_extras?.background) ? 'FREE' : `₹${calculateDetailedBackgroundPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '0').replace(/[^0-9]/g, '')) || 0).toLocaleString()}`}
+                                        </span>
+                                    </div>
+                                )}
+                                {detailedClothes && (
+                                    <div className="flex justify-between">
+                                        <span className="text-neutral-400">+ Detailed Clothes</span>
+                                        <span className="font-mono text-foreground">
+                                            ₹{calculateDetailedClothesPrice(calculatePortraitPrice(parseInt((currentPrices[selectedSize as keyof typeof currentPrices] || '0').replace(/[^0-9]/g, '')) || 0, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2')).toLocaleString()}
                                         </span>
                                     </div>
                                 )}

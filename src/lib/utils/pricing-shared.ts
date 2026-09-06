@@ -50,3 +50,136 @@ export function calculatePortraitPrice(basePrice: number, peopleCount: number, s
     return basePrice + additionalCost;
 }
 
+/**
+ * Calculates the Detailed Background add-on price based on the paper size's base price (2x base price).
+ */
+export function calculateDetailedBackgroundPrice(basePrice: number): number {
+    return basePrice * 2;
+}
+
+/**
+ * Calculates the Detailed Clothes add-on price based on total portrait person price (1x portrait price).
+ */
+export function calculateDetailedClothesPrice(portraitPrice: number): number {
+    return portraitPrice;
+}
+
+// Size-based minimum creation lead time (in days from queue start)
+export const SIZE_MIN_LEAD_DAYS: Record<'A5' | 'A4' | 'A3' | 'A2', number> = {
+    A5: 7,
+    A4: 14,
+    A3: 20,
+    A2: 30,
+};
+
+// Size-based rush creation window (inclusive range in days from queue start)
+export const SIZE_RUSH_WINDOWS: Record<'A5' | 'A4' | 'A3' | 'A2', { min: number; max: number } | null> = {
+    A5: null, // No rush order available for A5
+    A4: { min: 14, max: 20 },
+    A3: { min: 20, max: 26 },
+    A2: { min: 30, max: 36 },
+};
+
+export type CalendarDateCategory = 'past' | 'booked' | 'review' | 'disabled' | 'rush' | 'standard';
+
+/**
+ * Get the calendar status for a specific date given the queue start date and paper size.
+ */
+export function getDateCategory(
+    targetDate: Date,
+    queueStartDate: Date,
+    size: 'A5' | 'A4' | 'A3' | 'A2',
+    isBooked: boolean = false
+): { category: CalendarDateCategory; isSelectable: boolean; isRush: boolean; tooltip: string } {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const check = new Date(targetDate);
+    check.setHours(0, 0, 0, 0);
+
+    const queueStart = new Date(queueStartDate);
+    queueStart.setHours(0, 0, 0, 0);
+
+    // 1. Past dates
+    if (check.getTime() < today.getTime()) {
+        return {
+            category: 'past',
+            isSelectable: false,
+            isRush: false,
+            tooltip: 'Past date'
+        };
+    }
+
+    // 2. Dates before Queue Start
+    if (check.getTime() < queueStart.getTime()) {
+        if (isBooked) {
+            return {
+                category: 'booked',
+                isSelectable: false,
+                isRush: false,
+                tooltip: 'Artist is booked working on an active commission'
+            };
+        } else {
+            return {
+                category: 'review',
+                isSelectable: false,
+                isRush: false,
+                tooltip: '48-hour inquiry review & material preparation'
+            };
+        }
+    }
+
+    // Diff days from queue start
+    const diffTime = check.getTime() - queueStart.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    const minLead = SIZE_MIN_LEAD_DAYS[size] || 14;
+    const rushWindow = SIZE_RUSH_WINDOWS[size];
+
+    // 3. Below minimum creation time
+    if (diffDays < minLead) {
+        return {
+            category: 'disabled',
+            isSelectable: false,
+            isRush: false,
+            tooltip: `Minimum creation time required (${minLead} days for ${size})`
+        };
+    }
+
+    // 4. Rush order window
+    if (rushWindow && diffDays >= rushWindow.min && diffDays <= rushWindow.max) {
+        return {
+            category: 'rush',
+            isSelectable: true,
+            isRush: true,
+            tooltip: `Rush Order Window (${diffDays} days from queue start, +30% Rush Fee)`
+        };
+    }
+
+    // 5. Standard available timeline
+    return {
+        category: 'standard',
+        isSelectable: true,
+        isRush: false,
+        tooltip: `Standard Available Delivery (${diffDays} days from queue start, no rush fee)`
+    };
+}
+
+// Timezone-safe local date formatting and parsing (YYYY-MM-DD)
+export function formatLocalDate(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+export function parseLocalDate(str: string): Date {
+    const [y, m, d] = str.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setHours(0, 0, 0, 0);
+    return date;
+}
+
+
+
+

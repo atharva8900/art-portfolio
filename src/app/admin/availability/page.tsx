@@ -29,6 +29,11 @@ export default function AdminAvailability() {
     const [datePart, setDatePart] = useState('');
     const [timePart, setTimePart] = useState('');
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+    const [cooldownActive, setCooldownActive] = useState(false);
+    const [cooldownReopenDate, setCooldownReopenDate] = useState<string | null>(null);
+    const [queueStartDate, setQueueStartDate] = useState<string | null>(null);
+    const [bookedUntilDate, setBookedUntilDate] = useState<string | null>(null);
+    const [isBooked, setIsBooked] = useState(false);
 
     const router = useRouter();
 
@@ -38,6 +43,11 @@ export default function AdminAvailability() {
             const res = await fetch('/api/availability');
             const data = await res.json();
             setIsOpen(data.is_accepting_commissions);
+            setCooldownActive(!!data.cooldown_active);
+            setCooldownReopenDate(data.cooldown_reopen_date || null);
+            setQueueStartDate(data.queue_start_date || null);
+            setBookedUntilDate(data.booked_until_date || null);
+            setIsBooked(!!data.is_booked);
             
             const loadedReason = data.closure_reason || '';
             setReason(loadedReason);
@@ -58,6 +68,27 @@ export default function AdminAvailability() {
             setLastUpdated(data.last_updated);
         } catch {
             console.error('Failed to fetch status');
+        }
+    };
+
+    const handleLiftCooldown = async () => {
+        setStatusLoading(true);
+        setError('');
+        try {
+            const res = await fetch('/api/availability', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'lift_cooldown' }),
+            });
+            if (res.ok) {
+                await fetchStatus();
+            } else {
+                setError('Failed to lift cooldown');
+            }
+        } catch {
+            setError('Failed to lift cooldown');
+        } finally {
+            setStatusLoading(false);
         }
     };
 
@@ -152,6 +183,56 @@ export default function AdminAvailability() {
                         <p className="text-neutral-500 text-sm mt-1">Logged in as {userEmail}</p>
                     </div>
                 </header>
+
+                {/* 3-Day Submission Review Cooldown Notice */}
+                {cooldownActive && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex flex-col md:flex-row items-center justify-between gap-4"
+                    >
+                        <div className="flex items-start gap-3">
+                            <Clock size={24} className="shrink-0 mt-0.5" />
+                            <div>
+                                <h3 className="font-bold text-base">3-Day Submission Cooldown Active</h3>
+                                <p className="text-xs opacity-90 mt-1">
+                                    Submissions are paused while an inquiry is pending review.
+                                    {cooldownReopenDate && ` Estimated auto-reopen: ${new Date(cooldownReopenDate).toLocaleDateString()} ${new Date(cooldownReopenDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleLiftCooldown}
+                            disabled={statusLoading}
+                            className="px-4 py-2.5 rounded-lg bg-amber-500 text-neutral-950 font-bold text-xs uppercase tracking-wider hover:bg-amber-400 transition-colors shrink-0 cursor-pointer"
+                        >
+                            Lift Cooldown Now
+                        </button>
+                    </motion.div>
+                )}
+
+                {/* Sequential Queue Summary */}
+                <div className="p-6 rounded-2xl bg-surface border border-foreground/10 space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-accent">
+                        <Calendar size={16} />
+                        <span>Sequential Pipeline & Booking Queue</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div className="p-3.5 rounded-xl bg-foreground/5 border border-foreground/10">
+                            <span className="text-neutral-500 block">Current Drawing Booking:</span>
+                            <span className="font-serif text-base font-bold text-foreground">
+                                {isBooked && bookedUntilDate ? `Booked Until ${new Date(bookedUntilDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'No Active Drawing Queue'}
+                            </span>
+                        </div>
+                        <div className="p-3.5 rounded-xl bg-foreground/5 border border-foreground/10">
+                            <span className="text-neutral-500 block">Next Inquiry Queue Starts:</span>
+                            <span className="font-serif text-base font-bold text-emerald-500">
+                                {queueStartDate ? new Date(queueStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Today'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 gap-8">
                     <motion.div
