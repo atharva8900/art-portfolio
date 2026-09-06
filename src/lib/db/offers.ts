@@ -19,6 +19,7 @@ export interface OfferData {
     is_public: boolean;
     only_india_delivery: boolean;
     delivery_restricted?: boolean; // UI flag for geolocation restriction
+    target_email?: string | null; // Specific client email allowed to use this offer
     note?: string | null;
     created_at: string;
     updated_at: string;
@@ -82,7 +83,7 @@ export async function getOfferByCode(code: string): Promise<OfferData | null> {
     return data as OfferData;
 }
 
-export async function validateOffer(code: string): Promise<{ valid: boolean; offer?: OfferData; error?: string }> {
+export async function validateOffer(code: string, email?: string): Promise<{ valid: boolean; offer?: OfferData; error?: string }> {
     const offer = await getOfferByCode(code);
 
     if (!offer) {
@@ -99,6 +100,15 @@ export async function validateOffer(code: string): Promise<{ valid: boolean; off
 
     if (offer.expires_at && new Date(offer.expires_at) < new Date()) {
         return { valid: false, error: 'This offer has expired.' };
+    }
+
+    if (offer.target_email && offer.target_email.trim()) {
+        const normalizedTarget = offer.target_email.trim().toLowerCase();
+        const normalizedClient = email ? email.trim().toLowerCase() : '';
+
+        if (!normalizedClient || normalizedClient !== normalizedTarget) {
+            return { valid: false, error: 'This exclusive offer is not valid for your account.' };
+        }
     }
 
     return { valid: true, offer };

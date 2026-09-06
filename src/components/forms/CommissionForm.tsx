@@ -278,11 +278,16 @@ export default function CommissionForm() {
         const activeFingerprint = overrideFp !== undefined ? overrideFp : fingerprintHash;
         const country = new URLSearchParams(window.location.search).get('country');
         const query = country ? `?country=${country}` : '';
+        const clientEmail = session?.user?.email || null;
         try {
             const res = await fetch(`/api/offers/validate${query}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code.toUpperCase(), fingerprint: activeFingerprint })
+                body: JSON.stringify({
+                    code: code.toUpperCase(),
+                    fingerprint: activeFingerprint,
+                    email: clientEmail
+                })
             });
             const data = await res.json();
             if (res.ok && data.valid) {
@@ -304,7 +309,7 @@ export default function CommissionForm() {
         } finally {
             setIsValidatingPromos(prev => { const newArr = [...prev]; newArr[index] = false; return newArr; });
         }
-    }, [offers, fingerprintHash]);
+    }, [offers, fingerprintHash, session?.user?.email]);
 
     // Populate URL promo into input immediately on mount
     useEffect(() => {

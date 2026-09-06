@@ -360,6 +360,15 @@ export async function POST(request: NextRequest) {
                 const offer = await getOfferById(pid);
                 if (offer && (offer.usage_limit - offer.usage_count) > 0) {
                     
+                    // Client Email Restriction Check
+                    if (offer.target_email && offer.target_email.trim()) {
+                        if (offer.target_email.trim().toLowerCase() !== email.trim().toLowerCase()) {
+                            return NextResponse.json({
+                                error: `Offer code ${offer.code} is exclusive to another account.`
+                            }, { status: 400 });
+                        }
+                    }
+
                     // Regional Restriction Logic
                     if (country !== 'IN' && offer.only_india_delivery) {
                         if (offer.free_extras) {

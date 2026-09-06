@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
     Loader2, Copy, Users, Check, Lock, MousePointer2,
-    QrCode, X, Plus, Percent, Trash2, Calendar, Clock, Edit2
+    QrCode, X, Plus, Percent, Trash2, Calendar, Clock, Edit2, Mail
 } from 'lucide-react';
 import { ADMIN_EMAILS } from '@/lib/config/constants';
 import { useSession, signOut } from 'next-auth/react';
@@ -403,6 +403,12 @@ function OfferListView({ offers, onDelete, onEdit, onShowQR, showNotification, e
                                         </button>
                                     )}
                                 </div>
+                                {offer.target_email && (
+                                    <div className="flex items-center gap-1.5 text-[10px] text-accent/90 bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-lg w-fit font-mono mt-0.5" title={`Restricted to: ${offer.target_email}`}>
+                                        <Mail size={10} className="shrink-0" />
+                                        <span className="truncate max-w-[180px]">{offer.target_email}</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-right">
                                 <button
@@ -515,7 +521,8 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
             framing: editOffer?.free_extras?.framing || false
         },
         only_india_delivery: editOffer?.only_india_delivery || false,
-        is_public: editOffer?.is_public !== false
+        is_public: editOffer?.is_public !== false,
+        target_email: editOffer?.target_email || ''
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -535,6 +542,7 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
                     discount_percent: formData.discount_percent,
                     usage_limit: formData.usage_limit,
                     note: formData.note || null,
+                    target_email: formData.target_email?.trim() ? formData.target_email.trim().toLowerCase() : null,
                     free_extras: formData.free_extras,
                     only_india_delivery: formData.only_india_delivery,
                     is_public: formData.is_public,
@@ -777,6 +785,23 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
                                     </span>
                                 </div>
                             </button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between px-2">
+                                <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-500">Target Client Email (Optional)</label>
+                                <span className="text-[9px] text-neutral-500 italic">Locked to this account only</span>
+                            </div>
+                            <div className="relative">
+                                <Mail size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-neutral-500" />
+                                <input
+                                    type="email"
+                                    placeholder="e.g. client@example.com"
+                                    value={formData.target_email}
+                                    onChange={(e) => setFormData({ ...formData, target_email: e.target.value })}
+                                    className="w-full bg-foreground/5 border border-foreground/10 rounded-2xl pl-12 pr-5 py-3.5 focus:border-accent outline-none transition-all placeholder:text-neutral-600 font-mono text-sm"
+                                />
+                            </div>
                         </div>
 
                         {/* Error message */}

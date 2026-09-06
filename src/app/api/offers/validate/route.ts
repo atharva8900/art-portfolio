@@ -9,6 +9,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const code = body.code;
         const fingerprint = body.fingerprint;
+        const email = body.email;
 
         if (!code) {
             return NextResponse.json({ error: 'Code is required' }, { status: 400 });
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const result = await validateOffer(code);
+        const result = await validateOffer(code, email);
 
         if (result.valid && result.offer) {
             const { searchParams } = new URL(req.url);
