@@ -24,7 +24,7 @@ interface ClientCommission {
     address?: string;
     number_of_people?: string;
     shipping_cost?: number;
-    status: 'pending' | 'waitlist' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'cancelled' | 'rejected' | 'muted' | 'banned';
+    status: 'pending' | 'waitlist' | 'accepted' | 'in_progress' | 'redrawing' | 'finished' | 'on_delivery' | 'completed' | 'cancelled' | 'rejected' | 'muted' | 'banned';
     payment_status?: 'pending' | 'reservation_paid' | 'deposit_paid' | 'fully_paid';
     razorpay_order_id?: string;
     razorpay_payment_link_url?: string;
@@ -95,7 +95,7 @@ export default function ClientDashboardPage() {
         }
     };
 
-    const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'finished', 'on_delivery', 'muted', 'banned'];
+    const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery', 'muted', 'banned'];
     const HISTORY_STATUSES = ['completed', 'cancelled', 'rejected'];
 
     const activeCommissions = commissions.filter(c => ACTIVE_STATUSES.includes(c.status));
@@ -116,6 +116,8 @@ export default function ClientDashboardPage() {
                     return { text: 'In Progress (Deposit Paid)', color: 'text-emerald-500 bg-emerald-500/10' };
                 }
                 return { text: 'In Progress', color: 'text-emerald-500 bg-emerald-500/10' };
+            case 'redrawing':
+                return { text: 'Redraw in Progress (70% Off)', color: 'text-amber-500 bg-amber-500/10' };
             case 'finished':
                 return { text: 'Artwork Ready', color: 'text-pink-500 bg-pink-500/10' };
             case 'on_delivery':
@@ -355,8 +357,8 @@ export default function ClientDashboardPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* WIP Gallery — only shown when in progress or later */}
-                                                {(['in_progress', 'finished', 'on_delivery', 'completed'] as ClientCommission['status'][]).includes(commission.status) && commission.wip_images && commission.wip_images.length > 0 && (
+                                                {/* WIP Gallery — only shown when in progress, redrawing, or later */}
+                                                {(['in_progress', 'redrawing', 'finished', 'on_delivery', 'completed'] as ClientCommission['status'][]).includes(commission.status) && commission.wip_images && commission.wip_images.length > 0 && (
                                                     <div className="mt-5 pt-5 border-t border-foreground/10">
                                                         <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-3">Artwork Progress</p>
                                                         <div className="grid grid-cols-3 gap-3">
@@ -450,6 +452,41 @@ export default function ClientDashboardPage() {
                                                         </a>
                                                         <p className="text-xs text-neutral-500 mt-3 border-t border-neutral-800 pt-3">
                                                             Your waitlist slot is ready! Please pay the remaining 25% deposit to officially begin the work.
+                                                        </p>
+                                                    </div>
+                                                ) : commission.status === 'redrawing' ? (
+                                                    <div className="text-center">
+                                                        <p className="text-sm font-medium text-amber-400 mb-2">Redraw Payment Due (70% Off)</p>
+                                                        <div className="space-y-1 mb-4">
+                                                            <div className="flex justify-between text-xs text-neutral-400">
+                                                                <span>Original Total</span>
+                                                                <span>₹{total}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-xs text-emerald-400">
+                                                                <span>70% Redraw Discount</span>
+                                                                <span>-₹{Math.round(total * 0.70)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-lg font-serif text-foreground border-t border-foreground/10 pt-1 mt-1">
+                                                                <span>Total Due (30%)</span>
+                                                                <span>₹{Math.max(1, Math.round(total * 0.30))}</span>
+                                                            </div>
+                                                        </div>
+                                                        {commission.razorpay_payment_link_url ? (
+                                                            <a
+                                                                href={commission.razorpay_payment_link_url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-amber-500/20"
+                                                            >
+                                                                Pay Redraw (70% Off) <ExternalLink size={18} />
+                                                            </a>
+                                                        ) : (
+                                                            <p className="text-xs text-neutral-500 italic">
+                                                                Atharva is preparing your 70% discounted payment link. You will be able to pay securely right here shortly.
+                                                            </p>
+                                                        )}
+                                                        <p className="text-xs text-neutral-500 mt-3 border-t border-neutral-800 pt-3">
+                                                            Atharva will begin the new redraw as soon as payment is confirmed.
                                                         </p>
                                                     </div>
                                                 ) : commission.status === 'finished' ? (

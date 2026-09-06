@@ -25,7 +25,7 @@ export default function RefundPolicy() {
                 <div>
                     <h2 className="text-2xl font-serif text-foreground mb-4">2. The 48-Hour Cancellation Window</h2>
                     <p className="leading-relaxed">
-                        We understand that circumstances can change. The cancellation grace period applies <strong>only to your very first (initial) payment</strong> — whether that is the 50% active deposit or the 25% waitlist reservation fee.
+                        I understand that circumstances can change. The cancellation grace period applies <strong>only to your very first (initial) payment</strong> (whether that is the 50% active deposit or the 25% waitlist reservation fee).
                     </p>
                     <ul className="list-disc pl-6 mt-4 space-y-2">
                         <li><strong>Within 48 Hours of Initial Payment:</strong> If you decide to cancel within exactly 48 hours of making your first payment, you are entitled to a <strong>100% full refund</strong> of that amount. The slot will be released.</li>
@@ -35,16 +35,22 @@ export default function RefundPolicy() {
                 </div>
 
                 <div>
-                    <h2 className="text-2xl font-serif text-foreground mb-4">3. Completed Artworks</h2>
+                    <h2 className="text-2xl font-serif text-foreground mb-4">3. Completed Artworks &amp; Strict No-Returns Policy</h2>
                     <p className="leading-relaxed">
-                        Due to the deeply personal and custom-made nature of hand-drawn portraits, <strong>no refunds, returns, or exchanges are accepted once the final artwork has been completed</strong>, approved by the client via photograph, and prepared for shipping or dispatched.
+                        Because every custom portrait is a deeply personal, hand-drawn original artwork created specifically for you:
                     </p>
+                    <ul className="list-disc pl-6 mt-4 space-y-2">
+                        <li><strong>All Sales &amp; Deliveries Are Final:</strong> Once the final artwork has been approved by you and dispatched, <strong>under no circumstances are physical returns accepted</strong>.</li>
+                        <li><strong>Risk of Transit Damage:</strong> Delicate hand-drawn artwork requires specialized packaging. Returning an artwork carries a high risk of damage during return transit.</li>
+                        <li><strong>Non-Resalable Labor:</strong> Custom artwork cannot be restocked or resold. The extensive time, labor, and delivery costs invested into creating your piece cannot be recovered.</li>
+                        <li><strong>Digital Resolution Policy:</strong> If your package suffers genuine transit damage (verified through your continuous unboxing video), <strong>you do not need to return the artwork</strong>. Resolutions are handled directly via framing fee refunds or water damage compensation as outlined in Section 5.</li>
+                    </ul>
                 </div>
 
                 <div>
                     <h2 className="text-2xl font-serif text-foreground mb-4">4. Liability &amp; Circumstances During Creation</h2>
                     <p className="leading-relaxed">
-                        If, for any unforeseen reason or due to an error during the drawing process, the artist (Atharva Sherlekar) accidentally compromises, ruins, or is entirely unable to fulfill your commission after work has begun:
+                        If, for any unforeseen reason or due to an error during the drawing process, I (Atharva Sherlekar) accidentally compromise, ruin, or am entirely unable to fulfill your commission after work has begun:
                     </p>
                     <ul className="list-disc pl-6 mt-4 space-y-2">
                         <li>You will be notified immediately.</li>
@@ -53,26 +59,31 @@ export default function RefundPolicy() {
                 </div>
 
                 <div>
-                    <h2 className="text-2xl font-serif text-foreground mb-4">5. Damaged in Transit (Courier Liability)</h2>
+                    <h2 className="text-2xl font-serif text-foreground mb-4">5. Damaged in Transit &amp; Unboxing Proof Policy</h2>
                     <p className="leading-relaxed">
-                        Considerable care and high-quality packaging materials are used to ensure your portrait arrives safely. However, we cannot directly control the handling practices of third-party shipping carriers (e.g., DTDC, DHL, postal services).
+                        I take great personal care in packing every portrait with rigid backing boards, bubble wrap, and heavy-duty protective packaging. However, because hand-drawn artworks are delicate, the following verification and resolution protocol applies:
                     </p>
-                    <p className="leading-relaxed mt-4">
-                        If your package arrives visibly damaged, you must:
+                    
+                    <h3 className="text-lg font-serif text-foreground mt-6 mb-2">Mandatory Continuous Unboxing Video:</h3>
+                    <p className="leading-relaxed">
+                        To claim any resolution for transit damage, <strong>you must record a single, continuous, unedited video from start to finish</strong>.
                     </p>
                     <ol className="list-decimal pl-6 mt-2 space-y-2">
-                        <li>Contact us via email within <strong>48 hours of delivery</strong>.</li>
-                        <li>Provide clear, well-lit photographs detailing the damage to both the external packaging and the artwork itself.</li>
+                        <li>Take a photo of the sealed outer box showing the shipping label and send it to me via DM or email.</li>
+                        <li>Record the unboxing process continuously without cuts or pauses (placing your camera on a stand or having someone record for you).</li>
+                        <li>Inspect the artwork and frame clearly on camera under good lighting.</li>
+                        <li>Contact me with the video within <strong>48 hours of marked delivery</strong>.</li>
                     </ol>
-
-                    <h3 className="text-lg font-serif text-foreground mt-6 mb-2">Resolution Process for Transit Damage:</h3>
-                    <ul className="list-disc pl-6 space-y-2">
-                        <li><strong>Framed Artworks:</strong> If the glass, matting, or frame is damaged, but the core artwork is intact, the client will be asked to ship the piece back. The frame will be repaired or replaced at no extra structural cost, and shipped back.</li>
-                        <li><strong>Unframed / Rolled Artworks:</strong> Hand-drawn charcoal and graphite are delicate mediums. If an unframed drawing is severely crushed, folded, or irrecoverably smudged by the courier, it cannot be simply &quot;repaired.&quot; Because the artist fundamentally completed the labor, <strong>full refunds cannot be issued for courier-inflicted damage</strong>. However, to ensure you receive the art you desired, the artist will offer to create a brand new redraw of the piece for a heavily discounted rate, decided on a case-by-case basis considering the size and original complexity of the portrait.</li>
-                    </ul>
-                    <p className="leading-relaxed mt-4 italic text-sm opacity-70">
-                        * Note: Minor smudging that naturally occurs despite fixative spray during extended transit is common for dry mediums and does not constitute &quot;damage&quot; warranting a redraw.
+                    <p className="leading-relaxed mt-3 text-sm opacity-80">
+                        * Please note: If you choose not to record an unboxing video, I cannot verify whether the damage occurred during transit or after delivery, and no refunds or redraws can be provided.
                     </p>
+
+                    <h3 className="text-lg font-serif text-foreground mt-6 mb-2">Transit Resolution Guidelines:</h3>
+                    <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Framed Artworks (Broken Glass or Frame):</strong> If the frame or glass arrives damaged during transit but the core drawing is intact, <strong>I will promptly refund the full framing charges</strong> you paid so you can have it reframed locally. The original artwork is retained by you.</li>
+                        <li><strong>Severe Water or Liquid Damage:</strong> If the package suffers catastrophic water or rain damage during transit that irrecoverably ruins the drawing, <strong>I will issue a 100% full refund</strong>, and if you wish to have the piece redrawn, <strong>I will offer a complete redraw at a 70% discount of the total value</strong> of the original commission (meaning you only pay 30% of the total value).</li>
+                        <li><strong>Folds, Creases, and Accidental Bends:</strong> Because all portraits are dispatched inside rigid, unbendable protective packaging, claims for folded or creased drawings are not eligible for refunds or free redraws once delivered.</li>
+                    </ul>
                 </div>
             </section>
         </article>

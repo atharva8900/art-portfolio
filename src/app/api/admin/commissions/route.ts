@@ -109,7 +109,7 @@ export async function PATCH(request: NextRequest) {
 
         // Update Main Status
         if (status) {
-            if (!['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'completed', 'rejected', 'waitlist', 'cancelled'].includes(status)) {
+            if (!['pending', 'accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery', 'completed', 'rejected', 'waitlist', 'cancelled'].includes(status)) {
                 return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
             }
             try {
@@ -155,7 +155,7 @@ export async function PATCH(request: NextRequest) {
 
 
                     // --- Automated Emails for Status Changes ---
-                    const emailTriggerStatuses = ['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'completed', 'rejected', 'cancelled'];
+                    const emailTriggerStatuses = ['pending', 'accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery', 'completed', 'rejected', 'cancelled'];
                     // Only send email if status has actually CHANGED to prevent duplicate notifications on parallel requests
                     if (existingCommission.status !== status && emailTriggerStatuses.includes(status)) {
                         await sendCommissionStatusEmail(updatedCommission, status);

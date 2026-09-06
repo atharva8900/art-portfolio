@@ -68,6 +68,30 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
                 <p><strong>Atharva Sherlekar</strong></p>
             `;
             break;
+        case 'redrawing':
+            subject = 'Your Redraw has Started! (70% Discount Applied) – Atharva Sherlekar Art';
+            const hasRedrawLink = !!commission.razorpay_payment_link_url;
+            htmlContent = `
+                <h1>Redraw in Progress</h1>
+                <p>Hi ${commission.client_name},</p>
+                <p>Atharva has officially approved and queued your <strong>portrait redraw</strong> with a 70% discount applied to the total value of your artwork (you only pay 30% of the total value).</p>
+                
+                ${hasRedrawLink ? `
+                <div style="margin: 25px 0; padding: 25px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; text-align: center;">
+                    <p style="margin: 0 0 15px; font-weight: bold; color: #92400e;">Complete your 70% discounted redraw payment:</p>
+                    <a href="${commission.razorpay_payment_link_url}" style="display: inline-block; background: #D4AF37; color: black; text-decoration: none; padding: 14px 30px; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">PAY REDRAW BALANCE (70% OFF) →</a>
+                    <p style="margin: 15px 0 0; font-size: 12px; color: #64748b;">Link powered by Razorpay. Secure and encrypted.</p>
+                </div>
+                ` : `
+                <p>You can view your commission status and payment details anytime on your <a href="${baseUrl}/client/dashboard">Commission Dashboard</a>.</p>
+                `}
+                
+                <p>I will share work-in-progress (WIP) updates as your new piece comes to life.</p>
+                <br/>
+                <p>Best regards,</p>
+                <p><strong>Atharva Sherlekar</strong></p>
+            `;
+            break;
         case 'finished':
             subject = 'Your Artwork is Finished! Final Approval & Invoice – Atharva Sherlekar Art';
             const hasFinalLink = !!commission.final_payment_link_url;
@@ -113,7 +137,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             `;
             break;
         case 'completed':
-            subject = 'Your Artwork has been Delivered! – Atharva Sherlekar Art';
+            subject = 'Your Artwork has Arrived! 🎨📦 (Important Unboxing Instructions) – Atharva Sherlekar Art';
             const basePrice = Number(commission.base_price || 0);
             const extrasTotal = Number(commission.extras_total || 0);
             const rushFee = Number(commission.rush_fee || 0);
@@ -127,12 +151,38 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             if (commission.timelapse_recording) extrasList.push('Timelapse Video Recording');
             if (commission.rush_fee && commission.rush_fee > 0) extrasList.push(`Rush Order Processing (₹${commission.rush_fee.toLocaleString('en-IN')})`);
 
+            const isFramed = !!commission.framing;
+
             htmlContent = `
-                <h1>Commission Delivered!</h1>
+                <h1>Your Artwork has Arrived!</h1>
                 <p>Hi ${escapeHtml(commission.client_name)},</p>
-                <p>Your commission has been marked as <strong>delivered</strong>!</p>
-                <p>Thank you so much for choosing me for this commission artwork. I hope you love the final result.</p>
+                <p>Your hand-drawn commission has officially arrived! Thank you so much for commissioning me, I truly hope you love the final ${isFramed ? 'framed ' : ''}piece.</p>
                 
+                <div style="margin: 25px 0; padding: 22px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                    <h2 style="margin: 0 0 12px; font-size: 16px; color: #0f172a; display: flex; align-items: center;">
+                        📦 Before You Open: Please Record a Continuous Unboxing Video
+                    </h2>
+                    <p style="margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: #334155;">
+                        Because each artwork is an original, delicate hand-drawn piece, <strong>I require a continuous, uncut unboxing video</strong> to verify any transit claims:
+                    </p>
+                    <ol style="margin: 0 0 16px; padding-left: 20px; font-size: 13px; line-height: 1.6; color: #334155;">
+                        <li style="margin-bottom: 6px;"><strong>Take a photo of the parcel:</strong> Snap a quick photo of the sealed package and send it to me in my DMs or email.</li>
+                        <li style="margin-bottom: 6px;"><strong>Record Continuous Unboxing:</strong> Record a single, uncut video from start to finish as you unwrap the package. (You can prop your phone on a stand, place it overhead, or have someone record for you so everything is clearly in frame).</li>
+                        <li style="margin-bottom: 6px;"><strong>Inspect the Piece:</strong> Show the ${isFramed ? 'artwork and frame' : 'drawing'} clearly on camera under good lighting.</li>
+                    </ol>
+
+                    <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 10px;">
+                        <p style="margin: 0 0 8px; font-weight: 700; font-size: 13px; color: #0f172a;">My Transit Guarantee:</p>
+                        <ul style="margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.6; color: #475569;">
+                            ${isFramed ? `
+                            <li style="margin-bottom: 4px;"><strong>Framed Artwork:</strong> If the frame or glass arrived damaged during transit, send me the video and <strong>I will promptly refund your full framing charges</strong> so you can have it reframed locally.</li>
+                            ` : ''}
+                            <li style="margin-bottom: 4px;"><strong>Water / Rain Damage:</strong> In the rare event that rain or liquid leaked into the package during transit and ruined the drawing, <strong>I will issue a 100% full refund</strong>, and if you want the artwork redrawn, <strong>I will offer a complete redraw at a 70% discount of its total value</strong> (you only pay 30%).</li>
+                            <li style="margin-bottom: 4px;"><strong>Please Note:</strong> Drawings are packed between rigid protective boards, so folds or creases cannot occur in transit and are not eligible for refunds. If you choose not to record an unboxing video, I cannot verify that damage occurred during transit and will not be able to offer any refunds or redraws.</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <div style="margin: 25px 0; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                     <div style="background-color: #0f172a; color: #ffffff; padding: 18px 24px;">
                         <table style="width: 100%; border-collapse: collapse;">

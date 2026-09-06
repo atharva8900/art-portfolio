@@ -53,7 +53,7 @@ export const referralSchema = z.object({
 // Admin Status Update Schema
 export const adminStatusUpdateSchema = z.object({
   id: z.string().min(1, "ID is required"),
-  status: z.enum(['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'completed', 'rejected', 'waitlist', 'cancelled']).optional(),
+  status: z.enum(['pending', 'accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery', 'completed', 'rejected', 'waitlist', 'cancelled']).optional(),
   admin_note: z.string().max(2000).optional(),
   payout_status: z.enum(['unpaid', 'requested', 'paid']).optional(),
   payment_status: z.enum(['pending', 'reservation_paid', 'deposit_paid', 'fully_paid']).optional(),

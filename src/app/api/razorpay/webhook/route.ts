@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
                 if (commission) {
                     const isFinalPayment = paymentType === 'final';
                     const isReservationCompletion = paymentType === 'reservation_completion';
+                    const isRedrawPayment = paymentType === 'redraw';
 
                     const updateData: Record<string, string> = {
                         razorpay_payment_id: paymentId,
@@ -54,14 +55,15 @@ export async function POST(request: NextRequest) {
 
                     if (isFinalPayment) {
                         updateData.payment_status = 'fully_paid';
-                        // Keep the status as finished until admin marks as on_delivery
-                        // or if it was already on_delivery, keep it.
+                    } else if (isRedrawPayment) {
+                        updateData.payment_status = 'fully_paid';
+                        updateData.status = 'redrawing';
                     } else if (isReservationCompletion) {
                         updateData.payment_status = 'deposit_paid';
                         updateData.status = 'in_progress';
                     } else {
                         updateData.payment_status = 'deposit_paid';
-                        updateData.status = 'in_progress'; // unlocking 48h refund window
+                        updateData.status = 'in_progress';
                     }
 
                     const { error } = await supabaseAdmin

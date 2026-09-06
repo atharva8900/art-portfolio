@@ -20,7 +20,7 @@ export interface CommissionData {
         phone?: string;
         instagram?: string;
     } | null;
-    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned';
+    status: 'pending' | 'accepted' | 'in_progress' | 'redrawing' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned';
     submitted_at: string;
     updated_at?: string;
     admin_note?: string;
@@ -187,7 +187,7 @@ export async function getCommissionById(id: string): Promise<CommissionData | nu
 // Update commission status
 export async function updateCommissionStatus(
     id: string,
-    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned',
+    status: 'pending' | 'accepted' | 'in_progress' | 'redrawing' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned',
     adminNote?: string
 ): Promise<CommissionData | null> {
     const updateData: {
@@ -379,7 +379,7 @@ export async function getActiveWorkloadCount(): Promise<number> {
     const { count, error } = await supabaseAdmin
         .from('commissions')
         .select('*', { count: 'exact', head: true })
-        .in('status', ['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'waitlist']);
+        .in('status', ['pending', 'accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery', 'waitlist']);
 
     if (error) {
         console.error('Error counting active workload in Supabase:', error);
@@ -438,7 +438,7 @@ export async function getActiveCommissionCount(): Promise<number> {
     const { count, error } = await supabaseAdmin
         .from('commissions')
         .select('*', { count: 'exact', head: true })
-        .in('status', ['accepted', 'in_progress', 'finished', 'on_delivery']);
+        .in('status', ['accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery']);
 
     if (error) {
         console.error('Error counting active commissions in Supabase:', error);
@@ -470,7 +470,7 @@ export async function hasActiveCommission(email: string): Promise<boolean> {
         .from('commissions')
         .select('*', { count: 'exact', head: true })
         .eq('client_email', emailLower)
-        .in('status', ['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'waitlist']);
+        .in('status', ['pending', 'accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery', 'waitlist']);
 
     if (error) {
         console.error('Error checking active commission in Supabase:', error);
@@ -487,7 +487,7 @@ export async function getActiveCommissionStatus(email: string): Promise<string |
         .from('commissions')
         .select('status')
         .eq('client_email', emailLower)
-        .in('status', ['pending', 'accepted', 'in_progress', 'finished', 'on_delivery', 'waitlist'])
+        .in('status', ['pending', 'accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery', 'waitlist'])
         .maybeSingle();
 
     if (error) {

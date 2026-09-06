@@ -28,7 +28,7 @@ export interface Commission {
     timelapse_recording?: boolean;
     address: string;
     notes?: string;
-    status: 'pending' | 'accepted' | 'in_progress' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist';
+    status: 'pending' | 'accepted' | 'in_progress' | 'redrawing' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist';
     referral_code?: string;
     created_at: string;
     // Commission Calculation Fields

@@ -32,7 +32,7 @@ interface CommissionData {
         phone?: string;
         instagram?: string;
     } | null;
-    status: 'pending' | 'accepted' | 'in_progress' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned';
+    status: 'pending' | 'accepted' | 'in_progress' | 'redrawing' | 'finished' | 'on_delivery' | 'completed' | 'rejected' | 'waitlist' | 'cancelled' | 'muted' | 'banned';
     payout_status?: 'unpaid' | 'requested' | 'paid';
     needed_by?: string;
     submitted_at: string;
@@ -41,6 +41,7 @@ interface CommissionData {
     commission_amount?: number;
     base_price?: number;
     extras_total?: number;
+    rush_fee?: number;
     detailed_background?: boolean;
     timelapse_recording?: boolean;
     razorpay_payment_link_url?: string;
@@ -69,6 +70,7 @@ const STATUS_OPTIONS = [
     { value: 'finished', label: 'Artwork Finished', colorClass: 'bg-pink-500/20 text-pink-400 border-pink-500/30' },
     { value: 'on_delivery', label: 'Shipped', colorClass: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' },
     { value: 'completed', label: 'Completed', colorClass: 'bg-green-500/20 text-green-400 border-green-500/30' },
+    { value: 'redrawing', label: 'Redraw in Progress (70% Off)', colorClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
     { value: 'rejected', label: 'Rejected', colorClass: 'bg-red-500/20 text-red-400 border-red-500/30' },
     { value: 'cancelled', label: 'Cancelled / Refunded', colorClass: 'bg-neutral-500/20 text-neutral-400 border-neutral-500/30' },
     { value: 'muted', label: 'Muted', colorClass: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
@@ -128,7 +130,7 @@ export default function AdminCommissionsPage() {
     const [muteDuration, setMuteDuration] = useState<number>(24 * 60 * 60 * 1000); // Default 24h
     const [isBanConfirmed, setIsBanConfirmed] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [linkToGenerate, setLinkToGenerate] = useState<{ id: string; type: 'deposit' | 'final'; clientName: string } | null>(null);
+    const [linkToGenerate, setLinkToGenerate] = useState<{ id: string; type: 'deposit' | 'final' | 'redraw'; clientName: string } | null>(null);
     const [liftRestrictionHash, setLiftRestrictionHash] = useState<string | null>(null);
     const [liftRestrictionEmail, setLiftRestrictionEmail] = useState<string | null>(null);
     const [liftRestrictionCommissionId, setLiftRestrictionCommissionId] = useState<string | null>(null);
@@ -446,6 +448,27 @@ export default function AdminCommissionsPage() {
         }
     };
 
+    const generateRedrawPaymentLink = async (commissionId: string) => {
+        setGeneratingLinkId(commissionId);
+        try {
+            const res = await fetch(`/api/admin/commissions/${commissionId}/redraw-payment-link`, {
+                method: 'POST',
+            });
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to generate redraw payment link');
+            }
+            const data = await res.json();
+            showNotification(`Redraw Link generated (70% Off = ₹${data.redrawAmount}): ${data.link}`, 'success');
+            fetchCommissions();
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            showNotification(err.message || 'Failed to generate redraw link', 'error');
+        } finally {
+            setGeneratingLinkId(null);
+        }
+    };
+
     const confirmGenerateLink = async () => {
         if (!linkToGenerate) return;
 
@@ -456,6 +479,8 @@ export default function AdminCommissionsPage() {
             await generatePaymentLink(id);
         } else if (type === 'final') {
             await generateFinalPaymentLink(id);
+        } else if (type === 'redraw') {
+            await generateRedrawPaymentLink(id);
         }
     };
 
@@ -582,7 +607,7 @@ export default function AdminCommissionsPage() {
         router.push('/');
     };
 
-    const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'finished', 'on_delivery'];
+    const ACTIVE_STATUSES = ['pending', 'waitlist', 'accepted', 'in_progress', 'redrawing', 'finished', 'on_delivery'];
     const HISTORY_STATUSES = ['completed', 'cancelled', 'rejected'];
     const BANNED_STATUSES = ['muted', 'banned'];
 
@@ -1345,7 +1370,7 @@ export default function AdminCommissionsPage() {
                                                                     </div>
 
                                                                     {/* Commission Specific Actions */}
-                                                                    {(commission.status === 'waitlist' || (commission.status === 'accepted' && (commission.payment_status === 'pending' || commission.payment_status === 'reservation_paid')) || (commission.status === 'finished' && commission.payment_status !== 'fully_paid') || commission.status === 'on_delivery') && (
+                                                                    {(commission.status === 'waitlist' || (commission.status === 'accepted' && (commission.payment_status === 'pending' || commission.payment_status === 'reservation_paid')) || (commission.status === 'redrawing') || (commission.status === 'finished' && commission.payment_status !== 'fully_paid') || commission.status === 'on_delivery') && (
                                                                         <div className="w-full xl:w-96 shrink-0 bg-accent/5 rounded-xl border border-accent/10 p-5 mb-4 flex flex-col justify-center">
                                                                             {commission.status === 'waitlist' ? (
                                                                                 <>
@@ -1441,6 +1466,71 @@ export default function AdminCommissionsPage() {
                                                                                                 {commission.payment_status === 'reservation_paid'
                                                                                                     ? 'Generate Remaining 25% Link'
                                                                                                     : 'Generate Deposit Link'}
+                                                                                            </motion.button>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </>
+                                                                            ) : commission.status === 'redrawing' ? (
+                                                                                <>
+                                                                                    {commission.razorpay_payment_link_url ? (
+                                                                                        <div className="flex flex-col gap-2 w-full max-w-md">
+                                                                                            <div className="flex items-center gap-2 text-amber-400 mb-1">
+                                                                                                <Check size={16} />
+                                                                                                <p className="text-sm font-medium">Redraw Payment Link Ready (70% Off)</p>
+                                                                                            </div>
+                                                                                            <div className="flex items-center gap-2 bg-foreground/5 border border-foreground/10 rounded-lg p-2.5">
+                                                                                                <p className="text-xs font-mono text-neutral-400 truncate flex-1">{commission.razorpay_payment_link_url}</p>
+                                                                                                <button
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        navigator.clipboard.writeText(commission.razorpay_payment_link_url || '');
+                                                                                                        showNotification('Redraw link copied!', 'success');
+                                                                                                    }}
+                                                                                                    className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400 hover:text-foreground"
+                                                                                                    title="Copy Link"
+                                                                                                >
+                                                                                                    <Copy size={14} />
+                                                                                                </button>
+                                                                                                <a
+                                                                                                    href={commission.razorpay_payment_link_url}
+                                                                                                    target="_blank"
+                                                                                                    rel="noreferrer"
+                                                                                                    onClick={e => e.stopPropagation()}
+                                                                                                    className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400 hover:text-foreground"
+                                                                                                    title="Open Link"
+                                                                                                >
+                                                                                                    <ExternalLink size={14} />
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <div className="flex flex-col md:flex-row xl:flex-col items-start xl:items-stretch md:items-center justify-between gap-4 w-full">
+                                                                                            <div className="flex items-start gap-3 text-amber-400 xl:mb-2">
+                                                                                                <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+                                                                                                <p className="text-sm font-medium leading-tight">
+                                                                                                    Client pays 30% for Redraw (₹{Math.max(1, Math.round(((commission.base_price || 0) + (commission.extras_total || 0) + (commission.rush_fee || 0) || (commission.commission_amount || 0)) * 0.30))})
+                                                                                                </p>
+                                                                                            </div>
+                                                                                            <motion.button
+                                                                                                whileHover={{ scale: 1.02 }}
+                                                                                                whileTap={{ scale: 0.98 }}
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    setLinkToGenerate({
+                                                                                                        id: commission.id,
+                                                                                                        type: 'redraw',
+                                                                                                        clientName: commission.client_name
+                                                                                                    });
+                                                                                                }}
+                                                                                                disabled={generatingLinkId === commission.id}
+                                                                                                className="flex items-center gap-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 px-6 py-2.5 rounded-lg hover:bg-amber-500/30 transition-all font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                                                                                            >
+                                                                                                {generatingLinkId === commission.id ? (
+                                                                                                    <Loader2 size={16} className="animate-spin" />
+                                                                                                ) : (
+                                                                                                    <Check size={16} />
+                                                                                                )}
+                                                                                                Generate Redraw Link (70% Off)
                                                                                             </motion.button>
                                                                                         </div>
                                                                                     )}
@@ -1823,7 +1913,7 @@ export default function AdminCommissionsPage() {
                                                 </div>
 
                                                 {/* Commission Specific Actions - Mobile */}
-                                                {(commission.status === 'waitlist' || (commission.status === 'accepted' && (commission.payment_status === 'pending' || commission.payment_status === 'reservation_paid')) || (commission.status === 'finished' && commission.payment_status !== 'fully_paid') || commission.status === 'on_delivery') && (
+                                                {(commission.status === 'waitlist' || (commission.status === 'accepted' && (commission.payment_status === 'pending' || commission.payment_status === 'reservation_paid')) || (commission.status === 'redrawing') || (commission.status === 'finished' && commission.payment_status !== 'fully_paid') || commission.status === 'on_delivery') && (
                                                     <div className="px-6 pb-6 space-y-4">
                                                         <div className="pt-4 border-t border-foreground/10">
                                                             {commission.status === 'waitlist' ? (
@@ -1910,6 +2000,68 @@ export default function AdminCommissionsPage() {
                                                                                     <Check size={16} />
                                                                                 )}
                                                                                 {commission.payment_status === 'reservation_paid' ? 'Generate Remaining 25% Link' : 'Generate Deposit Link'}
+                                                                            </motion.button>
+                                                                        </>
+                                                                    )}
+                                                                </>
+                                                            ) : commission.status === 'redrawing' ? (
+                                                                <>
+                                                                    {commission.razorpay_payment_link_url ? (
+                                                                        <div className="space-y-3">
+                                                                            <div className="flex items-center gap-2 text-amber-400">
+                                                                                <Check size={14} />
+                                                                                <p className="text-xs font-medium">Redraw Payment Link Ready (70% Off)</p>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2 bg-foreground/5 border border-foreground/10 rounded-lg p-2 overflow-hidden">
+                                                                                <p className="text-[10px] font-mono text-neutral-400 truncate flex-1">{commission.razorpay_payment_link_url}</p>
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        navigator.clipboard.writeText(commission.razorpay_payment_link_url || '');
+                                                                                        showNotification('Redraw link copied!', 'success');
+                                                                                    }}
+                                                                                    className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400"
+                                                                                >
+                                                                                    <Copy size={14} />
+                                                                                </button>
+                                                                                <a
+                                                                                    href={commission.razorpay_payment_link_url}
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                    onClick={e => e.stopPropagation()}
+                                                                                    className="p-1.5 hover:bg-foreground/10 rounded transition-colors text-neutral-400"
+                                                                                >
+                                                                                    <ExternalLink size={14} />
+                                                                                </a>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <div className="flex items-start gap-3 text-amber-400 mb-4 p-3 rounded-lg border border-amber-500/10 bg-amber-500/5">
+                                                                                <p className="text-xs leading-relaxed">
+                                                                                    Client pays 30% for Redraw (₹{Math.max(1, Math.round(((commission.base_price || 0) + (commission.extras_total || 0) + (commission.rush_fee || 0) || (commission.commission_amount || 0)) * 0.30))}).
+                                                                                </p>
+                                                                            </div>
+                                                                            <motion.button
+                                                                                whileHover={{ scale: 1.01 }}
+                                                                                whileTap={{ scale: 0.99 }}
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setLinkToGenerate({
+                                                                                        id: commission.id,
+                                                                                        type: 'redraw',
+                                                                                        clientName: commission.client_name
+                                                                                    });
+                                                                                }}
+                                                                                disabled={generatingLinkId === commission.id}
+                                                                                className="flex items-center justify-center gap-2 w-full bg-amber-500/20 text-amber-400 border border-amber-500/30 px-6 py-3 rounded-lg hover:bg-amber-500/30 transition-all font-bold text-sm"
+                                                                            >
+                                                                                {generatingLinkId === commission.id ? (
+                                                                                    <Loader2 size={16} className="animate-spin" />
+                                                                                ) : (
+                                                                                    <Check size={16} />
+                                                                                )}
+                                                                                Generate Redraw Link (70% Off)
                                                                             </motion.button>
                                                                         </>
                                                                     )}
@@ -2293,7 +2445,7 @@ export default function AdminCommissionsPage() {
                         >
                             <h3 className="text-xl font-bold mb-2">Generate Payment Link?</h3>
                             <p className="text-sm text-neutral-400 mb-6">
-                                You are about to generate a {linkToGenerate.type === 'deposit' ? 'deposit' : 'final'} payment link for <strong className="text-foreground">{linkToGenerate.clientName}</strong>. This will interact with Razorpay.
+                                You are about to generate a {linkToGenerate.type === 'deposit' ? 'deposit' : linkToGenerate.type === 'redraw' ? '70% discounted redraw' : 'final'} payment link for <strong className="text-foreground">{linkToGenerate.clientName}</strong>. This will interact with Razorpay.
                             </p>
                             <div className="flex gap-4">
                                 <button
