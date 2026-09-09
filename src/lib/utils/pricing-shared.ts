@@ -21,6 +21,30 @@ export const FRAMING_PRICES: Record<'A5' | 'A4' | 'A3' | 'A2', number> = {
     A2: 800,
 };
 
+// Packaging Prices based on size (Unframed vs Framed)
+export const PACKAGING_PRICES_UNFRAMED: Record<'A5' | 'A4' | 'A3' | 'A2', number> = {
+    A5: 150,
+    A4: 200,
+    A3: 250,
+    A2: 300,
+};
+
+export const PACKAGING_PRICES_FRAMED: Record<'A5' | 'A4' | 'A3' | 'A2', number> = {
+    A5: 200,
+    A4: 250,
+    A3: 300,
+    A2: 350,
+};
+
+/**
+ * Calculates the protective packaging fee based on paper size and whether framing is selected.
+ */
+export function calculatePackagingPrice(size: 'A5' | 'A4' | 'A3' | 'A2', isFramed: boolean = false): number {
+    return isFramed 
+        ? (PACKAGING_PRICES_FRAMED[size] ?? 250) 
+        : (PACKAGING_PRICES_UNFRAMED[size] ?? 200);
+}
+
 export const EARLY_ACCESS_LIMIT = 10;
 
 // Type for pricing tier

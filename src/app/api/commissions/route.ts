@@ -12,7 +12,7 @@ import {
 } from '@/lib/db/referrals';
 import { saveCommission, generateCommissionId, getActiveWorkloadCount, getPendingReviewCount, hasActiveCommission, getActiveCommissionCount, CommissionData } from '@/lib/db/commissions';
 import { getAvailability } from '@/lib/db/availability';
-import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
+import { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES, calculatePackagingPrice } from '@/lib/utils/pricing';
 import { SIZE_MIN_LEAD_DAYS, SIZE_RUSH_WINDOWS, parseLocalDate, formatLocalDate, calculateDetailedBackgroundPrice, calculateDetailedClothesPrice } from '@/lib/utils/pricing-shared';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth';
@@ -349,6 +349,7 @@ export async function POST(request: NextRequest) {
         let hasFreeBackground = false;
         let hasFreeTimelapse = false;
         let hasFreeFraming = false;
+        let hasFreePackaging = false;
         let appliedOffersEmailDraft = '';
 
         if (promo_ids && Array.isArray(promo_ids)) {
@@ -386,6 +387,7 @@ export async function POST(request: NextRequest) {
                     if (offer.free_extras?.background) hasFreeBackground = true;
                     if (offer.free_extras?.timelapse) hasFreeTimelapse = true;
                     if (offer.free_extras?.framing) hasFreeFraming = true;
+                    if (offer.free_extras?.packaging) hasFreePackaging = true;
                 }
             }
         }
@@ -394,14 +396,16 @@ export async function POST(request: NextRequest) {
         const clothesCostOriginal = detailed_clothes ? calculateDetailedClothesPrice(totalBasePriceOriginal) : 0;
         const timelapseCostOriginal = timelapse_recording ? 500 : 0;
         const framingCostOriginal = framing ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
-        const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + clothesCostOriginal + timelapseCostOriginal + framingCostOriginal + rushFee);
+        const packagingCostOriginal = calculatePackagingPrice(size as 'A5' | 'A4' | 'A3' | 'A2', !!framing);
+        const totalAmountOriginal = Math.round(totalBasePriceOriginal + backgroundCostOriginal + clothesCostOriginal + timelapseCostOriginal + framingCostOriginal + packagingCostOriginal + rushFee);
 
         const backgroundCost = (detailed_background && !hasFreeBackground) ? calculateDetailedBackgroundPrice(basePriceForOne) : 0;
         const clothesCost = detailed_clothes ? calculateDetailedClothesPrice(totalBasePriceOriginal) : 0;
         const timelapseCost = (timelapse_recording && !hasFreeTimelapse) ? 500 : 0;
         const framingCost = (framing && !hasFreeFraming) ? FRAMING_PRICES[size as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
+        const packagingCost = hasFreePackaging ? 0 : packagingCostOriginal;
 
-        const totalAmount = Math.round(totalBasePrice + backgroundCost + clothesCost + timelapseCost + framingCost + rushFee);
+        const totalAmount = Math.round(totalBasePrice + backgroundCost + clothesCost + timelapseCost + framingCost + packagingCost + rushFee);
         const totalSavings = totalAmountOriginal - totalAmount;
 
         // Increment Offer Usages if valid
@@ -420,6 +424,7 @@ export async function POST(request: NextRequest) {
             (detailed_clothes ? `- Detailed Clothes: ₹${clothesCostOriginal}\n` : '') +
             (timelapse_recording ? `- Timelapse Recording: ₹500 ${hasFreeTimelapse ? '(FREE)' : ''}\n` : '') +
             (framing ? `- Professional Framing: ₹${framingCostOriginal} ${hasFreeFraming ? '(FREE)' : ''}\n` : '') +
+            `- Protective Packaging: ₹${packagingCostOriginal} ${hasFreePackaging ? '(FREE)' : ''}\n` +
             (rushFee > 0 ? `- Artist Rush Fee (15–19 Days): ₹${rushFee}\n` : '') +
             appliedOffersEmailDraft +
             (totalSavings > 0 ? `**Total Savings: ₹${totalSavings}**\n` : '') +
@@ -452,7 +457,7 @@ export async function POST(request: NextRequest) {
         // 1. Save commission to storage FIRST (Guarantees data is persisted before notification)
         try {
             const commissionId = generateCommissionId();
-            const extrasTotal = backgroundCost + clothesCost + timelapseCost + framingCost + rushFee;
+            const extrasTotal = backgroundCost + clothesCost + timelapseCost + framingCost + packagingCost + rushFee;
             const commissionableAmount = totalBasePrice + backgroundCost + clothesCost;
             const referrersShare = commissionEligible ? (commissionableAmount * 0.20) : 0;
 

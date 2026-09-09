@@ -242,7 +242,7 @@ export async function PATCH(request: NextRequest) {
             result.data.framing !== undefined
         ) {
             const { supabaseAdmin } = await import('@/lib/supabase/admin');
-            const { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES } = await import('@/lib/utils/pricing');
+            const { getPriceForSize, calculatePortraitPrice, FRAMING_PRICES, calculatePackagingPrice } = await import('@/lib/utils/pricing');
             const { calculateDetailedBackgroundPrice, calculateDetailedClothesPrice } = await import('@/lib/utils/pricing-shared');
             const { getAllOffers } = await import('@/lib/db/offers');
 
@@ -260,10 +260,12 @@ export async function PATCH(request: NextRequest) {
             let hasFreeBackground = false;
             let hasFreeTimelapse = false;
             let hasFreeFraming = false;
+            let hasFreePackaging = false;
             for (const offer of appliedOffers) {
                 if (offer?.free_extras?.background) hasFreeBackground = true;
                 if (offer?.free_extras?.timelapse) hasFreeTimelapse = true;
                 if (offer?.free_extras?.framing) hasFreeFraming = true;
+                if (offer?.free_extras?.packaging) hasFreePackaging = true;
             }
 
             const newDetailedBackground = result.data.detailed_background !== undefined
@@ -286,9 +288,10 @@ export async function PATCH(request: NextRequest) {
             const clothesCost = newDetailedClothes ? calculateDetailedClothesPrice(totalBasePriceOriginal) : 0;
             const timelapseCost = (newTimelapse && !hasFreeTimelapse) ? 500 : 0;
             const framingCost = (newFraming && !hasFreeFraming) ? FRAMING_PRICES[size] : 0;
+            const packagingCost = hasFreePackaging ? 0 : calculatePackagingPrice(size, newFraming);
             const rushFee = existingCommission.rush_fee || 0;
 
-            const newExtrasTotal = backgroundCost + clothesCost + timelapseCost + framingCost + rushFee;
+            const newExtrasTotal = backgroundCost + clothesCost + timelapseCost + framingCost + packagingCost + rushFee;
             const commissionableAmount = (existingCommission.base_price || totalBasePriceOriginal) + backgroundCost + clothesCost;
             const newReferralAmount = existingCommission.referral_code ? (commissionableAmount * 0.20) : (existingCommission.commission_amount || 0);
 

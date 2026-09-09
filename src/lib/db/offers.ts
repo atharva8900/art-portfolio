@@ -14,6 +14,7 @@ export interface OfferData {
         timelapse?: boolean;
         background?: boolean;
         framing?: boolean;
+        packaging?: boolean;
     };
     is_active: boolean;
     is_public: boolean;

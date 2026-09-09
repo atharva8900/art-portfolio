@@ -434,6 +434,18 @@ function OfferListView({ offers, onDelete, onEdit, onShowQR, showNotification, e
                             </p>
                         )}
 
+                        {offer.free_extras && Object.entries(offer.free_extras).some(([, v]) => v) && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                                {Object.entries(offer.free_extras)
+                                    .filter(([, v]) => v)
+                                    .map(([k]) => (
+                                        <span key={k} className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-accent font-medium uppercase tracking-wider">
+                                            Free {k}
+                                        </span>
+                                    ))}
+                            </div>
+                        )}
+
                         <div className={`grid gap-4 pt-4 border-t border-foreground/5 ${offer.discount_percent > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                             {offer.discount_percent > 0 && (
                                 <div className="space-y-1">
@@ -518,7 +530,8 @@ function OfferModal({ onClose, onSuccess, editOffer }: { onClose: () => void, on
             delivery: editOffer?.free_extras?.delivery || false,
             timelapse: editOffer?.free_extras?.timelapse || false,
             background: editOffer?.free_extras?.background || false,
-            framing: editOffer?.free_extras?.framing || false
+            framing: editOffer?.free_extras?.framing || false,
+            packaging: editOffer?.free_extras?.packaging || false,
         },
         only_india_delivery: editOffer?.only_india_delivery || false,
         is_public: editOffer?.is_public !== false,

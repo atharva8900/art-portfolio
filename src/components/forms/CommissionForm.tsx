@@ -4,7 +4,7 @@ import { useState, useEffect, FormEvent, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, Plus, Minus, Lock, Instagram, Clock, Palette, Truck, Hourglass, Info, ChevronDown, Check, Flame, Sparkles, Frame, X, ShieldAlert } from 'lucide-react';
 
-import { calculatePortraitPrice, FRAMING_PRICES } from '@/lib/utils/pricing';
+import { calculatePortraitPrice, FRAMING_PRICES, calculatePackagingPrice } from '@/lib/utils/pricing';
 import { SIZE_RUSH_WINDOWS, formatLocalDate, calculateDetailedBackgroundPrice, calculateDetailedClothesPrice } from '@/lib/utils/pricing-shared';
 import CommissionCalendar from '@/components/forms/CommissionCalendar';
 import { useSession } from 'next-auth/react';
@@ -490,6 +490,7 @@ export default function CommissionForm() {
         let hasFreeBackground = false;
         let hasFreeTimelapse = false;
         let hasFreeFraming = false;
+        let hasFreePackaging = false;
 
         for (const offer of offers) {
             if (offer && offer.discount_percent) {
@@ -498,6 +499,7 @@ export default function CommissionForm() {
             if (offer?.free_extras?.background) hasFreeBackground = true;
             if (offer?.free_extras?.timelapse) hasFreeTimelapse = true;
             if (offer?.free_extras?.framing) hasFreeFraming = true;
+            if (offer?.free_extras?.packaging) hasFreePackaging = true;
         }
 
         const portraitPriceOriginal = calculatePortraitPrice(basePrice, peopleCount, selectedSize as 'A5' | 'A4' | 'A3' | 'A2');
@@ -506,6 +508,7 @@ export default function CommissionForm() {
         const clothesCost = detailedClothes ? calculateDetailedClothesPrice(portraitPriceOriginal) : 0;
         const timelapseCost = (timelapse && !hasFreeTimelapse) ? 499 : 0;
         const framingCost = (framing && !hasFreeFraming) ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
+        const packagingCost = hasFreePackaging ? 0 : calculatePackagingPrice(selectedSize as 'A5' | 'A4' | 'A3' | 'A2', framing);
 
         // Calculate Rush Fee based on size and queueStartDate
         let computedRushFee = 0;
@@ -530,7 +533,7 @@ export default function CommissionForm() {
         setIsRushOrder(rushActive);
 
         // Note: Delivery is usually handled in shipping, but if free_extras.delivery is true, that's a bonus
-        const total = baseTotal + backgroundCost + clothesCost + timelapseCost + framingCost + computedRushFee;
+        const total = baseTotal + backgroundCost + clothesCost + timelapseCost + framingCost + packagingCost + computedRushFee;
 
         // Calculate original total (without any discounts)
         const originalBaseTotal = portraitPriceOriginal;
@@ -538,7 +541,8 @@ export default function CommissionForm() {
         const originalClothesCost = detailedClothes ? calculateDetailedClothesPrice(portraitPriceOriginal) : 0;
         const originalTimelapseCost = timelapse ? 499 : 0;
         const originalFramingCost = framing ? FRAMING_PRICES[selectedSize as 'A5' | 'A4' | 'A3' | 'A2'] : 0;
-        const originalTotal = originalBaseTotal + originalBackgroundCost + originalClothesCost + originalTimelapseCost + originalFramingCost + computedRushFee;
+        const originalPackagingCost = calculatePackagingPrice(selectedSize as 'A5' | 'A4' | 'A3' | 'A2', framing);
+        const originalTotal = originalBaseTotal + originalBackgroundCost + originalClothesCost + originalTimelapseCost + originalFramingCost + originalPackagingCost + computedRushFee;
 
         setEstimatedTotal(Math.round(total));
         setOriginalTotalValue(Math.round(originalTotal));
@@ -1930,6 +1934,12 @@ export default function CommissionForm() {
                                         </span>
                                     </div>
                                 )}
+                                <div className="flex justify-between">
+                                    <span className="text-neutral-400">+ Protective Packaging {framing ? '(Framed)' : ''}</span>
+                                    <span className={`font-mono ${offers.some(o => o?.free_extras?.packaging) ? 'text-accent font-bold' : 'text-foreground'}`}>
+                                        {offers.some(o => o?.free_extras?.packaging) ? 'FREE' : `₹${calculatePackagingPrice(selectedSize as 'A5' | 'A4' | 'A3' | 'A2', framing)}`}
+                                    </span>
+                                </div>
                                 {rushFee > 0 && (
                                     <div className="flex justify-between items-center text-amber-500 font-medium pt-1 border-t border-amber-500/10">
                                         <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { CommissionData } from '@/lib/db/commissions';
 import type { OfferData } from '@/lib/db/offers';
+import { calculatePackagingPrice } from '@/lib/utils/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,7 @@ export async function GET() {
             let hasFreeTimelapse = false;
             let hasFreeFraming = false;
             let hasFreeDelivery = false;
+            let hasFreePackaging = false;
 
             if (c.promo_ids && Array.isArray(c.promo_ids)) {
                 try {
@@ -55,6 +57,7 @@ export async function GET() {
                             if (offer.free_extras?.timelapse) hasFreeTimelapse = true;
                             if (offer.free_extras?.framing) hasFreeFraming = true;
                             if (offer.free_extras?.delivery) hasFreeDelivery = true;
+                            if (offer.free_extras?.packaging) hasFreePackaging = true;
                         }
                     }
                 } catch {
@@ -71,6 +74,12 @@ export async function GET() {
             if (c.framing) {
                 // framing base price is variable based on size, but we can just say Framing or Framing (FREE)
                 extras.push(`Framing ${hasFreeFraming ? '(FREE)' : ''}`);
+            }
+            if (hasFreePackaging) {
+                extras.push('Protective Packaging (FREE)');
+            } else if (c.size) {
+                const pkgFee = calculatePackagingPrice(c.size as 'A5' | 'A4' | 'A3' | 'A2', !!c.framing);
+                extras.push(`Protective Packaging (+₹${pkgFee})`);
             }
             if (hasFreeDelivery) {
                 extras.push('Delivery (FREE)');
