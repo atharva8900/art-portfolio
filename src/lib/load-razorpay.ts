@@ -13,7 +13,7 @@
  * as "unused" if the modal isn't opened within ~5 seconds.
  *
  * Loading it JIT (when the user initiates checkout) means:
- *   1. Preloads are consumed immediately — the modal opens right after
+ *   1. Preloads are consumed immediately: the modal opens right after
  *      the script loads, within the browser's warning window.
  *   2. Users who never pay never download the SDK.
  *   3. Page TTI is completely unaffected.
@@ -67,7 +67,7 @@ let _promise: Promise<RazorpayConstructor> | null = null;
 
 /**
  * Resolves with the Razorpay constructor, injecting checkout.js on first call.
- * Subsequent calls return the cached promise — no duplicate script tags.
+ * Subsequent calls return the cached promise: no duplicate script tags.
  *
  * @example
  *   const Razorpay = await loadRazorpay();
@@ -82,7 +82,7 @@ export function loadRazorpay(): Promise<RazorpayConstructor> {
   if (_promise) return _promise;
 
   _promise = new Promise<RazorpayConstructor>((resolve, reject) => {
-    // HMR guard — script tag may already exist without window.Razorpay set yet
+    // HMR guard: script tag may already exist without window.Razorpay set yet
     const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (existing) {
       existing.addEventListener("load", () =>
@@ -109,7 +109,7 @@ export function loadRazorpay(): Promise<RazorpayConstructor> {
     script.onerror = () => {
       _promise = null; // allow retry on next call
       script.remove();
-      reject(new Error("Failed to load Razorpay checkout.js — check network and CSP"));
+      reject(new Error("Failed to load Razorpay checkout.js: check network and CSP"));
     };
 
     document.head.appendChild(script);
@@ -118,7 +118,7 @@ export function loadRazorpay(): Promise<RazorpayConstructor> {
   return _promise;
 }
 
-/** Synchronous check — useful for disabling the pay button during SDK init. */
+/** Synchronous check: useful for disabling the pay button during SDK init. */
 export function isRazorpayLoaded(): boolean {
   return typeof window !== "undefined" && typeof window.Razorpay === "function";
 }

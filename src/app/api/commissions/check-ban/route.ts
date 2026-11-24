@@ -108,7 +108,7 @@ export async function POST(request: Request) {
             reason: data.reason,
         });
     } catch {
-        // Fail open — don't block users on unexpected errors
+        // Fail open: don't block users on unexpected errors
         return NextResponse.json({ restricted: false });
     }
 }

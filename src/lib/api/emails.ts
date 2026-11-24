@@ -34,7 +34,7 @@ export async function sendCommissionStatusEmail(commission: CommissionData, stat
             subject = 'Your Commission Slot is Ready! – Atharva Sherlekar Art';
             const hasLink = !!commission.razorpay_payment_link_url;
             htmlContent = `
-                <h1>Good news—your slot is ready!</h1>
+                <h1>Good news: your slot is ready!</h1>
                 <p>Hi ${commission.client_name},</p>
                 <p>A slot has opened up for you!</p>
                 <p>To begin the artwork, please pay the <strong>50% advance deposit</strong>. Add-ons and delivery will be charged in the final invoice.</p>

@@ -77,7 +77,7 @@ export default function Pricing() {
 
         return [
             { size: 'A5' as const, price: pricingData.prices.A5, futurePrice: futurePrices.A5, subtitle: 'Perfect for tabletops & small spaces', badge: null },
-            { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: { icon: Star, text: 'Most Popular' } },
+            { size: 'A4' as const, price: pricingData.prices.A4, futurePrice: futurePrices.A4, subtitle: 'Best for couple portraits & fanart', badge: { icon: Star, text: 'Standard Choice' } },
             { size: 'A3' as const, price: pricingData.prices.A3, futurePrice: pricingData.prices.A3 === '₹1999' ? futurePrices.A3 : '₹3999', subtitle: 'Good for detailed artwork', badge: { icon: Sparkles, text: 'Large Portrait' } },
             { size: 'A2' as const, price: pricingData.prices.A2, futurePrice: futurePrices.A2, subtitle: 'Best for group portraits', badge: { icon: Crown, text: 'Grand Portrait' } }
         ];

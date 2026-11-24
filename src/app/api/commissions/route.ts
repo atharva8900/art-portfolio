@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
                     // LAYER 4: Commission Cap Check
                     commissionEligible = !(await hasReachedCommissionCap(referral_code));
 
-                    // LAYER 5: "Sting" Flagging (Anti-Self-Referral) — all checks run independently
+                    // LAYER 5: "Sting" Flagging (Anti-Self-Referral): all checks run independently
 
                     // A: Browser Lock (Most reliable for same device switching)
                     if (referral_locked_browser) {
@@ -256,7 +256,7 @@ export async function POST(request: NextRequest) {
                             : 'Browser Lock Match (Detected via device storage)';
                     }
 
-                    // B: IP Match (Device/Network overlap) — runs independently of A
+                    // B: IP Match (Device/Network overlap): runs independently of A
                     if (referralInfo.ip_hash === ipHash) {
                         isSelfReferralFlag = true;
                         flagReason = flagReason

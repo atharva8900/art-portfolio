@@ -17,7 +17,7 @@ function getDateCutoff(range: string): Date | null {
     if (range === 'ytd') {
         return new Date(now.getFullYear(), 0, 1);
     }
-    return null; // 'all' — no cutoff
+    return null; // 'all': no cutoff
 }
 
 export async function GET(request: Request) {

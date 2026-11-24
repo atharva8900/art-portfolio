@@ -1090,15 +1090,15 @@ export default function AdminCommissionsPage() {
                                                                         <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase">Contact</p>
                                                                         <div className="flex items-center gap-2 text-sm text-foreground">
                                                                             <Phone size={13} className="text-neutral-500 shrink-0" />
-                                                                            {commission.phone || <span className="text-neutral-600">—</span>}
+                                                                            {commission.phone || <span className="text-neutral-600">-</span>}
                                                                         </div>
                                                                         <div className="flex items-center gap-2 text-sm text-foreground">
                                                                             <Instagram size={13} className="text-neutral-500 shrink-0" />
-                                                                            {commission.instagram_id || <span className="text-neutral-600">—</span>}
+                                                                            {commission.instagram_id || <span className="text-neutral-600">-</span>}
                                                                         </div>
                                                                         <div className="flex items-start gap-2 text-sm text-foreground">
                                                                             <MapPin size={13} className="text-neutral-500 shrink-0 mt-0.5" />
-                                                                            <span className="leading-tight">{commission.address || <span className="text-neutral-600">—</span>}</span>
+                                                                            <span className="leading-tight">{commission.address || <span className="text-neutral-600">-</span>}</span>
                                                                         </div>
                                                                     </div>
 
@@ -1335,7 +1335,7 @@ export default function AdminCommissionsPage() {
                                                                                     <div className="flex justify-between gap-4 text-pink-400 font-medium italic"><span className="">Shipping</span><span className="font-mono">₹{commission.shipping_cost}</span></div>
                                                                                 ) : null}
                                                                             </div>
-                                                                        ) : <span className="text-neutral-600 text-sm">—</span>}
+                                                                        ) : <span className="text-neutral-600 text-sm">-</span>}
 
                                                                         <div className="pt-4 border-t border-foreground/10">
                                                                             <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-2">Payment Status (Manual Override)</p>
@@ -1940,9 +1940,9 @@ export default function AdminCommissionsPage() {
                                                 <div className="p-6 grid grid-cols-2 gap-6">
                                                     <div className="space-y-3">
                                                         <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase">Contact</p>
-                                                        <div className="flex items-center gap-2 text-sm text-foreground"><Phone size={12} className="text-neutral-500" />{commission.phone || '—'}</div>
-                                                        <div className="flex items-center gap-2 text-sm text-foreground"><Instagram size={12} className="text-neutral-500" />{commission.instagram_id || '—'}</div>
-                                                        <div className="flex items-start gap-2 text-sm text-foreground"><MapPin size={12} className="text-neutral-500 mt-0.5" /><span>{commission.address || '—'}</span></div>
+                                                        <div className="flex items-center gap-2 text-sm text-foreground"><Phone size={12} className="text-neutral-500" />{commission.phone || '-'}</div>
+                                                        <div className="flex items-center gap-2 text-sm text-foreground"><Instagram size={12} className="text-neutral-500" />{commission.instagram_id || '-'}</div>
+                                                        <div className="flex items-start gap-2 text-sm text-foreground"><MapPin size={12} className="text-neutral-500 mt-0.5" /><span>{commission.address || '-'}</span></div>
                                                     </div>
                                                     <div className="space-y-3">
                                                         <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase">Pricing</p>

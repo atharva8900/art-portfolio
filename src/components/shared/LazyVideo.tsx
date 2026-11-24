@@ -132,7 +132,7 @@ export default function LazyVideo({
                         playsInline
                     />
 
-                    {/* Controls Overlay — always on top, shown/hidden via opacity */}
+                    {/* Controls Overlay: always on top, shown/hidden via opacity */}
                     <div
                         className={`absolute inset-0 flex flex-col justify-end transition-opacity duration-300 pointer-events-none ${showControls || !isPlaying ? "opacity-100" : "opacity-0"}`}
                     >

@@ -23,7 +23,7 @@ import type { OfferData } from '@/lib/db/offers';
 
 const REF_LOCK_KEY = 'atharva_referral_lock';
 
-// Custom paper size dropdown — portal-based so it escapes any overflow container
+// Custom paper size dropdown: portal-based so it escapes any overflow container
 function PaperSizeDropdown({ value, onChange, options }: {
     value: string;
     onChange: (v: string) => void;
@@ -54,7 +54,7 @@ function PaperSizeDropdown({ value, onChange, options }: {
         setOpen(true);
     };
 
-    // Close when clicking outside (but not on the button itself — that's handled by toggle)
+    // Close when clicking outside (but not on the button itself: that's handled by toggle)
     useEffect(() => {
         if (!open) return;
         const handleClickOutside = (e: MouseEvent) => {
@@ -228,7 +228,7 @@ export default function CommissionForm() {
     const [offerErrors, setOfferErrors] = useState<string[]>(['', '', '']);
     const [isValidatingPromos, setIsValidatingPromos] = useState<boolean[]>([false, false, false]);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-// (Removed showTurnstile state as SafeTurnstile handles it internally)
+    // (Removed showTurnstile state as SafeTurnstile handles it internally)
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const [offerAppliedMessages, setOfferAppliedMessages] = useState<string[]>(['', '', '']);
     const originalBodyOverflow = useRef('');
@@ -274,7 +274,7 @@ export default function CommissionForm() {
         setIsValidatingPromos(prev => { const newArr = [...prev]; newArr[index] = true; return newArr; });
         setOfferErrors(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
         setOfferAppliedMessages(prev => { const newArr = [...prev]; newArr[index] = ''; return newArr; });
-        
+
         const activeFingerprint = overrideFp !== undefined ? overrideFp : fingerprintHash;
         const country = new URLSearchParams(window.location.search).get('country');
         const query = country ? `?country=${country}` : '';
@@ -336,7 +336,7 @@ export default function CommissionForm() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const promo = params.get('promo');
-        
+
         console.log('[OFFER DEBUG] Effect triggered. Status:', status, 'Promo from URL:', promo, 'Already Fetched:', publicOfferFetched.current);
 
         if (status !== 'open') {
@@ -563,7 +563,7 @@ export default function CommissionForm() {
 
             // 1. OBVIOUS: Same account match (Show explicit warning)
             const isEmailMatch = email && user?.email && email.trim().toLowerCase() === user.email.trim().toLowerCase();
-            
+
             if (isEmailMatch) {
                 // Obvious same-account match: Show yellow warning, Block referral
                 setIsSelfReferral(true);
@@ -600,9 +600,9 @@ export default function CommissionForm() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
-        
+
         let files = Array.from(e.target.files);
-        
+
         if (attachments.length + files.length > 6) {
             alert(`You can only upload a maximum of 6 reference photos. The remaining files were skipped.`);
             files = files.slice(0, Math.max(0, 6 - attachments.length));
@@ -801,7 +801,7 @@ export default function CommissionForm() {
                 // Only show "Obvious" warning if emails match. 
                 // Browser lock remains silent here to avoid giving it away after submission.
                 if (session?.user?.email === responseData.referral.referrer_email) {
-                setIsSelfReferral(true);
+                    setIsSelfReferral(true);
                 }
                 // Ensure lock is set for next time
                 localStorage.setItem(REF_LOCK_KEY, 'true');
@@ -977,16 +977,14 @@ export default function CommissionForm() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`relative z-10 p-10 md:p-14 border rounded-3xl max-w-md w-full shadow-2xl text-left ${
-                        isMuted
-                            ? 'bg-orange-500/5 border-orange-500/20'
-                            : 'bg-red-500/5 border-red-500/20'
-                    }`}
+                    className={`relative z-10 p-10 md:p-14 border rounded-3xl max-w-md w-full shadow-2xl text-left ${isMuted
+                        ? 'bg-orange-500/5 border-orange-500/20'
+                        : 'bg-red-500/5 border-red-500/20'
+                        }`}
                 >
                     {/* Title */}
-                    <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ${
-                        isMuted ? 'text-orange-400/60' : 'text-red-500/60'
-                    }`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-3 ${isMuted ? 'text-orange-400/60' : 'text-red-500/60'
+                        }`}>
                         {isMuted ? 'Temporary Restriction' : 'Permanent Restriction'}
                     </p>
                     <h2 className="font-serif text-3xl text-foreground mb-4">
@@ -994,9 +992,8 @@ export default function CommissionForm() {
                     </h2>
 
                     {/* Reason block */}
-                    <div className={`p-4 rounded-xl border mb-6 ${
-                        isMuted ? 'bg-orange-500/5 border-orange-500/10' : 'bg-red-500/5 border-red-500/10'
-                    }`}>
+                    <div className={`p-4 rounded-xl border mb-6 ${isMuted ? 'bg-orange-500/5 border-orange-500/10' : 'bg-red-500/5 border-red-500/10'
+                        }`}>
                         <p className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 mb-1">Reason</p>
                         <p className="text-sm text-foreground/80">False form submission</p>
                     </div>
@@ -1018,7 +1015,7 @@ export default function CommissionForm() {
                     )}
 
                     {/* Divider */}
-                    <div className={`h-px mb-6 ${ isMuted ? 'bg-orange-500/10' : 'bg-red-500/10'}`} />
+                    <div className={`h-px mb-6 ${isMuted ? 'bg-orange-500/10' : 'bg-red-500/10'}`} />
 
                     {/* CTA */}
                     <p className="text-sm text-neutral-400 mb-5">
@@ -1029,11 +1026,10 @@ export default function CommissionForm() {
                         href="https://instagram.com/atharva_sherlekar_art"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-3 px-6 py-3.5 rounded-xl font-bold text-sm transition-all ${
-                            isMuted
-                                ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20'
-                                : 'bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20'
-                        }`}
+                        className={`inline-flex items-center gap-3 px-6 py-3.5 rounded-xl font-bold text-sm transition-all ${isMuted
+                            ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20'
+                            : 'bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20'
+                            }`}
                     >
                         <Instagram size={16} />
                         @atharva_sherlekar_art
@@ -1072,7 +1068,7 @@ export default function CommissionForm() {
                     </p>
 
                     {reopenDate && (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             className="mb-8 p-4 bg-accent/10 border border-accent/20 rounded-lg text-accent text-sm font-bold uppercase tracking-widest flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
@@ -1158,7 +1154,7 @@ export default function CommissionForm() {
                     {status === 'waitlist' && (
                         <div className="mt-6 space-y-4 flex flex-col items-center w-full">
                             <div className="p-6 bg-amber-500/5 border border-amber-500/20 text-amber-800 dark:text-amber-200/80 rounded-2xl text-center w-full max-w-2xl">
-                                <p className="font-bold mb-2 text-amber-700 dark:text-amber-400 tracking-tight text-lg">High Demand — Slot Reservation Available</p>
+                                <p className="font-bold mb-2 text-amber-700 dark:text-amber-400 tracking-tight text-lg">High Demand: Slot Reservation Available</p>
                                 <p className="text-sm opacity-90 leading-relaxed">
                                     My commission slots are currently full. You can reserve a slot for next month by paying a <strong className="text-amber-900 dark:text-amber-300">25% Slot Reservation Fee</strong>. The remaining 25% advance will be collected when I begin your artwork.
                                 </p>
@@ -1403,13 +1399,13 @@ export default function CommissionForm() {
                                 </h4>
                                 <div className="space-y-2 relative z-10">
                                     <label htmlFor="submitted_at" className="text-xs uppercase tracking-widest text-neutral-400 font-medium">Custom Submission Date</label>
-                                    <input 
-                                        id="submitted_at" 
-                                        name="submitted_at" 
-                                        type="datetime-local" 
+                                    <input
+                                        id="submitted_at"
+                                        name="submitted_at"
+                                        type="datetime-local"
                                         value={submittedAtOverride}
                                         onChange={(e) => setSubmittedAtOverride(e.target.value)}
-                                        className="w-full bg-surface/50 border border-orange-500/20 p-4 rounded-md text-foreground focus:border-orange-500 outline-none transition-colors" 
+                                        className="w-full bg-surface/50 border border-orange-500/20 p-4 rounded-md text-foreground focus:border-orange-500 outline-none transition-colors"
                                     />
                                     <p className="text-[10px] text-neutral-500">Leave blank to use the current date and time. Only visible to admins.</p>
                                 </div>
@@ -1426,21 +1422,20 @@ export default function CommissionForm() {
                                     <span>Email Address</span>
                                     {user && <span className="text-[9px] text-accent flex items-center gap-1"><Lock size={10} /> VERIFIED</span>}
                                 </label>
-                                <input 
-                                    required 
-                                    id="email" 
-                                    name="email" 
-                                    type="email" 
-                                    value={userEmail} 
-                                    onChange={(e) => !user && setUserEmail(e.target.value)} 
+                                <input
+                                    required
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    value={userEmail}
+                                    onChange={(e) => !user && setUserEmail(e.target.value)}
                                     readOnly={!!user}
-                                    autoComplete="email" 
-                                    className={`w-full bg-surface border p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors ${
-                                        user 
-                                            ? 'border-accent/30 bg-accent/5 opacity-80 cursor-not-allowed text-neutral-400' 
-                                            : 'border-foreground/10 hover:border-foreground/30'
-                                    }`} 
-                                    placeholder="john@example.com" 
+                                    autoComplete="email"
+                                    className={`w-full bg-surface border p-4 rounded-md text-foreground focus:border-accent outline-none transition-colors ${user
+                                        ? 'border-accent/30 bg-accent/5 opacity-80 cursor-not-allowed text-neutral-400'
+                                        : 'border-foreground/10 hover:border-foreground/30'
+                                        }`}
+                                    placeholder="john@example.com"
                                 />
                                 {user && (
                                     <p className="text-[10px] text-neutral-500 uppercase tracking-wider">
@@ -1552,7 +1547,7 @@ export default function CommissionForm() {
                                     >
                                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-300">
                                             <Flame size={14} className="flex-shrink-0" />
-                                            <span className="text-xs font-medium">Add a 2nd face for 50% off — make it a group portrait!</span>
+                                            <span className="text-xs font-medium">Add a 2nd face for 50% off: make it a group portrait!</span>
                                         </div>
                                     </motion.div>
                                 )}
@@ -1565,7 +1560,7 @@ export default function CommissionForm() {
                                     >
                                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300">
                                             <Sparkles size={14} className="flex-shrink-0" />
-                                            <span className="text-xs font-medium">Group discount applied — each extra face at 50% off!</span>
+                                            <span className="text-xs font-medium">Group discount applied: each extra face at 50% off!</span>
                                         </div>
                                     </motion.div>
                                 )}
@@ -2130,12 +2125,12 @@ export default function CommissionForm() {
 
                         <div className="space-y-4">
                             <AnimatePresence>
-                            <div className="flex justify-center items-center overflow-hidden">
-                                <SafeTurnstile
-                                    ref={turnstileRef}
-                                    onSuccess={handleTurnstileSuccess}
-                                />
-                            </div>
+                                <div className="flex justify-center items-center overflow-hidden">
+                                    <SafeTurnstile
+                                        ref={turnstileRef}
+                                        onSuccess={handleTurnstileSuccess}
+                                    />
+                                </div>
                             </AnimatePresence>
 
                             <button

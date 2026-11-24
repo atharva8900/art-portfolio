@@ -9,7 +9,7 @@ const TESTIMONIALS = [
     {
         name: "Namrata Paste",
         role: "Buyer",
-        content: "Exceptional work 🙌 This sketch is beyond what I imagined. You brought so much life and emotion to it—Thank you so much ❤️",
+        content: "Exceptional work 🙌 This sketch is beyond what I imagined. You brought so much life and emotion to it, thank you so much ❤️",
         avatar: "N",
         color: "amber",
         icon: Quote,
@@ -18,7 +18,7 @@ const TESTIMONIALS = [
     {
         name: "Shubham Paste",
         role: "The Recipient",
-        content: "You've created something unforgettable. The detailing, the effort — everything is perfect. Truly grateful for this masterpiece. ❤️🔥🙌",
+        content: "You've created something unforgettable. The detailing, the effort: everything is perfect. Truly grateful for this masterpiece. ❤️🔥🙌",
         avatar: "S",
         color: "accent",
         icon: Sparkles,

@@ -40,8 +40,8 @@ export const PACKAGING_PRICES_FRAMED: Record<'A5' | 'A4' | 'A3' | 'A2', number> 
  * Calculates the protective packaging fee based on paper size and whether framing is selected.
  */
 export function calculatePackagingPrice(size: 'A5' | 'A4' | 'A3' | 'A2', isFramed: boolean = false): number {
-    return isFramed 
-        ? (PACKAGING_PRICES_FRAMED[size] ?? 250) 
+    return isFramed
+        ? (PACKAGING_PRICES_FRAMED[size] ?? 250)
         : (PACKAGING_PRICES_UNFRAMED[size] ?? 200);
 }
 
@@ -58,7 +58,7 @@ export type PricingTier = 'early_access' | 'regular';
  * - A5: Additional People cost +100% of Base Price each (no discount)
  * @param basePrice The base price for the selected size (e.g., 500)
  * @param peopleCount The total number of people in the portrait (min 1)
- * @param size Optional paper size — A4/A3/A2 get group discount, A5 does not
+ * @param size Optional paper size: A4/A3/A2 get group discount, A5 does not
  */
 export function calculatePortraitPrice(basePrice: number, peopleCount: number, size?: 'A5' | 'A4' | 'A3' | 'A2'): number {
     if (peopleCount <= 1) return basePrice;
@@ -66,7 +66,7 @@ export function calculatePortraitPrice(basePrice: number, peopleCount: number, s
     const additionalPeople = peopleCount - 1;
     // A4/A3/A2 get 50% discount on extra people, A5 (or unspecified) charges full price
     const discountRate = (size === 'A4' || size === 'A3' || size === 'A2') ? 0.5 : 1.0;
-    
+
     // Round up the additional cost to maintain whole numbers and X99 format
     // Example: A4 (₹999) + 1 face (₹999 * 0.5 = 499.5) becomes 499.5 rounded up to 500. Total = 1499.
     const additionalCost = Math.ceil(basePrice * discountRate * additionalPeople);

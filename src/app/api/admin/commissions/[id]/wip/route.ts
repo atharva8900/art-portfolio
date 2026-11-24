@@ -15,7 +15,7 @@ async function getAdminSession() {
     return await getServerSession(authOptions);
 }
 
-// POST /api/admin/commissions/[id]/wip  — upload a WIP image for a slot
+// POST /api/admin/commissions/[id]/wip: upload a WIP image for a slot
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const session = await getAdminSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: 'Commission not found' }, { status: 404 });
     }
 
-    // wip_images is stored as [start_url, mid_url, finished_url] — indexed by slot
+    // wip_images is stored as [start_url, mid_url, finished_url], indexed by slot
     const currentImages: (string | null)[] = commission.wip_images ?? [null, null, null];
     while (currentImages.length < 3) currentImages.push(null);
     const slotIndex = WIP_SLOTS.indexOf(slot);
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ url: publicUrl, slot });
 }
 
-// DELETE /api/admin/commissions/[id]/wip?slot=start  — remove a WIP image
+// DELETE /api/admin/commissions/[id]/wip?slot=start: remove a WIP image
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const session = await getAdminSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

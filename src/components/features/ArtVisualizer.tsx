@@ -42,7 +42,7 @@ interface ArtVisualizerProps {
     forcedSize?: PortraitSize;
     /** Passed from the parent form to remember previously saved selections */
     initialConfig?: FrameConfig;
-    /** Called when user clicks "Frame It" — passes the current config */
+    /** Called when user clicks "Frame It": passes the current config */
     onFrameIt?: (config: FrameConfig) => void;
     /** Optional class name to pass down */
     className?: string;
@@ -303,7 +303,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                                             className="w-full h-full relative transition-all duration-300 shadow-inner flex items-center justify-center"
                                             style={{ padding: `${mattingSize}px`, backgroundColor: mattingColor }}
                                         >
-                                            {/* The "Artwork" — zoomable/pannable */}
+                                            {/* The "Artwork": zoomable/pannable */}
                                             <div ref={previewAreaRef} className="w-full h-full relative overflow-hidden shadow-sm touch-none">
                                                 <TransformWrapper
                                                     key={`${orientation}-${image}-${Math.round(wrapperSize.w)}-${Math.round(wrapperSize.h)}-${Math.round(imgSize.w)}-${Math.round(imgSize.h)}`}
@@ -403,11 +403,11 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
 
                 {/* Controls Drawer - scrollable bottom sheet on mobile, sidebar on desktop */}
                 <div className="lg:col-span-4 flex-1 lg:h-full lg:min-h-0 bg-surface border-t-0 lg:border lg:border-foreground/5 rounded-t-3xl lg:rounded-3xl lg:self-stretch shadow-[0_-8px_30px_rgba(0,0,0,0.4)] lg:shadow-sm flex flex-col">
-                    {/* Pill handle — mobile only */}
+                    {/* Pill handle: mobile only */}
                     <div className="flex justify-center pt-3 pb-1 lg:hidden">
                         <div className="w-10 h-1 rounded-full bg-foreground/20" />
                     </div>
-                    {/* Sticky header — not part of the scroll area */}
+                    {/* Sticky header: not part of the scroll area */}
                     <div className="flex items-center gap-3 text-accent border-b border-foreground/5 px-4 lg:px-6 py-3">
                         <Settings2 size={16} />
                         <h3 className="font-serif text-sm lg:text-xl tracking-widest uppercase">Design Studio</h3>
@@ -551,7 +551,7 @@ const ArtVisualizer = ({ embedded = false, forcedSize, initialConfig, onFrameIt,
                             />
                         </div>
 
-                        {/* CTA — scroll down to reach it */}
+                        {/* CTA: scroll down to reach it */}
                         <div className="pt-6 pb-8">
                             <button
                                 type="button"

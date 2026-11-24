@@ -43,7 +43,7 @@ export function onTurnstileReady(cb: ReadyCallback): () => void {
 }
 
 /**
- * Synchronous check — useful for SSR guards.
+ * Synchronous check: useful for SSR guards.
  */
 export function isTurnstileReady(): boolean {
   return scriptReady && typeof window !== "undefined" && !!window.turnstile;

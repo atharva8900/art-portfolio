@@ -357,7 +357,7 @@ export default function ClientDashboardPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* WIP Gallery — only shown when in progress, redrawing, or later */}
+                                                {/* WIP Gallery: only shown when in progress, redrawing, or later */}
                                                 {(['in_progress', 'redrawing', 'finished', 'on_delivery', 'completed'] as ClientCommission['status'][]).includes(commission.status) && commission.wip_images && commission.wip_images.length > 0 && (
                                                     <div className="mt-5 pt-5 border-t border-foreground/10">
                                                         <p className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-3">Artwork Progress</p>
@@ -572,7 +572,7 @@ export default function ClientDashboardPage() {
                                                     </div>
                                                 )}
 
-                                                {/* Invoice Download — shown when any payment is made (reservation_paid, deposit_paid, fully_paid) */}
+                                                {/* Invoice Download: shown when any payment is made (reservation_paid, deposit_paid, fully_paid) */}
                                                 {(commission.payment_status && commission.payment_status !== 'pending') && (
                                                     <button
                                                         onClick={() => handleDownloadInvoice(commission)}

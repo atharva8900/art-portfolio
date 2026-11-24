@@ -25,7 +25,7 @@ export default function About() {
                         >
                             <p>
                                 I specialize in <strong className="text-foreground font-medium">photorealistic and hyper-realistic hand-drawn portraits</strong>.
-                                My work is defined by an obsession with detail—capturing not just the likeness, but the texture of skin, the depth of eyes, and the subtle interplay of light and shadow.
+                                My work is defined by an obsession with detail, capturing not just the likeness, but the texture of skin, the depth of eyes, and the subtle interplay of light and shadow.
                             </p>
                             <p>
                                 Using the <strong className="text-foreground font-medium">Grid Method</strong> for absolute precision, I ensure that every proportion is mathematically accurate before shading begins. This technique allows me to achieve a level of realism that transforms a simple sketch into a lifelike memory.

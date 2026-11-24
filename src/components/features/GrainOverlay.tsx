@@ -207,7 +207,7 @@ export default function GrainOverlay() {
       geometry.dispose();
       material.dispose();
     };
-  }, []); // mount once — theme handled via isDarkRef
+  }, []); // mount once: theme handled via isDarkRef
 
   return (
     <canvas

@@ -228,7 +228,7 @@ export default function AdminDashboardPage() {
                                     />
                                     <KPICard
                                         title="Turnaround"
-                                        value={data.metrics.avgTurnaroundDays !== null ? `${data.metrics.avgTurnaroundDays}d` : '—'}
+                                        value={data.metrics.avgTurnaroundDays !== null ? `${data.metrics.avgTurnaroundDays}d` : '-'}
                                         icon={<Timer size={16} />}
                                         subtitle="Avg. completion time"
                                         delay={0.4}
@@ -236,7 +236,7 @@ export default function AdminDashboardPage() {
                                     />
                                     <KPICard
                                         title="Conversion"
-                                        value={data.metrics.conversionRate !== null ? `${data.metrics.conversionRate}%` : '—'}
+                                        value={data.metrics.conversionRate !== null ? `${data.metrics.conversionRate}%` : '-'}
                                         icon={<BarChart2 size={16} />}
                                         subtitle="Requests to completed"
                                         delay={0.5}
