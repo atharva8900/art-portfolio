@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Info, Calendar, Sparkles, ClipboardEdit, Search, CreditCard, Clock, Palette, Wallet, Truck, Package } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info, Calendar, Sparkles, ClipboardEdit, Search, CreditCard, Clock, Palette, Wallet, Truck, Package, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 
 const steps = [
@@ -10,7 +10,7 @@ const steps = [
         title: "Fill Out the Commission Form",
         icon: ClipboardEdit,
         description:
-            "Everything starts with a short form on the homepage. You'll choose your paper size (A5, A4, A3, or A2), the number of people in the portrait, and any add-ons you'd like — such as a detailed background, a timelapse recording of the drawing process, or custom framing. You can also upload up to 6 reference photos directly in the form, so I can see exactly what you have in mind.",
+            "Everything starts with a short form on the homepage. You'll choose your paper size (A5, A4, A3, or A2), the number of people in the portrait, and any add-ons you'd like (such as a detailed background, a timelapse recording of the drawing process, or custom framing). You can also upload up to 6 reference photos directly in the form, so I can see exactly what you have in mind.",
         note: "You'll need to sign in with Google or your email to submit. This keeps your commission tied to your account and lets you track it later in your Client Dashboard.",
     },
     {
@@ -23,7 +23,7 @@ const steps = [
     },
     {
         number: "03",
-        title: "Slot Confirmed — Deposit to Begin",
+        title: "Slot Confirmed: Deposit to Begin",
         icon: CreditCard,
         description:
             "If your slot is accepted, you'll receive an email notification and a secure Razorpay payment link in your dashboard for the 50% deposit. Once the deposit is received, work officially begins. If I'm fully booked, your request automatically enters the Waitlist (see below).",
@@ -43,12 +43,12 @@ const steps = [
         title: "Artwork in Progress",
         icon: Palette,
         description:
-            "This is where the magic happens. I work on your portrait carefully and at my own pace to ensure the best quality — typically 15 to 30 days for completion. As the artwork progresses, I'll upload three work-in-progress snapshots to your Client Dashboard: the initial outlines, a mid-process photo, and the finished artwork. You can view and download these at any time.",
+            "This is where the magic happens. I work on your portrait carefully and at my own pace to ensure the best quality, typically 15 to 30 days for completion. As the artwork progresses, I'll upload three work-in-progress snapshots to your Client Dashboard: the initial outlines, a mid-process photo, and the finished artwork. You can view and download these at any time.",
         note: "If you opted for a timelapse, the video recording will be shared with you once the artwork is complete.",
     },
     {
         number: "05",
-        title: "Artwork Ready — Final Payment",
+        title: "Artwork Ready: Final Payment",
         icon: Wallet,
         description:
             "Once the portrait is complete, the status in your dashboard changes to 'Artwork Ready'. At this point, I'll calculate the shipping cost based on your location and generate a final payment link for the remaining 50% balance plus shipping. The artwork will not be shipped until the final payment is received.",
@@ -64,10 +64,10 @@ const steps = [
     },
     {
         number: "07",
-        title: "Delivered — Your Art is Home",
+        title: "Delivered: Your Art is Home",
         icon: Package,
         description:
-            "When your artwork arrives, please let me know — I love hearing that it reached you safely! The commission is then marked as 'Delivered' in your dashboard and archived in your history. You can also download a detailed invoice from your dashboard for your records at any time.",
+            "When your artwork arrives, please let me know, as I love hearing that it reached you safely! The commission is then marked as 'Delivered' in your dashboard and archived in your history. You can also download a detailed invoice from your dashboard for your records at any time.",
         note: "If you opted for framing, the artwork arrives in a custom frame, ready to hang.",
     },
 ];
@@ -106,7 +106,7 @@ export default function CommissionProcessPage() {
                         </h1>
                         <p className="text-neutral-500 dark:text-neutral-400 text-xl leading-relaxed max-w-2xl font-light italic">
                             &ldquo;Commissioning a custom portrait is a personal and exciting experience. Here&apos;s a
-                            detailed look at every step — from the moment you fill out the form to the day your
+                            detailed look at every step, from the moment you fill out the form to the day your
                             artwork arrives at your door.&rdquo;
                         </p>
                     </motion.div>
@@ -117,7 +117,7 @@ export default function CommissionProcessPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
-                    className="mb-24 relative"
+                    className="mb-8 relative"
                 >
                     <div className="absolute inset-0 bg-surface/50 dark:bg-[#e7bb55]/[0.02] border border-[#e7bb55]/10 dark:border-[#e7bb55]/20 rounded-[2.5rem] shadow-xl shadow-black/5 dark:shadow-none" />
                     <div className="absolute top-0 right-0 py-8 px-12 opacity-5 overflow-hidden rounded-[2.5rem]">
@@ -138,6 +138,38 @@ export default function CommissionProcessPage() {
                             </p>
                         </div>
                     </div>
+                </motion.div>
+
+                {/* Rush Orders & 7-Day Buffer Link Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    className="mb-20 p-6 sm:p-8 rounded-[2rem] bg-gradient-to-r from-amber-500/[0.08] via-amber-500/[0.03] to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
+                >
+                    <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-500 shrink-0 mt-0.5">
+                            <Flame size={24} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] uppercase font-bold tracking-widest text-amber-600 dark:text-amber-400">
+                                Need Art Urgently For A Specific Date?
+                            </span>
+                            <h3 className="font-serif text-xl sm:text-2xl font-bold text-foreground">
+                                Why I Charge a Rush Fee & How My 7-Day Buffer Works
+                            </h3>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-xl leading-relaxed">
+                                Learn why to guarantee delivery by your date, drawing must finish 7 days earlier, and how whole-day overtime and post-production buffers guarantee on-time delivery.
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/rush-fee"
+                        className="shrink-0 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs uppercase tracking-wider transition-all flex items-center gap-2 group shadow-sm"
+                    >
+                        <span>Read Full Guide</span>
+                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
                 </motion.div>
 
                 {/* Steps Section Title */}

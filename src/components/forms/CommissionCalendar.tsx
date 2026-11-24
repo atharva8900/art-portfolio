@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Flame, CheckCircle, Info, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Flame, CheckCircle, Info, Lock, X, Frame, Package, Truck, Clock, ArrowRight } from 'lucide-react';
 import { getDateCategory, CalendarDateCategory, SIZE_MIN_LEAD_DAYS, SIZE_RUSH_WINDOWS, formatLocalDate, parseLocalDate } from '@/lib/utils/pricing-shared';
 
 interface CommissionCalendarProps {
@@ -47,6 +48,7 @@ export default function CommissionCalendar({
         }
         return new Date(queueStartDate.getFullYear(), queueStartDate.getMonth(), 1);
     });
+    const [showRushModal, setShowRushModal] = useState(false);
 
     const currentYear = currentMonthDate.getFullYear();
     const currentMonth = currentMonthDate.getMonth();
@@ -166,9 +168,21 @@ export default function CommissionCalendar({
 
             {/* Visual Color Legend */}
             <div className="space-y-1.5">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
-                    <Info size={12} />
-                    <span>Calendar Schedule</span>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                        <Info size={12} />
+                        <span>Calendar Schedule</span>
+                    </div>
+                    {rushWindow && (
+                        <button
+                            type="button"
+                            onClick={() => setShowRushModal(true)}
+                            className="text-[10px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium hover:underline flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                            <Flame size={11} className="text-amber-500" />
+                            <span>Why rush fee? (7-day buffer)</span>
+                        </button>
+                    )}
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px]">
                     <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 font-medium">
@@ -184,10 +198,15 @@ export default function CommissionCalendar({
                         <span>Creation Time ({minLead}d)</span>
                     </div>
                     {rushWindow ? (
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-medium">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-                            <span>Rush (+30%)</span>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowRushModal(true)}
+                            className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-500/20 transition-all text-left cursor-pointer group"
+                            title="Click to learn why rush fees apply and how the 7-day buffer works"
+                        >
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 group-hover:scale-110 transition-transform" />
+                            <span className="group-hover:underline">Rush (+30%) ℹ️</span>
+                        </button>
                     ) : (
                         <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-neutral-500/5 border border-foreground/5 text-neutral-400 font-medium">
                             <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700 shrink-0" />
@@ -329,7 +348,7 @@ export default function CommissionCalendar({
                             <CheckCircle size={16} className="text-emerald-500 shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1">
-                            <div className="flex items-center justify-between font-semibold">
+                            <div className="flex items-center justify-between font-semibold flex-wrap gap-1">
                                 <span>Target Delivery: {selectedDateInfo.formatted}</span>
                                 {selectedDateInfo.isRush && (
                                     <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
@@ -339,16 +358,133 @@ export default function CommissionCalendar({
                             </div>
                             <p className="text-[11px] opacity-90 mt-0.5">
                                 {selectedDateInfo.isRush
-                                    ? `Rush order selected (${size}). Prioritized artwork creation, express packaging & fast dispatch included.`
+                                    ? `Rush order selected (${size}). Prioritized whole-day overtime creation, custom framing (if chosen), and secure courier buffer included.`
                                     : `Standard delivery selected (${size}). No rush fee applied.`}
                             </p>
+                            {selectedDateInfo.isRush && (
+                                <div className="mt-2 pt-2 border-t border-amber-500/20 flex items-center justify-between">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowRushModal(true)}
+                                        className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <Info size={12} />
+                                        <span>Why is there a rush fee? (How the 7-day buffer works)</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 ) : (
                     <div className="p-3 rounded-lg bg-foreground/5 border border-foreground/10 text-neutral-500 text-xs flex items-center gap-2">
                         <CalendarIcon size={14} className="text-neutral-400 shrink-0" />
-                        <span>Please select an available deadline (green or yellow date) from the calendar above.</span>
+                        <span>Please select an available delivery deadline (green or yellow date) from the calendar above.</span>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* Quick In-Context Rush Explainer Modal */}
+            <AnimatePresence>
+                {showRushModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs"
+                        onClick={() => setShowRushModal(false)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="bg-surface border border-foreground/15 rounded-2xl p-5 sm:p-6 max-w-lg w-full shadow-2xl relative text-foreground space-y-4"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Close Button */}
+                            <button
+                                type="button"
+                                onClick={() => setShowRushModal(false)}
+                                className="absolute top-4 right-4 p-1.5 rounded-lg text-neutral-400 hover:text-foreground hover:bg-foreground/5 transition-colors cursor-pointer"
+                                aria-label="Close modal"
+                            >
+                                <X size={18} />
+                            </button>
+
+                            {/* Modal Header */}
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                    <Flame size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif font-bold text-lg leading-tight">
+                                        Why I Charge a Rush Fee
+                                    </h3>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                        My 7-Day Delivery Buffer Explained
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Core Explanation */}
+                            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+                                <strong className="block mb-1 font-serif font-bold text-sm">To guarantee delivery by your date, drawing must finish 7 days earlier.</strong>
+                                When you pick a date, I give myself an internal deadline by <strong>subtracting 7 days</strong> from your target date. Those 7 days are dedicated to framing, protective packaging, and courier transit.
+                            </div>
+
+                            {/* 3 Steps Mini Timeline */}
+                            <div className="space-y-2 text-xs">
+                                <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-foreground/5 border border-foreground/10">
+                                    <Frame size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <span className="font-semibold block">1–3 Days: Framing</span>
+                                        <span className="text-neutral-500 dark:text-neutral-400 text-[11px]">Finalizing your chosen frame style and custom-fitting your portrait (if framed).</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-foreground/5 border border-foreground/10">
+                                    <Package size={16} className="text-purple-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <span className="font-semibold block">1 Day: Packaging</span>
+                                        <span className="text-neutral-500 dark:text-neutral-400 text-[11px]">Packed securely with protective padding to ensure safe doorstep delivery.</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-foreground/5 border border-foreground/10">
+                                    <Truck size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <span className="font-semibold block">3–5 Days: Priority Courier Transit</span>
+                                        <span className="text-neutral-500 dark:text-neutral-400 text-[11px]">Tracked express courier margin to guarantee arrival on or before your date.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Overtime Note */}
+                            <div className="p-3 rounded-lg bg-foreground/5 text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed flex items-start gap-2">
+                                <Clock size={16} className="text-[#e7bb55] shrink-0 mt-0.5" />
+                                <span>
+                                    Because the 7-day buffer is fixed, a rush deadline squeezes my drawing window. To maintain the exact same 30+ hours of realistic detail, <strong>I work whole-day overtime</strong> from early morning until night.
+                                </span>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-between pt-2 border-t border-foreground/10 gap-3">
+                                <Link
+                                    href="/rush-fee"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-[#e7bb55] hover:underline flex items-center gap-1 font-semibold group"
+                                >
+                                    Read full behind-the-scenes guide
+                                    <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRushModal(false)}
+                                    className="px-4 py-2 rounded-lg bg-foreground/10 hover:bg-foreground/15 text-foreground text-xs font-semibold transition-colors cursor-pointer"
+                                >
+                                    Got it
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
