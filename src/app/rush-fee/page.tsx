@@ -171,7 +171,7 @@ export default function RushFeePage() {
                                     <Sparkles size={16} /> How I make your tight deadline work:
                                 </div>
                                 <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                                    I work whole-day overtime, waking up early in the morning and drawing continuously until night to pour those same 30+ hours of detailed craftsmanship into a condensed few days.
+                                    I work whole-day overtime, waking up early in the morning and drawing continuously until night to pour those same 30+ hours of detailed artwork into a condensed few days.
                                 </p>
                             </div>
                         </div>
@@ -185,45 +185,64 @@ export default function RushFeePage() {
                         <h2 className="font-serif text-2xl sm:text-3xl font-bold text-foreground mt-1">
                             Standard Schedule vs. Rush Schedule
                         </h2>
+                        <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 mt-2">
+                            Example: Ordering an <strong>A4 Portrait</strong> on <strong>May 1</strong> (same 30+ hours of detail, same 7-day buffer).
+                        </p>
                     </div>
 
                     <div className="space-y-4">
-                        {/* Standard Schedule Bar */}
+                        {/* Standard Schedule Bar (21 Days = 2/3 Drawing + 1/3 Buffer) */}
                         <div className="p-5 rounded-xl bg-surface border border-foreground/10 space-y-3">
-                            <div className="flex justify-between items-center text-sm font-semibold">
-                                <span className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                                    <CheckCircle2 size={16} /> Standard Timeline (e.g. 18–30+ Days)
+                            <div className="flex flex-wrap justify-between items-center gap-2 text-sm font-semibold">
+                                <span className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                                    <CheckCircle2 size={16} /> Standard Timeline: 21 Days (Arrives May 22+)
                                 </span>
-                                <span className="text-xs text-neutral-500 font-normal">Standard Pace</span>
+                                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
+                                    Standard Pace (No Rush Fee)
+                                </span>
                             </div>
-                            <div className="grid grid-cols-12 gap-1.5 h-10 text-[11px] font-medium text-center">
-                                <div className="col-span-8 sm:col-span-9 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 rounded-lg flex items-center justify-center px-2">
-                                    🎨 Regular Drawing Pace (12–25 Days)
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-center">
+                                <div className="sm:col-span-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 rounded-lg flex flex-col items-center justify-center px-3 py-2.5">
+                                    <span className="font-semibold">🎨 Regular Drawing (14 Days)</span>
+                                    <span className="text-[11px] opacity-80 mt-0.5">May 1 - May 14</span>
                                 </div>
-                                <div className="col-span-4 sm:col-span-3 bg-neutral-500/15 border border-foreground/10 text-neutral-600 dark:text-neutral-300 rounded-lg flex items-center justify-center px-2">
-                                    📦 7-Day Buffer & Shipping
+                                <div className="sm:col-span-1 bg-neutral-500/10 dark:bg-neutral-500/15 border border-foreground/10 text-neutral-700 dark:text-neutral-300 rounded-lg flex flex-col items-center justify-center px-3 py-2.5">
+                                    <span className="font-semibold">📦 7-Day Buffer</span>
+                                    <span className="text-[11px] opacity-80 mt-0.5">Framing &amp; Shipping (May 15 - May 21)</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Rush Schedule Bar */}
+                        {/* Rush Schedule Bar (14 Days = 1/3 Overtime Drawing + 1/3 Buffer + 1/3 Saved Time) */}
                         <div className="p-5 rounded-xl bg-surface border border-amber-500/30 space-y-3">
-                            <div className="flex justify-between items-center text-sm font-semibold">
-                                <span className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                                    <Flame size={16} /> Rush Timeline (e.g. 12–17 Days)
+                            <div className="flex flex-wrap justify-between items-center gap-2 text-sm font-semibold">
+                                <span className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                                    <Flame size={16} /> Rush Timeline: 14 Days (Arrives May 15)
                                 </span>
-                                <span className="text-xs text-amber-500 font-medium">+30% Rush Fee</span>
+                                <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                                    +30% Rush Fee
+                                </span>
                             </div>
-                            <div className="grid grid-cols-12 gap-1.5 h-10 text-[11px] font-medium text-center">
-                                <div className="col-span-6 sm:col-span-7 bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-300 font-bold rounded-lg flex items-center justify-center px-2">
-                                    ⚡ Whole-Day Overtime Drawing (5–10 Days)
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-center">
+                                <div className="sm:col-span-1 bg-amber-500/20 border border-amber-500/40 text-amber-800 dark:text-amber-300 rounded-lg flex flex-col items-center justify-center px-3 py-2.5">
+                                    <span className="font-bold">⚡ Overtime Drawing (7 Days)</span>
+                                    <span className="text-[11px] opacity-85 mt-0.5">May 1 - May 7</span>
                                 </div>
-                                <div className="col-span-6 sm:col-span-5 bg-neutral-500/15 border border-foreground/10 text-neutral-600 dark:text-neutral-300 rounded-lg flex items-center justify-center px-2">
-                                    📦 7-Day Buffer (Framing + Shipping)
+                                <div className="sm:col-span-1 bg-neutral-500/10 dark:bg-neutral-500/15 border border-foreground/10 text-neutral-700 dark:text-neutral-300 rounded-lg flex flex-col items-center justify-center px-3 py-2.5">
+                                    <span className="font-semibold">📦 7-Day Buffer</span>
+                                    <span className="text-[11px] opacity-80 mt-0.5">Framing &amp; Shipping (May 8 - May 14)</span>
+                                </div>
+                                <div className="sm:col-span-1 border border-dashed border-amber-500/35 bg-amber-500/[0.04] text-amber-700 dark:text-amber-300 rounded-lg flex flex-col items-center justify-center px-3 py-2.5">
+                                    <span className="font-semibold">✨ Delivered 1 Week Earlier</span>
+                                    <span className="text-[11px] opacity-80 mt-0.5">In your hands on May 15</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                        Shown using an A4 portrait as an example. Exact timelines scale by paper size (A5, A4, A3, A2) on the booking calendar.
+                    </p>
                 </div>
 
                 {/* What You Get with a Rush Order */}
@@ -237,7 +256,7 @@ export default function RushFeePage() {
                             <div>
                                 <h3 className="font-semibold text-sm text-foreground">Zero Compromise on Quality</h3>
                                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
-                                    Every single hair, eye reflection, and fine texture receives the exact same dedicated craftsmanship.
+                                    Every single hair, eye reflection, and fine texture receives the exact same dedicated attention to detail.
                                 </p>
                             </div>
                         </div>
@@ -247,7 +266,7 @@ export default function RushFeePage() {
                             <div>
                                 <h3 className="font-semibold text-sm text-foreground">Priority Queue Bump</h3>
                                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
-                                    Your portrait jumps straight to the front of my drawing easel and becomes my immediate focus.
+                                    Your portrait jumps straight to the top of my priority list and becomes my immediate focus.
                                 </p>
                             </div>
                         </div>
