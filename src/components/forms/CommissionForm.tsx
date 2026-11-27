@@ -1199,7 +1199,7 @@ export default function CommissionForm() {
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="mt-8 p-8 bg-neutral-50 dark:bg-neutral-900 border border-black/5 dark:border-accent/20 rounded-[2.5rem] shadow-2xl relative overflow-hidden group"
+                                className="mt-8 p-8 bg-surface dark:bg-neutral-900 border border-border dark:border-accent/20 rounded-[2.5rem] shadow-2xl relative overflow-hidden group"
                             >
                                 {/* Decorative elements */}
                                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent/10 rounded-full blur-[60px] group-hover:bg-accent/20 transition-all" />

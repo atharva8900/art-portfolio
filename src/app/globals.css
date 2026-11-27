@@ -11,11 +11,11 @@
 }
 
 .light {
-  --background: 242 242 242;
-  --foreground: 30 30 30;
-  --surface: 255 255 255;
-  --accent: 120 120 120;
-  --border: 215 215 215;
+  --background: 214 214 214;
+  --foreground: 20 20 20;
+  --surface: 228 228 228;
+  --accent: 88 88 88;
+  --border: 180 180 180;
 }
 
 @layer base {

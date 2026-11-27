@@ -90,7 +90,7 @@ export const GlowCard = ({
       }}
     >
       {/* Background Layer with Ambient Glow */}
-      <div className="absolute inset-[1px] rounded-[inherit] bg-neutral-50 dark:bg-[#0d0d0d] z-0 overflow-hidden">
+      <div className="absolute inset-[1px] rounded-[inherit] bg-background dark:bg-[#0d0d0d] z-0 overflow-hidden">
          {/* Internal Surface Glow */}
          <div
             className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-500"
